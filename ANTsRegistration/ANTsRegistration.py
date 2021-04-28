@@ -8,7 +8,6 @@ from slicer.util import VTKObservationMixin
 import PythonQt
 import platform
 
-from antsRegistrationLib.util import antsRegistrationStage
 
 #
 # antsRegistration
@@ -218,12 +217,10 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     reply = qt.QInputDialog.getItem(qt.QWidget(), 'New Stage', 'Select Transform Type', ['a','b'], 0, 0, validReply)
     if validReply:
       self.ui.stagesListWidget.addItem(reply)
-      self.logic.stages.append(antsRegistrationStage(reply))
 
   def onRemoveStagePushButton(self):
     currentItem = self.ui.stagesListWidget.currentItem()
     if currentItem:
-      self.logic.stages.pop(self.ui.stagesListWidget.currentRow)
       currentItem.delete()
 
   def onRunRegistrationButton(self):
@@ -278,7 +275,6 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     if not parameterNode.GetParameter("Invert"):
       parameterNode.SetParameter("Invert", "false")
 
-    self.stages = []
 
   def getantsRegistrationExecutable(self):
     """
