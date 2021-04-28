@@ -36,6 +36,94 @@ and Steve Pieper, Isomics, Inc. and was partially funded by NIH grant 3P41RR0132
 """
 
 #
+# Custom Widgets
+#
+
+#
+# Custom Qt
+#
+
+
+class ComboDelegate(qt.QItemDelegate):
+  def __init__(self, parent):
+    qt.QItemDelegate.__init__(self, parent)
+
+  def createEditor(self, parent, option, index):
+    combo = qt.QComboBox(parent)
+    li = []
+    li.append("Zero")
+    li.append("One")
+    li.append("Two")
+    li.append("Three")
+    li.append("Four")
+    li.append("Five")
+    combo.addItems(li)
+    self.connect(combo, qt.SIGNAL("currentIndexChanged(int)"), self, qt.SLOT("currentIndexChanged()"))
+    return combo
+
+  def setEditorData(self, editor, index):
+    editor.blockSignals(True)
+    editor.setCurrentText(index.model().data(index))
+    editor.blockSignals(False)
+
+  def setModelData(self, editor, model, index):
+    model.setData(index, editor.currentText)
+
+  @qt.Slot()
+  def currentIndexChanged(self):
+    print('a')
+    # self.commitData.emit(self.sender())
+
+class SpinBoxDelegate(qt.QItemDelegate):
+  def __init__(self, parent):
+    qt.QItemDelegate.__init__(self, parent)
+
+  def createEditor(self, parent, option, index):
+    spinBox = qt.QDoubleSpinBox(parent)
+    spinBox.setSingleStep(0.1)
+    # self.connect(combo, qt.SIGNAL("currentIndexChanged(int)"), self, qt.SLOT("currentIndexChanged()"))
+    return spinBox
+
+  def setEditorData(self, editor, index):
+    editor.blockSignals(True)
+    editor.value = index.model().data(index) if index.model().data(index) else 0
+    editor.blockSignals(False)
+
+  def setModelData(self, editor, model, index):
+    model.setData(index, editor.value)
+
+  @qt.Slot()
+  def currentIndexChanged(self):
+    print('a')
+    # self.commi
+
+class TextEditDelegate(qt.QItemDelegate):
+  def __init__(self, parent):
+    qt.QItemDelegate.__init__(self, parent)
+
+  def createEditor(self, parent, option, index):
+    textEdit = qt.QPlainTextEdit(parent)
+    textEdit.setVerticalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOff)
+    textEdit.setHorizontalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOff)
+    textEdit.setLineWrapMode(textEdit.NoWrap)
+    # self.connect(combo, qt.SIGNAL("currentIndexChanged(int)"), self, qt.SLOT("currentIndexChanged()"))
+    return textEdit
+
+  def setEditorData(self, editor, index):
+    editor.blockSignals(True)
+    editor.plainText = index.model().data(index) if index.model().data(index) else ''
+    editor.blockSignals(False)
+
+  def setModelData(self, editor, model, index):
+    model.setData(index, editor.plainText)
+
+  @qt.Slot()
+  def currentIndexChanged(self):
+    print('a')
+    # self.commi
+
+
+#
 # antsRegistrationWidget
 #
 
@@ -65,6 +153,17 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     uiWidget = slicer.util.loadUI(self.resourcePath('UI/antsRegistration.ui'))
     self.layout.addWidget(uiWidget)
     self.ui = slicer.util.childWidgetVariables(uiWidget)
+
+    # Set custom UI components
+
+    self.ui.stagesTableModel = qt.QStandardItemModel(4,3,uiWidget)
+    self.ui.stagesTableModel.setHeaderData(0, qt.Qt.Horizontal, 'Transform')
+    self.ui.stagesTableModel.setHeaderData(1, qt.Qt.Horizontal, 'Gradient Step')
+    self.ui.stagesTableModel.setHeaderData(2, qt.Qt.Horizontal, 'Settings')
+    self.ui.stagesTableView.setItemDelegateForColumn(0, ComboDelegate(self.ui.stagesTableModel))
+    self.ui.stagesTableView.setItemDelegateForColumn(1, SpinBoxDelegate(self.ui.stagesTableModel))
+    self.ui.stagesTableView.setItemDelegateForColumn(2, TextEditDelegate(self.ui.stagesTableModel))
+    self.ui.stagesTableView.setModel(self.ui.stagesTableModel)    
 
     # Set scene in MRML widgets. Make sure that in Qt designer the top-level qMRMLWidget's
     # "mrmlSceneChanged(vtkMRMLScene*)" signal in is connected to each MRML widget's.
@@ -213,10 +312,11 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
 
   def onAddStagePushButton(self):
-    validReply = PythonQt.BoolResult()
-    reply = qt.QInputDialog.getItem(qt.QWidget(), 'New Stage', 'Select Transform Type', ['a','b'], 0, 0, validReply)
-    if validReply:
-      self.ui.stagesListWidget.addItem(reply)
+    newWidget = antsStageListItem('hola', self.ui.listWidget)
+    newItem = qt.QListWidgetItem(self.ui.listWidget)    
+    newItem.setSizeHint(newWidget.minimumSizeHint)
+    self.ui.listWidget.addItem(newItem)
+    self.ui.listWidget.setItemWidget(newItem, newWidget)
 
   def onRemoveStagePushButton(self):
     currentItem = self.ui.stagesListWidget.currentItem()
