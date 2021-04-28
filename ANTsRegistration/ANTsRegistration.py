@@ -11,24 +11,24 @@ import platform
 from antsRegistrationLib.util import antsRegistrationStage
 
 #
-# ANTsRegistration
+# antsRegistration
 #
 
-class ANTsRegistration(ScriptedLoadableModule):
+class antsRegistration(ScriptedLoadableModule):
   """Uses ScriptedLoadableModule base class, available at:
   https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
   """
 
   def __init__(self, parent):
     ScriptedLoadableModule.__init__(self, parent)
-    self.parent.title = "ANTsRegistration"  # TODO: make this more human readable by adding spaces
+    self.parent.title = "antsRegistration"  # TODO: make this more human readable by adding spaces
     self.parent.categories = ["Registration"]  # TODO: set categories (folders where the module shows up in the module selector)
     self.parent.dependencies = []  # TODO: add here list of module names that this module requires
     self.parent.contributors = ["Simon Oxenford (Netstim Berlin)"]  # TODO: replace with "Firstname Lastname (Organization)"
     # TODO: update with short description of the module and a link to online module documentation
     self.parent.helpText = """
 This is an example of scripted loadable module bundled in an extension.
-See more information in <a href="https://github.com/organization/projectname#ANTsRegistration">module documentation</a>.
+See more information in <a href="https://github.com/organization/projectname#antsRegistration">module documentation</a>.
 """
     # TODO: replace with organization, grant and thanks
     self.parent.acknowledgementText = """
@@ -37,10 +37,10 @@ and Steve Pieper, Isomics, Inc. and was partially funded by NIH grant 3P41RR0132
 """
 
 #
-# ANTsRegistrationWidget
+# antsRegistrationWidget
 #
 
-class ANTsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
+class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
   """Uses ScriptedLoadableModuleWidget base class, available at:
   https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
   """
@@ -63,7 +63,7 @@ class ANTsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     # Load widget from .ui file (created by Qt Designer).
     # Additional widgets can be instantiated manually and added to self.layout.
-    uiWidget = slicer.util.loadUI(self.resourcePath('UI/ANTsRegistration.ui'))
+    uiWidget = slicer.util.loadUI(self.resourcePath('UI/antsRegistration.ui'))
     self.layout.addWidget(uiWidget)
     self.ui = slicer.util.childWidgetVariables(uiWidget)
 
@@ -74,7 +74,7 @@ class ANTsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     # Create logic class. Logic implements all computations that should be possible to run
     # in batch mode, without a graphical user interface.
-    self.logic = ANTsRegistrationLogic()
+    self.logic = antsRegistrationLogic()
 
     # Connections
 
@@ -250,10 +250,10 @@ class ANTsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
 
 #
-# ANTsRegistrationLogic
+# antsRegistrationLogic
 #
 
-class ANTsRegistrationLogic(ScriptedLoadableModuleLogic):
+class antsRegistrationLogic(ScriptedLoadableModuleLogic):
   """This class should implement all the actual
   computation done by your module.  The interface
   should be such that other python code can import
@@ -280,7 +280,7 @@ class ANTsRegistrationLogic(ScriptedLoadableModuleLogic):
 
     self.stages = []
 
-  def getAntsRegistrationExecutable(self):
+  def getantsRegistrationExecutable(self):
     """
     Look for antsRegistration executable
     """
@@ -336,10 +336,10 @@ class ANTsRegistrationLogic(ScriptedLoadableModuleLogic):
     logging.info('Processing completed in {0:.2f} seconds'.format(stopTime-startTime))
 
 #
-# ANTsRegistrationTest
+# antsRegistrationTest
 #
 
-class ANTsRegistrationTest(ScriptedLoadableModuleTest):
+class antsRegistrationTest(ScriptedLoadableModuleTest):
   """
   This is the test case for your scripted module.
   Uses ScriptedLoadableModuleTest base class, available at:
@@ -355,9 +355,9 @@ class ANTsRegistrationTest(ScriptedLoadableModuleTest):
     """Run as few or as many tests as needed here.
     """
     self.setUp()
-    self.test_ANTsRegistration1()
+    self.test_antsRegistration1()
 
-  def test_ANTsRegistration1(self):
+  def test_antsRegistration1(self):
     """ Ideally you should have several levels of tests.  At the lowest level
     tests should exercise the functionality of the logic with different inputs
     (both valid and invalid).  At higher levels your tests should emulate the
@@ -375,7 +375,7 @@ class ANTsRegistrationTest(ScriptedLoadableModuleTest):
 
     import SampleData
     registerSampleData()
-    inputVolume = SampleData.downloadSample('ANTsRegistration1')
+    inputVolume = SampleData.downloadSample('antsRegistration1')
     self.delayDisplay('Loaded test data set')
 
     inputScalarRange = inputVolume.GetImageData().GetScalarRange()
@@ -387,7 +387,7 @@ class ANTsRegistrationTest(ScriptedLoadableModuleTest):
 
     # Test the module logic
 
-    logic = ANTsRegistrationLogic()
+    logic = antsRegistrationLogic()
 
     # Test algorithm with non-inverted threshold
     logic.process(inputVolume, outputVolume, threshold, True)
