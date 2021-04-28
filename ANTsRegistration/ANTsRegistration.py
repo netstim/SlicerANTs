@@ -8,6 +8,8 @@ from slicer.util import VTKObservationMixin
 import PythonQt
 import platform
 
+from Widgets.util import Abz
+
 
 #
 # antsRegistration
@@ -156,7 +158,7 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     # Set custom UI components
 
-    self.ui.stagesTableModel = qt.QStandardItemModel(4,3,uiWidget)
+    self.ui.stagesTableModel = qt.QStandardItemModel(0,3,uiWidget)
     self.ui.stagesTableModel.setHeaderData(0, qt.Qt.Horizontal, 'Transform')
     self.ui.stagesTableModel.setHeaderData(1, qt.Qt.Horizontal, 'Gradient Step')
     self.ui.stagesTableModel.setHeaderData(2, qt.Qt.Horizontal, 'Settings')
@@ -312,16 +314,12 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
 
   def onAddStagePushButton(self):
-    newWidget = antsStageListItem('hola', self.ui.listWidget)
-    newItem = qt.QListWidgetItem(self.ui.listWidget)    
-    newItem.setSizeHint(newWidget.minimumSizeHint)
-    self.ui.listWidget.addItem(newItem)
-    self.ui.listWidget.setItemWidget(newItem, newWidget)
+    self.ui.stagesTableModel.insertRow(self.ui.stagesTableModel.rowCount(qt.QModelIndex()))
 
   def onRemoveStagePushButton(self):
-    currentItem = self.ui.stagesListWidget.currentItem()
-    if currentItem:
-      currentItem.delete()
+    selection = self.ui.stagesTableView.selectionModel().selectedRows()
+    for sel in selection:
+      self.ui.stagesTableModel.removeRow(sel.row())
 
   def onRunRegistrationButton(self):
     """
@@ -498,3 +496,4 @@ class antsRegistrationTest(ScriptedLoadableModuleTest):
     self.assertEqual(outputScalarRange[1], inputScalarRange[1])
 
     self.delayDisplay('Test passed')
+

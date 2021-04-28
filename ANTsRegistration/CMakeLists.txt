@@ -1,6 +1,8 @@
 #-----------------------------------------------------------------------------
 set(MODULE_NAME antsRegistration)
 
+add_subdirectory(Widgets)
+
 #-----------------------------------------------------------------------------
 set(MODULE_PYTHON_SCRIPTS
   ${MODULE_NAME}.py

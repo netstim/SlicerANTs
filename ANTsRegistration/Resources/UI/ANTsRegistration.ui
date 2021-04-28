@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>468</width>
-    <height>1233</height>
+    <width>437</width>
+    <height>1206</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -39,6 +39,9 @@
         <property name="editTriggers">
          <set>QAbstractItemView::CurrentChanged|QAbstractItemView::DoubleClicked|QAbstractItemView::SelectedClicked</set>
         </property>
+        <property name="selectionMode">
+         <enum>QAbstractItemView::SingleSelection</enum>
+        </property>
         <property name="selectionBehavior">
          <enum>QAbstractItemView::SelectRows</enum>
         </property>
@@ -48,9 +51,9 @@
        </widget>
       </item>
       <item row="2" column="0" colspan="2">
-       <widget class="ctkCollapsibleButton" name="stageSettingsCollapsibleButton">
+       <widget class="ctkCollapsibleButton" name="stagePropertiesCollapsibleButton">
         <property name="text">
-         <string>Stage Settings</string>
+         <string>Stage Properties</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <item>
@@ -74,71 +77,6 @@
               <property name="text">
                <string>-</string>
               </property>
-             </widget>
-            </item>
-            <item row="2" column="0" colspan="2">
-             <widget class="ctkCollapsibleButton" name="metricSettingsCollapsibleButton">
-              <property name="text">
-               <string>Metric Settings</string>
-              </property>
-              <layout class="QFormLayout" name="formLayout_6">
-               <item row="0" column="0">
-                <widget class="QLabel" name="label_8">
-                 <property name="text">
-                  <string>Type: </string>
-                 </property>
-                </widget>
-               </item>
-               <item row="1" column="0">
-                <widget class="QLabel" name="label_9">
-                 <property name="text">
-                  <string>Fixed Image: </string>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="0">
-                <widget class="QLabel" name="label_10">
-                 <property name="text">
-                  <string>Moving Image: </string>
-                 </property>
-                </widget>
-               </item>
-               <item row="3" column="0">
-                <widget class="QLabel" name="label_11">
-                 <property name="text">
-                  <string>Weight: </string>
-                 </property>
-                </widget>
-               </item>
-               <item row="3" column="1">
-                <widget class="QDoubleSpinBox" name="metricWeightSpinBox">
-                 <property name="value">
-                  <double>1.000000000000000</double>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="1">
-                <widget class="QComboBox" name="metricTypeComboBox"/>
-               </item>
-               <item row="1" column="1">
-                <widget class="qMRMLNodeComboBox" name="metricFixedImageComboBox">
-                 <property name="nodeTypes">
-                  <stringlist>
-                   <string>vtkMRMLScalarVolumeNode</string>
-                  </stringlist>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="1">
-                <widget class="qMRMLNodeComboBox" name="metricMovingImageComboBox">
-                 <property name="nodeTypes">
-                  <stringlist>
-                   <string>vtkMRMLScalarVolumeNode</string>
-                  </stringlist>
-                 </property>
-                </widget>
-               </item>
-              </layout>
              </widget>
             </item>
            </layout>
@@ -186,9 +124,9 @@ p, li { white-space: pre-wrap; }
           </widget>
          </item>
          <item>
-          <widget class="ctkCollapsibleButton" name="maskCollapsibleButton">
+          <widget class="ctkCollapsibleButton" name="maskingCollapsibleButton">
            <property name="text">
-            <string>Mask</string>
+            <string>Masking</string>
            </property>
            <layout class="QFormLayout" name="formLayout_5">
             <item row="0" column="0">
@@ -332,38 +270,6 @@ p, li { white-space: pre-wrap; }
     <hint type="destinationlabel">
      <x>220</x>
      <y>161</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>antsRegistration</sender>
-   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
-   <receiver>metricFixedImageComboBox</receiver>
-   <slot>setMRMLScene(vtkMRMLScene*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>233</x>
-     <y>616</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>275</x>
-     <y>691</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>antsRegistration</sender>
-   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
-   <receiver>metricMovingImageComboBox</receiver>
-   <slot>setMRMLScene(vtkMRMLScene*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>233</x>
-     <y>616</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>275</x>
-     <y>716</y>
     </hint>
    </hints>
   </connection>
