@@ -35,7 +35,7 @@
        </widget>
       </item>
       <item row="1" column="0" colspan="2">
-       <widget class="QTableView" name="tableView">
+       <widget class="QTableView" name="stagesTableView">
         <property name="editTriggers">
          <set>QAbstractItemView::CurrentChanged|QAbstractItemView::DoubleClicked|QAbstractItemView::SelectedClicked</set>
         </property>
