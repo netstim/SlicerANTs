@@ -8,7 +8,7 @@ from slicer.util import VTKObservationMixin
 import PythonQt
 import platform
 
-from Widgets.util import Abz
+from Widgets.util import StagesTable
 
 
 #
@@ -37,92 +37,6 @@ This file was originally developed by Jean-Christophe Fillion-Robin, Kitware Inc
 and Steve Pieper, Isomics, Inc. and was partially funded by NIH grant 3P41RR013218-12S1.
 """
 
-#
-# Custom Widgets
-#
-
-#
-# Custom Qt
-#
-
-
-class ComboDelegate(qt.QItemDelegate):
-  def __init__(self, parent):
-    qt.QItemDelegate.__init__(self, parent)
-
-  def createEditor(self, parent, option, index):
-    combo = qt.QComboBox(parent)
-    li = []
-    li.append("Zero")
-    li.append("One")
-    li.append("Two")
-    li.append("Three")
-    li.append("Four")
-    li.append("Five")
-    combo.addItems(li)
-    self.connect(combo, qt.SIGNAL("currentIndexChanged(int)"), self, qt.SLOT("currentIndexChanged()"))
-    return combo
-
-  def setEditorData(self, editor, index):
-    editor.blockSignals(True)
-    editor.setCurrentText(index.model().data(index))
-    editor.blockSignals(False)
-
-  def setModelData(self, editor, model, index):
-    model.setData(index, editor.currentText)
-
-  @qt.Slot()
-  def currentIndexChanged(self):
-    print('a')
-    # self.commitData.emit(self.sender())
-
-class SpinBoxDelegate(qt.QItemDelegate):
-  def __init__(self, parent):
-    qt.QItemDelegate.__init__(self, parent)
-
-  def createEditor(self, parent, option, index):
-    spinBox = qt.QDoubleSpinBox(parent)
-    spinBox.setSingleStep(0.1)
-    # self.connect(combo, qt.SIGNAL("currentIndexChanged(int)"), self, qt.SLOT("currentIndexChanged()"))
-    return spinBox
-
-  def setEditorData(self, editor, index):
-    editor.blockSignals(True)
-    editor.value = index.model().data(index) if index.model().data(index) else 0
-    editor.blockSignals(False)
-
-  def setModelData(self, editor, model, index):
-    model.setData(index, editor.value)
-
-  @qt.Slot()
-  def currentIndexChanged(self):
-    print('a')
-    # self.commi
-
-class TextEditDelegate(qt.QItemDelegate):
-  def __init__(self, parent):
-    qt.QItemDelegate.__init__(self, parent)
-
-  def createEditor(self, parent, option, index):
-    textEdit = qt.QPlainTextEdit(parent)
-    textEdit.setVerticalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOff)
-    textEdit.setHorizontalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOff)
-    textEdit.setLineWrapMode(textEdit.NoWrap)
-    # self.connect(combo, qt.SIGNAL("currentIndexChanged(int)"), self, qt.SLOT("currentIndexChanged()"))
-    return textEdit
-
-  def setEditorData(self, editor, index):
-    editor.blockSignals(True)
-    editor.plainText = index.model().data(index) if index.model().data(index) else ''
-    editor.blockSignals(False)
-
-  def setModelData(self, editor, model, index):
-    model.setData(index, editor.plainText)
-
-  @qt.Slot()
-  def currentIndexChanged(self):
-    print('a')
-    # self.commi
 
 
 #
@@ -158,14 +72,10 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     # Set custom UI components
 
-    self.ui.stagesTableModel = qt.QStandardItemModel(0,3,uiWidget)
-    self.ui.stagesTableModel.setHeaderData(0, qt.Qt.Horizontal, 'Transform')
-    self.ui.stagesTableModel.setHeaderData(1, qt.Qt.Horizontal, 'Gradient Step')
-    self.ui.stagesTableModel.setHeaderData(2, qt.Qt.Horizontal, 'Settings')
-    self.ui.stagesTableView.setItemDelegateForColumn(0, ComboDelegate(self.ui.stagesTableModel))
-    self.ui.stagesTableView.setItemDelegateForColumn(1, SpinBoxDelegate(self.ui.stagesTableModel))
-    self.ui.stagesTableView.setItemDelegateForColumn(2, TextEditDelegate(self.ui.stagesTableModel))
-    self.ui.stagesTableView.setModel(self.ui.stagesTableModel)    
+    stagesTableWidget = StagesTable()
+    stagesTableLayout = qt.QVBoxLayout(self.ui.stagesFrame)
+    stagesTableLayout.addWidget(stagesTableWidget)
+
 
     # Set scene in MRML widgets. Make sure that in Qt designer the top-level qMRMLWidget's
     # "mrmlSceneChanged(vtkMRMLScene*)" signal in is connected to each MRML widget's.
@@ -191,8 +101,6 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     # self.ui.invertedOutputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
 
     # Buttons
-    self.ui.addStagePushButton.connect('clicked(bool)', self.onAddStagePushButton)
-    self.ui.removeStagePushButton.connect('clicked(bool)', self.onRemoveStagePushButton)
     self.ui.runRegistrationButton.connect('clicked(bool)', self.onRunRegistrationButton)
 
     # Make sure parameter node is initialized (needed for module reload)
@@ -312,14 +220,6 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     self._parameterNode.EndModify(wasModified)
 
-
-  def onAddStagePushButton(self):
-    self.ui.stagesTableModel.insertRow(self.ui.stagesTableModel.rowCount(qt.QModelIndex()))
-
-  def onRemoveStagePushButton(self):
-    selection = self.ui.stagesTableView.selectionModel().selectedRows()
-    for sel in selection:
-      self.ui.stagesTableModel.removeRow(sel.row())
 
   def onRunRegistrationButton(self):
     """
