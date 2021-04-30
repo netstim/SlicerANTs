@@ -8,7 +8,7 @@ from slicer.util import VTKObservationMixin
 import PythonQt
 import platform
 
-from Widgets.util import StagesTable
+from Widgets.util import StagesTable, MetricsTable, LevelsTable
 
 
 #
@@ -72,10 +72,17 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     # Set custom UI components
 
-    stagesTableWidget = StagesTable()
+    stagesTableWidget = StagesTable(self.ui.stagesFrame)
     stagesTableLayout = qt.QVBoxLayout(self.ui.stagesFrame)
     stagesTableLayout.addWidget(stagesTableWidget)
 
+    metricsTableWidget = MetricsTable(self.ui.metricsFrame)
+    metricsTableLayout = qt.QVBoxLayout(self.ui.metricsFrame)
+    metricsTableLayout.addWidget(metricsTableWidget)
+
+    levelsTableWidget = LevelsTable(self.ui.levelsFrame)
+    levelsTableLayout = qt.QVBoxLayout(self.ui.levelsFrame)
+    levelsTableLayout.addWidget(levelsTableWidget)
 
     # Set scene in MRML widgets. Make sure that in Qt designer the top-level qMRMLWidget's
     # "mrmlSceneChanged(vtkMRMLScene*)" signal in is connected to each MRML widget's.

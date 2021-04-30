@@ -1,23 +1,17 @@
-import qt
+import qt, ctk
 
 #
 # Delegates
 #
 
 class ComboDelegate(qt.QItemDelegate):
-  def __init__(self, parent):
+  def __init__(self, parent, comboItems):
     qt.QItemDelegate.__init__(self, parent)
+    self.comboItems = comboItems
 
   def createEditor(self, parent, option, index):
     combo = qt.QComboBox(parent)
-    li = []
-    li.append("Zero")
-    li.append("One")
-    li.append("Two")
-    li.append("Three")
-    li.append("Four")
-    li.append("Five")
-    combo.addItems(li)
+    combo.addItems(self.comboItems)
     self.connect(combo, qt.SIGNAL("currentIndexChanged(int)"), self, qt.SLOT("currentIndexChanged()"))
     return combo
 
@@ -85,8 +79,15 @@ class TextEditDelegate(qt.QItemDelegate):
 #
 
 class CustomTable(qt.QWidget):
-  def __init__(self, columnNames):
+
+  MinimumFrameHeight = 85
+  RowHeight = 25
+
+  def __init__(self, parentFrame, columnNames):
     super().__init__()
+
+    self.parentFrame = parentFrame
+    self.parentFrame.setFixedHeight(self.MinimumFrameHeight)
 
     self.addButton = qt.QPushButton('+')
     self.addButton.clicked.connect(self.onAddButton)
@@ -103,7 +104,17 @@ class CustomTable(qt.QWidget):
     self.view.setSelectionMode(self.view.SingleSelection)
     self.view.setSelectionBehavior(self.view.SelectRows)
     self.view.horizontalHeader().setStretchLastSection(True)
+    self.view.setHorizontalScrollMode(self.view.ScrollPerPixel)
+    self.view.verticalHeader().setMaximumSectionSize(self.RowHeight)
+    self.view.verticalHeader().setMinimumSectionSize(self.RowHeight)
+    self.view.verticalHeader().setDefaultSectionSize(self.RowHeight)
     self.view.setModel(self.model)
+
+    self.view.selectionModel().selectionChanged.connect(self.onSelectionChanged)
+
+
+    self.settingsFormatText = ctk.ctkFittedTextBrowser()
+    self.settingsFormatText.setText('Settings Format: ')
 
     layout = qt.QGridLayout(self)
     layout.addWidget(self.addButton,0,0,1,1)
@@ -112,37 +123,78 @@ class CustomTable(qt.QWidget):
   
   def onAddButton(self):
     self.model.insertRow(self.model.rowCount(qt.QModelIndex()))
+    self.parentFrame.setFixedHeight(self.parentFrame.height+self.RowHeight)
   
   def onRemoveButton(self):
     selectedRows = self.view.selectionModel().selectedRows()
     for selectedRow in selectedRows:
       self.model.removeRow(selectedRow.row())
+      self.parentFrame.setFixedHeight(self.parentFrame.height-self.RowHeight)
 
-
+  def onSelectionChanged(self, sel):
+    pass
 
 class StagesTable(CustomTable):
-  def __init__(self):
-    columnNames = ['Transform', 'Grid Step', 'Settings']
-    CustomTable.__init__(self, columnNames)
 
-    self.view.setItemDelegateForColumn(0, ComboDelegate(self.model))
-    self.view.setItemDelegateForColumn(1, SpinBoxDelegate(self.model))
-    self.view.setItemDelegateForColumn(2, TextEditDelegate(self.model))
+  Transforms = {\
+    'Rigid': 'gradientStep',\
+    'Affine': 'gradientStep',\
+    'CompositeAffine': 'gradientStep',\
+    'Similarity': 'gradientStep',\
+    'Translation': 'gradientStep',\
+    'BSpline': 'gradientStep,meshSizeAtBaseLevel',\
+    'GaussianDisplacementField': 'gradientStep,updateFieldVarianceInVoxelSpace,totalFieldVarianceInVoxelSpace',\
+    'BSplineDisplacementField': 'gradientStep,updateFieldMeshSizeAtBaseLevel,<totalFieldMeshSizeAtBaseLevel=0>,<splineOrder=3>',\
+    'TimeVaryingVelocityField': 'gradientStep,numberOfTimeIndices,updateFieldVarianceInVoxelSpace,updateFieldTimeVariance,totalFieldVarianceInVoxelSpace,totalFieldTimeVariance',\
+    'TimeVaryingBSplineVelocityField': 'gradientStep,velocityFieldMeshSize,<numberOfTimePointSamples=4>,<splineOrder=3>',\
+    'SyN': 'gradientStep,<updateFieldVarianceInVoxelSpace=3>,<totalFieldVarianceInVoxelSpace=0>',\
+    'BSplineSyN': 'gradientStep,updateFieldMeshSizeAtBaseLevel,<totalFieldMeshSizeAtBaseLevel=0>,<splineOrder=3>',\
+    'Exponential': 'gradientStep,updateFieldVarianceInVoxelSpace,velocityFieldVarianceInVoxelSpace,<numberOfIntegrationSteps>',\
+    'BSplineExponential': 'gradientStep,updateFieldMeshSizeAtBaseLevel,<velocityFieldMeshSizeAtBaseLevel=0>,<numberOfIntegrationSteps>,<splineOrder=3>'\
+  }
+
+  def __init__(self, parentFrame):
+    columnNames = ['Transform', 'Settings']
+    CustomTable.__init__(self, parentFrame, columnNames)
+
+    self.view.setItemDelegateForColumn(0, ComboDelegate(self.model, list(self.Transforms.keys())))
+    self.view.setItemDelegateForColumn(1, TextEditDelegate(self.model))
 
 
 class MetricsTable(CustomTable):
 
   Metrics = {\
-    'CC': 'radius,<samplingStrategy={None,Regular,Random}>,<samplingPercentage=[0,1]',\
-    'MI': 'numberOfBins,<samplingStrategy={None,Regular,Random}>,<samplingPercentage=[0,1]',\
-    'Mattes': 'numberOfBins,<samplingStrategy={None,Regular,Random}>,<samplingPercentage=[0,1]',\
-    'MeanSquares': 'radius=NA,<samplingStrategy={None,Regular,Random}>,<samplingPercentage=[0,1]',\
-    'Demons': 'radius=NA,<samplingStrategy={None,Regular,Random}>,<samplingPercentage=[0,1]',\
-    'GC': 'radius=NA,<samplingStrategy={None,Regular,Random}>,<samplingPercentage=[0,1]',\
+    'CC': 'metricWeight,radius,<samplingStrategy={None,Regular,Random}>,<samplingPercentage=[0,1]>',\
+    'MI': 'metricWeight,numberOfBins,<samplingStrategy={None,Regular,Random}>,<samplingPercentage=[0,1]>',\
+    'Mattes': 'metricWeight,numberOfBins,<samplingStrategy={None,Regular,Random}>,<samplingPercentage=[0,1]>',\
+    'MeanSquares': 'metricWeight,radius=NA,<samplingStrategy={None,Regular,Random}>,<samplingPercentage=[0,1]>',\
+    'Demons': 'metricWeight,radius=NA,<samplingStrategy={None,Regular,Random}>,<samplingPercentage=[0,1]>',\
+    'GC': 'metricWeight,radius=NA,<samplingStrategy={None,Regular,Random}>,<samplingPercentage=[0,1]>',\
+    'ICP': 'metricWeight,<samplingPercentage=[0,1]>,<boundaryPointsOnly=0>',\
+    'PSE': 'metricWeight,<samplingPercentage=[0,1]>,<boundaryPointsOnly=0>,<pointSetSigma=1>,<kNeighborhood=50>',\
+    'JHCT': 'metricWeight,<samplingPercentage=[0,1]>,<boundaryPointsOnly=0>,<pointSetSigma=1>,<kNeighborhood=50>,<alpha=1.1>,<useAnisotropicCovariances=1>',\
+    'IGDM': 'metricWeight,fixedMask,movingMask,<neighborhoodRadius=0x0>,<intensitySigma=0>,<distanceSigma=0>,<kNeighborhood=1>,<gradientSigma=1>',\
   }
 
-  def __init__(self):
-    columnNames = ['Type', 'Fixed', 'Moving', 'Weight', 'Settings']
-    CustomTable.__init__(self, columnNames)
+  def __init__(self, parentFrame):
+    columnNames = ['Type', 'Fixed', 'Moving', 'Settings']
+    CustomTable.__init__(self, parentFrame, columnNames)
 
-    self.view.setItemDelegateForColumn(0, ComboDelegate(self.model))
+    self.view.setItemDelegateForColumn(0, ComboDelegate(self.model, list(self.Metrics.keys())))
+    self.view.setItemDelegateForColumn(3, TextEditDelegate(self.model))
+
+  def onSelectionChanged(self, selection):
+    for index in selection.indexes():
+      print(self.model.data(index.siblingAtColumn(0)))
+      return
+
+
+class LevelsTable(CustomTable):
+
+  def __init__(self, parentFrame):
+    columnNames = ['Convergence', 'Smoothing Sigmas', 'Shrink Factors']
+    CustomTable.__init__(self, parentFrame, columnNames)
+
+    self.view.setItemDelegateForColumn(0, SpinBoxDelegate(self.model))
+    self.view.setItemDelegateForColumn(1, SpinBoxDelegate(self.model))
+    self.view.setItemDelegateForColumn(2, SpinBoxDelegate(self.model))
