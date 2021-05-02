@@ -72,15 +72,15 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     # Set custom UI components
 
-    stagesTableWidget = StagesTable(self.ui.stagesFrame)
+    stagesTableWidget = StagesTable()
     stagesTableLayout = qt.QVBoxLayout(self.ui.stagesFrame)
     stagesTableLayout.addWidget(stagesTableWidget)
 
-    metricsTableWidget = MetricsTable(self.ui.metricsFrame)
+    metricsTableWidget = MetricsTable()
     metricsTableLayout = qt.QVBoxLayout(self.ui.metricsFrame)
     metricsTableLayout.addWidget(metricsTableWidget)
 
-    levelsTableWidget = LevelsTable(self.ui.levelsFrame)
+    levelsTableWidget = LevelsTable()
     levelsTableLayout = qt.QVBoxLayout(self.ui.levelsFrame)
     levelsTableLayout.addWidget(levelsTableWidget)
 
@@ -270,6 +270,11 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     Called when the logic class is instantiated. Can be used for initializing member variables.
     """
     ScriptedLoadableModuleLogic.__init__(self)
+    if slicer.util.settingsValue('Developer/DeveloperMode', False, converter=slicer.util.toBool):
+      import importlib
+      import Widgets
+      import Widgets.util
+      importlib.reload(Widgets.util)
 
   def setDefaultParameters(self, parameterNode):
     """
