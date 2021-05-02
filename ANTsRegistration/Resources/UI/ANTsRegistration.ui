@@ -26,7 +26,7 @@
          <string>Stage Properties</string>
         </property>
         <property name="collapsed">
-         <bool>true</bool>
+         <bool>false</bool>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <item>
@@ -118,6 +118,9 @@
               <property name="addEnabled">
                <bool>false</bool>
               </property>
+              <property name="removeEnabled">
+               <bool>false</bool>
+              </property>
              </widget>
             </item>
             <item row="1" column="1">
@@ -134,6 +137,9 @@
                <bool>true</bool>
               </property>
               <property name="addEnabled">
+               <bool>false</bool>
+              </property>
+              <property name="removeEnabled">
                <bool>false</bool>
               </property>
              </widget>

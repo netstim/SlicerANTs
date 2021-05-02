@@ -1,5 +1,4 @@
 import qt, ctk, slicer
-from slicer.util import VTKObservationMixin
 
 #
 # Delegates
@@ -55,20 +54,23 @@ class TextEditDelegate(qt.QItemDelegate):
     model.setData(index, editor.plainText.replace('\n',''))
 
 
-class MRMLComboDelegate(qt.QItemDelegate, VTKObservationMixin):
+class MRMLComboDelegate(qt.QItemDelegate):
   def __init__(self, parent):
     qt.QItemDelegate.__init__(self, parent)
-    VTKObservationMixin.__init__(self)
 
   def createEditor(self, parent, option, index):
+    metricType = index.model().data(index.siblingAtColumn(0))
+    if metricType in ['ICP', 'PSE', 'JHCT']:
+      nodeTypes = ["vtkMRMLMarkupsFiducialNode"]
+    else:
+      nodeTypes = ["vtkMRMLScalarVolumeNode", "vtkMRMLLabelMapVolumeNode"]
     combo = slicer.qMRMLNodeComboBox(parent)
     combo.setEnabled(True)
-    combo.nodeTypes = ["vtkMRMLScalarVolumeNode"]
+    combo.nodeTypes = nodeTypes
     combo.addEnabled = False
     combo.noneEnabled = True
     combo.removeEnabled = False
     combo.setMRMLScene(slicer.mrmlScene)
-    self.addObserver(slicer.mrmlScene, slicer.mrmlScene.NewSceneEvent, lambda scene: combo.setMRMLScene(scene))
     return combo
 
   def setEditorData(self, editor, index):
@@ -370,9 +372,5 @@ MetricsNameInfo = {\
   'JHCT': {\
     'Details': 'Jensen-Havrda-Charvet-Tsallis',\
     'Format': 'metricWeight, <samplingPercentage=[0,1]>, <boundaryPointsOnly=0>, <pointSetSigma=1>, <kNeighborhood=50>, <alpha=1.1>, <useAnisotropicCovariances=1>',\
-    'Default': ''},\
-  'IGDM': {\
-    'Details': '',\
-    'Format': 'metricWeight, fixedMask, movingMask, <neighborhoodRadius=0x0>, <intensitySigma=0>, <distanceSigma=0>, <kNeighborhood=1>, <gradientSigma=1>',\
     'Default': ''}\
 }
