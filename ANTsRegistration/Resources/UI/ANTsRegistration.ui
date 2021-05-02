@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>437</width>
-    <height>1206</height>
+    <height>956</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -25,11 +25,17 @@
         <property name="text">
          <string>Stage Properties</string>
         </property>
+        <property name="collapsed">
+         <bool>true</bool>
+        </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <item>
           <widget class="ctkCollapsibleButton" name="metricsCollapsibleButton">
            <property name="text">
             <string>Metrics</string>
+           </property>
+           <property name="collapsed">
+            <bool>true</bool>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_3">
             <item>
@@ -49,6 +55,9 @@
           <widget class="ctkCollapsibleButton" name="levelsCollapsibleButton">
            <property name="text">
             <string>Levels</string>
+           </property>
+           <property name="collapsed">
+            <bool>true</bool>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_4">
             <item>
@@ -75,6 +84,9 @@
            <property name="text">
             <string>Masking</string>
            </property>
+           <property name="collapsed">
+            <bool>true</bool>
+           </property>
            <layout class="QFormLayout" name="formLayout_5">
             <item row="0" column="0">
              <widget class="QLabel" name="label_6">
@@ -87,6 +99,42 @@
              <widget class="QLabel" name="label_7">
               <property name="text">
                <string>Moving Mask: </string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="qMRMLNodeComboBox" name="fixedMaskComboBox">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
+              <property name="nodeTypes">
+               <stringlist>
+                <string>vtkMRMLLabelMapNode</string>
+               </stringlist>
+              </property>
+              <property name="noneEnabled">
+               <bool>true</bool>
+              </property>
+              <property name="addEnabled">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="qMRMLNodeComboBox" name="movingMaskComboBox">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
+              <property name="nodeTypes">
+               <stringlist>
+                <string>vtkMRMLLabelMapNode</string>
+               </stringlist>
+              </property>
+              <property name="noneEnabled">
+               <bool>true</bool>
+              </property>
+              <property name="addEnabled">
+               <bool>false</bool>
               </property>
              </widget>
             </item>
@@ -110,20 +158,146 @@
     </widget>
    </item>
    <item>
+    <widget class="ctkCollapsibleButton" name="InitialTransformCollapsibleButton">
+     <property name="text">
+      <string>Initial Moving Transform</string>
+     </property>
+     <property name="collapsed">
+      <bool>true</bool>
+     </property>
+     <layout class="QFormLayout" name="formLayout">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_9">
+        <property name="text">
+         <string>Type: </string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_10">
+        <property name="text">
+         <string>Transform Node: </string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_11">
+        <property name="text">
+         <string>Fixed Image: </string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_12">
+        <property name="text">
+         <string>Moving Image:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QComboBox" name="initialTransformTypeComboBox">
+        <item>
+         <property name="text">
+          <string>None</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Use Transform Node</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Geometric Center of Images</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Image Intensities</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Origin of Images</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="qMRMLNodeComboBox" name="initialTransformNodeComboBox">
+        <property name="nodeTypes">
+         <stringlist>
+          <string>vtkMRMLLinearTransformNode</string>
+         </stringlist>
+        </property>
+        <property name="noneEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="addEnabled">
+         <bool>false</bool>
+        </property>
+        <property name="removeEnabled">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="qMRMLNodeComboBox" name="initialTransformFixedNodeComboBox">
+        <property name="nodeTypes">
+         <stringlist>
+          <string>vtkMRMLScalarVolumeNode</string>
+         </stringlist>
+        </property>
+        <property name="noneEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="addEnabled">
+         <bool>false</bool>
+        </property>
+        <property name="removeEnabled">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="qMRMLNodeComboBox" name="initialTransformMovingNodeComboBox">
+        <property name="nodeTypes">
+         <stringlist>
+          <string>vtkMRMLScalarVolumeNode</string>
+         </stringlist>
+        </property>
+        <property name="noneEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="addEnabled">
+         <bool>false</bool>
+        </property>
+        <property name="removeEnabled">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
     <widget class="ctkCollapsibleButton" name="outputsCollapsibleButton">
      <property name="text">
       <string>Outputs</string>
      </property>
+     <property name="collapsed">
+      <bool>true</bool>
+     </property>
      <layout class="QFormLayout" name="formLayout_4">
-      <item row="0" column="0">
+      <item row="1" column="0">
        <widget class="QLabel" name="label_2">
         <property name="text">
          <string>Transformed volume:</string>
         </property>
        </widget>
       </item>
-      <item row="0" column="1">
-       <widget class="qMRMLNodeComboBox" name="outputVolumeSelector">
+      <item row="1" column="1">
+       <widget class="qMRMLNodeComboBox" name="outputVolumeComboBox">
         <property name="toolTip">
          <string/>
         </property>
@@ -146,18 +320,154 @@
         </property>
        </widget>
       </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>Interpolation: </string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QComboBox" name="interpolationComboBox">
+        <item>
+         <property name="text">
+          <string>Linear</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>NearestNeighbor</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>MultiLabel</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Gaussian</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>BSpline</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CosineWindowedSinc</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>WelchWindowedSinc</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>HammingWindowedSinc</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>LanczosWindowedSinc</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>GenericLabel</string>
+         </property>
+        </item>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
    <item>
-    <widget class="ctkCollapsibleButton" name="advancedCollapsibleButton">
+    <widget class="ctkCollapsibleButton" name="generalSettingsCollapsibleButton">
      <property name="text">
-      <string>Advanced</string>
+      <string>General Settings</string>
      </property>
      <property name="collapsed">
       <bool>true</bool>
      </property>
-     <layout class="QFormLayout" name="formLayout_3"/>
+     <layout class="QFormLayout" name="formLayout_3">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Dimensionality: </string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QSpinBox" name="dimensionalitySpinBox">
+        <property name="minimum">
+         <number>2</number>
+        </property>
+        <property name="maximum">
+         <number>4</number>
+        </property>
+        <property name="value">
+         <number>3</number>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Histogram Matching: </string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QCheckBox" name="histogramMatchingCheckBox">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>Winsorize Image Intensities: </string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_8">
+        <property name="text">
+         <string>Float Computation: </string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QCheckBox" name="floatComputationCheckBox">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="ctkRangeWidget" name="winsorizeRangeWidget">
+        <property name="decimals">
+         <number>3</number>
+        </property>
+        <property name="singleStep">
+         <double>0.005000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>1.000000000000000</double>
+        </property>
+        <property name="minimumValue">
+         <double>0.005000000000000</double>
+        </property>
+        <property name="maximumValue">
+         <double>0.995000000000000</double>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
    <item>
@@ -196,6 +506,11 @@
    <container>1</container>
   </customwidget>
   <customwidget>
+   <class>ctkRangeWidget</class>
+   <extends>QWidget</extends>
+   <header>ctkRangeWidget.h</header>
+  </customwidget>
+  <customwidget>
    <class>qMRMLNodeComboBox</class>
    <extends>QWidget</extends>
    <header>qMRMLNodeComboBox.h</header>
@@ -212,7 +527,7 @@
   <connection>
    <sender>antsRegistration</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
-   <receiver>outputVolumeSelector</receiver>
+   <receiver>outputVolumeComboBox</receiver>
    <slot>setMRMLScene(vtkMRMLScene*)</slot>
    <hints>
     <hint type="sourcelabel">
@@ -222,6 +537,86 @@
     <hint type="destinationlabel">
      <x>220</x>
      <y>161</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>antsRegistration</sender>
+   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
+   <receiver>fixedMaskComboBox</receiver>
+   <slot>setMRMLScene(vtkMRMLScene*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>218</x>
+     <y>477</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>256</x>
+     <y>249</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>antsRegistration</sender>
+   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
+   <receiver>movingMaskComboBox</receiver>
+   <slot>setMRMLScene(vtkMRMLScene*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>218</x>
+     <y>477</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>256</x>
+     <y>275</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>antsRegistration</sender>
+   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
+   <receiver>initialTransformNodeComboBox</receiver>
+   <slot>setMRMLScene(vtkMRMLScene*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>218</x>
+     <y>477</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>264</x>
+     <y>387</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>antsRegistration</sender>
+   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
+   <receiver>initialTransformFixedNodeComboBox</receiver>
+   <slot>setMRMLScene(vtkMRMLScene*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>218</x>
+     <y>477</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>264</x>
+     <y>413</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>antsRegistration</sender>
+   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
+   <receiver>initialTransformMovingNodeComboBox</receiver>
+   <slot>setMRMLScene(vtkMRMLScene*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>218</x>
+     <y>477</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>264</x>
+     <y>439</y>
     </hint>
    </hints>
   </connection>
