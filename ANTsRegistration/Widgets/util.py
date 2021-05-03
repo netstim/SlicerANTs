@@ -168,13 +168,49 @@ class CustomTable(qt.QWidget):
       self.removeSelectedRow()
   
   def removeSelectedRow(self):
+    selectedRow = self.getSelectedRow()
+    if selectedRow:
+      self.model.removeRow(selectedRow)
+      self.view.setFixedHeight(self.view.height-self.RowHeight)
+
+  def getSelectedRow(self):
     selectedRows = self.view.selectionModel().selectedRows()
     for selectedRow in selectedRows:
-      self.model.removeRow(selectedRow.row())
-      self.view.setFixedHeight(self.view.height-self.RowHeight)
+      return selectedRow.row() # is a single selection view
 
   def onSelectionChanged(self, selection):
     pass
+
+  def getParametersFromGUI(self):
+    parameters = []
+    for i in range(self.model.rowCount()):
+      parameters.append(self.getNthRowParametersFromGUI(i))
+    return parameters
+
+  def getNthRowParametersFromGUI(self, N):
+    parameters = {}
+    for col in range(self.model.columnCount()):
+      index = self.model.index(N, col)
+      itemData = self.model.itemData(index)
+      if qt.Qt.UserRole in itemData.keys():
+        data = itemData[qt.Qt.UserRole]
+      elif qt.Qt.DisplayRole in itemData.keys():
+        data = itemData[qt.Qt.DisplayRole]
+      else:
+        data = ''
+      parameters[self.model.headerData(col, qt.Qt.Horizontal)] = data
+    return parameters
+
+  def setGUIFromParameters(self, parameters):
+    self.model.clear()
+    for N,params in enumerate(parameters):
+      self.model.insertRow(self.model.rowCount())
+      self.setNthRowGUIFromParameters(N, params)
+
+  def setNthRowGUIFromParameters(self, N, parameters):
+    for col,val in enumerate(parameters.values()):
+      index = self.model.index(N, col)
+      self.model.setData(index, val)
 
 class TableWithSettings(CustomTable):
   def __init__(self, columnNames):
@@ -217,7 +253,7 @@ class StagesTable(TableWithSettings):
     else:
       newData = 'SyN'
     self.model.setData(index, newData)
-
+  
 class MetricsTable(TableWithSettings):
   def __init__(self):
     columnNames = ['Type', 'Fixed', 'Moving', 'Settings']

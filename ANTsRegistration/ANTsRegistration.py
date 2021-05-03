@@ -7,7 +7,7 @@ from slicer.util import VTKObservationMixin
 
 import PythonQt
 import platform
-
+import json
 from Widgets.util import StagesTable, MetricsTable, LevelsTable
 
 
@@ -72,17 +72,19 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     # Set custom UI components
 
-    stagesTableWidget = StagesTable()
+    self.ui.stagesTableWidget = StagesTable()
     stagesTableLayout = qt.QVBoxLayout(self.ui.stagesFrame)
-    stagesTableLayout.addWidget(stagesTableWidget)
+    stagesTableLayout.addWidget(self.ui.stagesTableWidget)
+    self.ui.stagesTableWidget.addButton.animateClick()
 
-    metricsTableWidget = MetricsTable()
+
+    self.ui.metricsTableWidget = MetricsTable()
     metricsTableLayout = qt.QVBoxLayout(self.ui.metricsFrame)
-    metricsTableLayout.addWidget(metricsTableWidget)
+    metricsTableLayout.addWidget(self.ui.metricsTableWidget)
 
-    levelsTableWidget = LevelsTable()
+    self.ui.levelsTableWidget = LevelsTable()
     levelsTableLayout = qt.QVBoxLayout(self.ui.levelsFrame)
-    levelsTableLayout.addWidget(levelsTableWidget)
+    levelsTableLayout.addWidget(self.ui.levelsTableWidget)
 
     # Set scene in MRML widgets. Make sure that in Qt designer the top-level qMRMLWidget's
     # "mrmlSceneChanged(vtkMRMLScene*)" signal in is connected to each MRML widget's.
@@ -106,6 +108,13 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     # self.ui.imageThresholdSliderWidget.connect("valueChanged(double)", self.updateParameterNodeFromGUI)
     # self.ui.invertOutputCheckBox.connect("toggled(bool)", self.updateParameterNodeFromGUI)
     # self.ui.invertedOutputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
+
+    self.ui.stagesTableWidget.view.selectionModel().selectionChanged.connect(self.updateParameterNodeFromGUI)
+
+    self.ui.dimensionalitySpinBox.connect("valueChanged(int)", self.updateParameterNodeFromGUI)
+    self.ui.histogramMatchingCheckBox.connect("toggled(bool)", self.updateParameterNodeFromGUI)
+    self.ui.winsorizeRangeWidget.connect("rangeChanged(double,double)", self.updateParameterNodeFromGUI)
+    self.ui.floatComputationCheckBox.connect("toggled(bool)", self.updateParameterNodeFromGUI)
 
     # Buttons
     self.ui.runRegistrationButton.connect('clicked(bool)', self.onRunRegistrationButton)
@@ -190,7 +199,19 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     # Make sure GUI changes do not call updateParameterNodeFromGUI (it could cause infinite loop)
     self._updatingGUIFromParameterNode = True
 
-    # Update node selectors and sliders
+    n = int(self._parameterNode.GetParameter("CurrentStageNumber")) - 1
+    index = self.ui.stagesTableWidget.model.index(0,0)
+    self.ui.stagesTableWidget.view.setCurrentIndex(index)
+    self.ui.stagePropertiesCollapsibleButton.text = 'Stage ' + self._parameterNode.GetParameter("CurrentStageNumber") + ' Properties'
+    self.ui.stagePropertiesCollapsibleButton.enabled = int(self._parameterNode.GetParameter("CurrentStageNumber"))
+    # self.setCurrentStagePropertiesGUIFromJson()
+
+    self.ui.dimensionalitySpinBox.value = int(self._parameterNode.GetParameter("Dimensionality"))
+    self.ui.histogramMatchingCheckBox.checked = int(self._parameterNode.GetParameter("HistogramMatching"))
+    self.ui.winsorizeRangeWidget.setMinimumValue(float(self._parameterNode.GetParameter("WinsorizeImageIntensities").split(",")[0]))
+    self.ui.winsorizeRangeWidget.setMaximumValue(float(self._parameterNode.GetParameter("WinsorizeImageIntensities").split(",")[1]))
+    self.ui.floatComputationCheckBox.checked = int(self._parameterNode.GetParameter("FloatComputation"))
+
     # self.ui.inputSelector.setCurrentNode(self._parameterNode.GetNodeReference("InputVolume"))
     # self.ui.outputSelector.setCurrentNode(self._parameterNode.GetNodeReference("OutputVolume"))
     # self.ui.invertedOutputSelector.setCurrentNode(self._parameterNode.GetNodeReference("OutputVolumeInverse"))
@@ -208,6 +229,16 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     # All the GUI updates are done
     self._updatingGUIFromParameterNode = False
 
+  def setCurrentStagePropertiesGUIFromJson(self):
+    stagesDictionary = json.loads(self._parameterNode.GetParameter("StagesJson"))
+    currentStageNumber = self._parameterNode.GetParameter("CurrentStageNumber")
+    self.ui.stagesTableWidget.setNthRowGUIFromParameters(int(currentStageNumber)-1, stagesDictionary[currentStageNumber]['Transform'])
+    self.ui.metricsTableWidget.setGUIFromParameters(stagesDictionary[currentStageNumber]['Metrics'])
+    self.ui.levelsTableWidget.setGUIFromParameters(stagesDictionary[currentStageNumber]['Levels'])
+    self.ui.fixedMaskComboBox.setCurrentNodeID(stagesDictionary[currentStageNumber]['Masking']['Fixed'])
+    self.ui.movingMaskComboBox.setCurrentNodeID(stagesDictionary[currentStageNumber]['Masking']['Moving'])
+
+
   def updateParameterNodeFromGUI(self, caller=None, event=None):
     """
     This method is called when the user makes any change in the GUI.
@@ -219,6 +250,18 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     wasModified = self._parameterNode.StartModify()  # Modify all properties in a single batch
 
+    # selectedStageRow = self.ui.stagesTableWidget.getSelectedRow()
+    # if selectedStageRow is not None:
+    # self._parameterNode.SetParameter("CurrentStageNumber", str(selectedStageRow+1))
+    # self._parameterNode.SetParameter("StagesJson", self.updateAndGetStagesJson())
+    # else:
+    #   self._parameterNode.SetParameter("CurrentStageNumber", "0")
+
+    self._parameterNode.SetParameter("Dimensionality", str(self.ui.dimensionalitySpinBox.value))
+    self._parameterNode.SetParameter("HistogramMatching", str(int(self.ui.histogramMatchingCheckBox.checked)))
+    self._parameterNode.SetParameter("WinsorizeImageIntensities", ",".join([str(self.ui.winsorizeRangeWidget.minimumValue),str(self.ui.winsorizeRangeWidget.maximumValue)]))
+    self._parameterNode.SetParameter("FloatComputation",  str(int(self.ui.floatComputationCheckBox.checked)))
+
     # self._parameterNode.SetNodeReferenceID("InputVolume", self.ui.inputSelector.currentNodeID)
     # self._parameterNode.SetNodeReferenceID("OutputVolume", self.ui.outputSelector.currentNodeID)
     # self._parameterNode.SetParameter("Threshold", str(self.ui.imageThresholdSliderWidget.value))
@@ -227,6 +270,16 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     self._parameterNode.EndModify(wasModified)
 
+
+  def updateAndGetStagesJson(self):
+    stagesDictionary = json.loads(self._parameterNode.GetParameter("StagesJson"))
+    currentStageNumber = self._parameterNode.GetParameter("CurrentStageNumber")
+    stagesDictionary[currentStageNumber] = {}
+    stagesDictionary[currentStageNumber]['Transform'] = self.ui.stagesTableWidget.getNthRowParametersFromGUI(int(currentStageNumber)-1)
+    stagesDictionary[currentStageNumber]['Metrics'] = self.ui.metricsTableWidget.getParametersFromGUI()
+    stagesDictionary[currentStageNumber]['Levels'] = self.ui.levelsTableWidget.getParametersFromGUI()
+    stagesDictionary[currentStageNumber]['Masking'] = {'Fixed': self.ui.fixedMaskComboBox.currentNodeID, 'Moving': self.ui.movingMaskComboBox.currentNodeID}
+    return json.dumps(stagesDictionary)
 
   def onRunRegistrationButton(self):
     """
@@ -280,11 +333,20 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     """
     Initialize parameter node with default settings.
     """
-    if not parameterNode.GetParameter("Threshold"):
-      parameterNode.SetParameter("Threshold", "100.0")
-    if not parameterNode.GetParameter("Invert"):
-      parameterNode.SetParameter("Invert", "false")
+    if not parameterNode.GetParameter("StagesJson"):
+      with open(os.path.join(os.path.dirname(__file__),'Presets','basicRigid.json')) as json_file:
+        parameterNode.SetParameter("StagesJson", json.dumps(json.load(json_file)))
+    if not parameterNode.GetParameter("CurrentStageNumber"):
+      parameterNode.SetParameter("CurrentStageNumber", "1")
 
+    if not parameterNode.GetParameter("Dimensionality"):
+      parameterNode.SetParameter("Dimensionality", "3")
+    if not parameterNode.GetParameter("HistogramMatching"):
+      parameterNode.SetParameter("HistogramMatching", "0")
+    if not parameterNode.GetParameter("WinsorizeImageIntensities"):
+      parameterNode.SetParameter("WinsorizeImageIntensities", "0.005,0.995")
+    if not parameterNode.GetParameter("FloatComputation"):
+      parameterNode.SetParameter("FloatComputation", "1")
 
   def getantsRegistrationExecutable(self):
     """

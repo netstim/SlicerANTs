@@ -1,0 +1,39 @@
+{
+    "1": {
+        "Transform": {
+            "Transform": "Rigid",
+            "Settings": ""
+        },
+        "Metrics": [],
+        "Levels": [],
+        "Masking": {
+            "Fixed": "",
+            "Moving": ""
+        }
+    },
+    "2": {
+        "Transform": {
+            "Transform": "Affine",
+            "Settings": ""
+        },
+        "Metrics": [
+            {
+                "Type": "MI",
+                "Fixed": "",
+                "Moving": "",
+                "Settings": ""
+            },
+            {
+                "Type": "MI",
+                "Fixed": "",
+                "Moving": "",
+                "Settings": ""
+            }
+        ],
+        "Levels": [],
+        "Masking": {
+            "Fixed": "",
+            "Moving": ""
+        }
+    }
+}
