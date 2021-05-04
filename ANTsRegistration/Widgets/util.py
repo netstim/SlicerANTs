@@ -5,15 +5,15 @@ import qt, ctk, slicer
 #
 
 class ComboDelegate(qt.QItemDelegate):
-  def __init__(self, parent, nameInfoDictionary, settingsFormatText):
+  def __init__(self, parent, nameInfoDictionary, setSettingsFormatFunction):
     qt.QItemDelegate.__init__(self, parent)
     self.nameInfoDictionary = nameInfoDictionary
-    self.settingsFormatText = settingsFormatText
+    self.setSettingsFormatFunction = setSettingsFormatFunction
 
   def createEditor(self, parent, option, index):
     combo = qt.QComboBox(parent)
     combo.addItems(list(self.nameInfoDictionary.keys()))
-    combo.currentTextChanged.connect(self.onCurrentTextChanged)
+    combo.currentTextChanged.connect(lambda text: self.setSettingsFormatFunction(text))
     return combo
 
   def setEditorData(self, editor, index):
@@ -24,9 +24,6 @@ class ComboDelegate(qt.QItemDelegate):
   def setModelData(self, editor, model, index):
     model.setData(index, editor.currentText, qt.Qt.DisplayRole)
     model.setData(index, self.nameInfoDictionary[editor.currentText]['Details'], qt.Qt.ToolTipRole)
-
-  def onCurrentTextChanged(self, key):
-    self.settingsFormatText.setText('Settings Format: ' + self.nameInfoDictionary[key]['Format'])
 
 
 class TextEditDelegate(qt.QItemDelegate):
@@ -125,6 +122,7 @@ class CustomTable(qt.QWidget):
     self.removeButton.clicked.connect(self.onRemoveButton)
 
     buttonsFrame = qt.QFrame()
+    buttonsFrame.setSizePolicy(qt.QSizePolicy.Preferred, qt.QSizePolicy.Minimum)
     buttonsFrame.setLayout(qt.QHBoxLayout())
     buttonsFrame.layout().addWidget(self.addButton)
     buttonsFrame.layout().addWidget(self.removeButton)
@@ -225,10 +223,30 @@ class TableWithSettings(CustomTable):
     layout = CustomTable.__init__(self, columnNames)
 
     self.settingsFormatText = ctk.ctkFittedTextBrowser()
-    self.settingsFormatText.setText('Settings Format: ')
+    self.settingsFormatText.setSizePolicy(qt.QSizePolicy.Ignored, qt.QSizePolicy.Preferred)
+    self.settingsFormatText.sizePolicy.setHorizontalStretch(1)
+    self.settingsFormatText.sizePolicy.setVerticalStretch(0)
+    self.settingsFormatText.setFrameShape(qt.QFrame.NoFrame)
+    self.settingsFormatText.setFrameShadow(qt.QFrame.Plain)
+    self.settingsFormatText.openExternalLinks = 1
+    self.settingsFormatText.openLinks = 1
+    self.settingsFormatText.showDetailsText = 'Show Settings Format.'
+    self.settingsFormatText.hideDetailsText = 'Hide Settings Format.'
+
+    self.settingsFormatText.setCollapsibleText('<html><br> </html>')
+    # self.settingsFormatText.setCollapsibleText(\
+    #   '<html>Paint with a round brush<br>.\
+    #   <p><ul style=\margin: 0\>\
+    #   <li><b>Left-button drag-and-drop:</b> paint strokes.</li>\
+    #   <li><b>Shift + mouse wheel</b> or <b>+/- keys:</b> adjust brush size.</li>\
+    #   <li><b>Ctrl + mouse wheel:</b> slice view zoom in/out.</li>\
+    #   </ul><p>\
+    #   Editing is available both in slice and 3D views.\
+    #   <p></html>')
+
     layout.addWidget(self.settingsFormatText)
 
-    self.view.setItemDelegateForColumn(0, ComboDelegate(self.model, self.nameInfoDictionary, self.settingsFormatText))
+    self.view.setItemDelegateForColumn(0, ComboDelegate(self.model, self.nameInfoDictionary, self.setSettingsFormatTextFromKey))
     self.view.setItemDelegateForColumn(self.model.columnCount()-1, TextEditDelegate(self.model, self.nameInfoDictionary))
 
   def onSelectionChanged(self, selection):
@@ -236,8 +254,14 @@ class TableWithSettings(CustomTable):
     indexes = selection.indexes()
     if indexes:
       key = self.model.data(indexes[0].siblingAtColumn(0))
-      self.settingsFormatText.setText('Settings Format: ' + self.nameInfoDictionary[key]['Format'])
-
+      self.setSettingsFormatTextFromKey(key)
+      
+  def setSettingsFormatTextFromKey(self, key):
+    text = self.nameInfoDictionary[key]['Format']
+    self.settingsFormatText.setCollapsibleText('<html><br> ' + text + ' </html>')
+    self.settingsFormatText.setMinimumHeight(self.settingsFormatText.sizeHint.height())
+    if self.settingsFormatText.layout():
+      self.settingsFormatText.layout().update()
 
 class StagesTable(TableWithSettings):
   def __init__(self):
@@ -310,6 +334,8 @@ class LevelsTable(CustomTable):
       newData = max(1, round(self.model.data(aboveIndex) * 0.5))
       self.model.setData(index, newData)
 
+
+# TODO: set text formats
 
 TransformsNameInfo = {\
   'Rigid': {\
