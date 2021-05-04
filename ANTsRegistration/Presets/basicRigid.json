@@ -1,5 +1,5 @@
-{
-    "0": {
+[
+    {
         "Transform": {
             "Transform": "Rigid",
             "Settings": ""
@@ -24,4 +24,4 @@
             "Moving": ""
         }
     }
-}
+]

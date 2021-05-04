@@ -99,6 +99,7 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.addObserver(slicer.mrmlScene, slicer.mrmlScene.StartCloseEvent, self.onSceneStartClose)
     self.addObserver(slicer.mrmlScene, slicer.mrmlScene.EndCloseEvent, self.onSceneEndClose)
 
+
     # These connections ensure that whenever user changes some settings on the GUI, that is saved in the MRML scene
     # (in the selected parameter node).
     # self.ui.inputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
@@ -113,6 +114,16 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.histogramMatchingCheckBox.connect("toggled(bool)", self.updateParameterNodeFromGUI)
     self.ui.winsorizeRangeWidget.connect("rangeChanged(double,double)", self.updateParameterNodeFromGUI)
     self.ui.floatComputationCheckBox.connect("toggled(bool)", self.updateParameterNodeFromGUI)
+
+    # Stages Parameter
+    self.ui.stagesTableWidget.removeButton.clicked.connect(self.onRemoveStageButtonClicked)
+    self.ui.metricsTableWidget.removeButton.clicked.connect(self.updateStagesParameterFromGUI)
+    self.ui.levelsTableWidget.removeButton.clicked.connect(self.updateStagesParameterFromGUI)
+    self.ui.stagesTableWidget.model.itemChanged.connect(self.updateStagesParameterFromGUI)
+    self.ui.metricsTableWidget.model.itemChanged.connect(self.updateStagesParameterFromGUI)
+    self.ui.levelsTableWidget.model.itemChanged.connect(self.updateStagesParameterFromGUI)
+    self.ui.fixedMaskComboBox.connect("currentNodeChanged(vtkMRMLNode*)", self.updateStagesParameterFromGUI)
+    self.ui.movingMaskComboBox.connect("currentNodeChanged(vtkMRMLNode*)", self.updateStagesParameterFromGUI)
 
     # Buttons
     self.ui.runRegistrationButton.connect('clicked(bool)', self.onRunRegistrationButton)
@@ -200,7 +211,7 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     currentStage = int(self._parameterNode.GetParameter("CurrentStage"))
     self.ui.stagesTableWidget.view.setCurrentIndex(self.ui.stagesTableWidget.model.index(currentStage, 0))
     self.ui.stagePropertiesCollapsibleButton.text = 'Stage ' + str(currentStage + 1) + ' Properties'
-    self.setCurrentStagePropertiesGUIFromJson()
+    self.updateStagesGUIFromParameter()
 
     self.ui.dimensionalitySpinBox.value = int(self._parameterNode.GetParameter("Dimensionality"))
     self.ui.histogramMatchingCheckBox.checked = int(self._parameterNode.GetParameter("HistogramMatching"))
@@ -225,14 +236,22 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     # All the GUI updates are done
     self._updatingGUIFromParameterNode = False
 
-  def setCurrentStagePropertiesGUIFromJson(self):
-    stagesDictionary = json.loads(self._parameterNode.GetParameter("StagesJson"))
-    currentStage = self._parameterNode.GetParameter("CurrentStage")
-    self.ui.stagesTableWidget.setNthRowGUIFromParameters(int(currentStage), stagesDictionary[currentStage]['Transform'])
-    self.ui.metricsTableWidget.setGUIFromParameters(stagesDictionary[currentStage]['Metrics'])
-    self.ui.levelsTableWidget.setGUIFromParameters(stagesDictionary[currentStage]['Levels'])
-    self.ui.fixedMaskComboBox.setCurrentNodeID(stagesDictionary[currentStage]['Masking']['Fixed'])
-    self.ui.movingMaskComboBox.setCurrentNodeID(stagesDictionary[currentStage]['Masking']['Moving'])
+  def updateStagesGUIFromParameter(self):
+    stagesList = json.loads(self._parameterNode.GetParameter("StagesJson"))
+    self.setTransformsGUIFromList(stagesList)
+    self.setCurrentStagePropertiesGUIFromList(stagesList)
+
+  def setTransformsGUIFromList(self, stagesList):
+    transformsParameters = [stage['Transform'] for stage in stagesList]
+    self.ui.stagesTableWidget.setGUIFromParameters(transformsParameters)
+
+  def setCurrentStagePropertiesGUIFromList(self, stagesList):
+    currentStage = int(self._parameterNode.GetParameter("CurrentStage"))
+    if 'Metrics' in stagesList[currentStage].keys():
+      self.ui.metricsTableWidget.setGUIFromParameters(stagesList[currentStage]['Metrics'])
+      self.ui.levelsTableWidget.setGUIFromParameters(stagesList[currentStage]['Levels'])
+      self.ui.fixedMaskComboBox.setCurrentNodeID(stagesList[currentStage]['Masking']['Fixed'])
+      self.ui.movingMaskComboBox.setCurrentNodeID(stagesList[currentStage]['Masking']['Moving'])
 
 
   def updateParameterNodeFromGUI(self, caller=None, event=None):
@@ -247,8 +266,7 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     wasModified = self._parameterNode.StartModify()  # Modify all properties in a single batch
 
     self._parameterNode.SetParameter("CurrentStage", str(self.ui.stagesTableWidget.getSelectedRow()))
-    self._parameterNode.SetParameter("StagesJson", self.updateAndGetStagesJson())
-
+    
     self._parameterNode.SetParameter("Dimensionality", str(self.ui.dimensionalitySpinBox.value))
     self._parameterNode.SetParameter("HistogramMatching", str(int(self.ui.histogramMatchingCheckBox.checked)))
     self._parameterNode.SetParameter("WinsorizeImageIntensities", ",".join([str(self.ui.winsorizeRangeWidget.minimumValue),str(self.ui.winsorizeRangeWidget.maximumValue)]))
@@ -263,15 +281,38 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self._parameterNode.EndModify(wasModified)
 
 
-  def updateAndGetStagesJson(self):
-    stagesDictionary = json.loads(self._parameterNode.GetParameter("StagesJson"))
-    currentStage = self._parameterNode.GetParameter("CurrentStage")
-    stagesDictionary[currentStage] = {}
-    stagesDictionary[currentStage]['Transform'] = self.ui.stagesTableWidget.getNthRowParametersFromGUI(int(currentStage))
-    stagesDictionary[currentStage]['Metrics'] = self.ui.metricsTableWidget.getParametersFromGUI()
-    stagesDictionary[currentStage]['Levels'] = self.ui.levelsTableWidget.getParametersFromGUI()
-    stagesDictionary[currentStage]['Masking'] = {'Fixed': self.ui.fixedMaskComboBox.currentNodeID, 'Moving': self.ui.movingMaskComboBox.currentNodeID}
-    return json.dumps(stagesDictionary)
+  def updateStagesParameterFromGUI(self):
+    if self._parameterNode is None or self._updatingGUIFromParameterNode:
+      return
+    stagesList = json.loads(self._parameterNode.GetParameter("StagesJson"))
+    self.setStagesTransformsToStagesList(stagesList)
+    self.setCurrentStagePropertiesToStagesList(stagesList)
+    self._parameterNode.SetParameter("StagesJson", json.dumps(stagesList))
+
+  def setStagesTransformsToStagesList(self, stagesList):
+    for stageNumber,transformParameters in enumerate(self.ui.stagesTableWidget.getParametersFromGUI()):
+      if stageNumber == len(stagesList):
+        stagesList.append({})
+      stagesList[stageNumber]['Transform'] = transformParameters
+
+  def setCurrentStagePropertiesToStagesList(self, stagesList):
+    currentStage = int(self._parameterNode.GetParameter("CurrentStage"))
+    stagesList[currentStage]['Metrics'] = self.ui.metricsTableWidget.getParametersFromGUI()
+    stagesList[currentStage]['Levels'] = self.ui.levelsTableWidget.getParametersFromGUI()
+    stagesList[currentStage]['Masking'] = {'Fixed': self.ui.fixedMaskComboBox.currentNodeID, 'Moving': self.ui.movingMaskComboBox.currentNodeID}
+
+  def onRemoveStageButtonClicked(self):
+    stagesList = json.loads(self._parameterNode.GetParameter("StagesJson"))
+    if len(stagesList) == 1:
+      return
+    currentStage = int(self._parameterNode.GetParameter("CurrentStage"))
+    stagesList.pop(currentStage)
+    wasModified = self._parameterNode.StartModify()  # Modify in a single batch
+    self._parameterNode.SetParameter("CurrentStage", str(max(currentStage-1,0)))
+    self._parameterNode.SetParameter("StagesJson", json.dumps(stagesList))
+    self._parameterNode.EndModify(wasModified)
+
+
 
   def onRunRegistrationButton(self):
     """

@@ -152,17 +152,17 @@ class CustomTable(qt.QWidget):
     layout.addWidget(buttonsFrame)
     layout.addWidget(self.view)
 
-    self.setDefaultFirstRow()
-
     return layout
   
   def onAddButton(self):
+    self.addRowAndSetHeight()
+    newRowN = self.model.rowCount()-1
+    self.setDefaultNthRow(newRowN)
+    self.view.setCurrentIndex(self.model.index(newRowN,0))
+
+  def addRowAndSetHeight(self):
     self.model.insertRow(self.model.rowCount())
     self.view.setFixedHeight(self.view.height+self.RowHeight)
-    if self.model.rowCount() == 1:
-      self.setDefaultFirstRow()
-    else:
-      self.setDefaultNthRow(self.model.rowCount()-1)
 
   def onRemoveButton(self):
     if self.model.rowCount() == 1:
@@ -173,7 +173,7 @@ class CustomTable(qt.QWidget):
   def removeSelectedRow(self):
     selectedRow = self.getSelectedRow()
     if selectedRow is not None:
-      self.removeRowAndSetHeight(rowNumber)
+      self.removeRowAndSetHeight(selectedRow)
 
   def removeRowAndSetHeight(self, rowNumber):
     self.model.removeRow(rowNumber)
@@ -210,7 +210,7 @@ class CustomTable(qt.QWidget):
   def setGUIFromParameters(self, parameters):
     for N,params in enumerate(parameters):
       if N == self.model.rowCount():
-        self.model.insertRow(N)
+        self.addRowAndSetHeight()
       self.setNthRowGUIFromParameters(N, params)
     while self.model.rowCount()-1 > N:
       self.removeRowAndSetHeight(self.model.rowCount()-1)
@@ -247,10 +247,6 @@ class StagesTable(TableWithSettings):
 
     self.settingsFormatText.setToolTip("The gradientStep or learningRate characterizes the gradient descent optimization and is scaled appropriately for each transform using the shift scales estimator. Subsequent parameters are transform-specific and can be determined from the usage. For the B-spline transforms one can also specify the smoothing in terms of spline distance (i.e. knot spacing).")
 
-  def setDefaultFirstRow(self):
-    index = self.model.index(0, 0)
-    self.model.setData(index, 'Rigid')
-
   def setDefaultNthRow(self, N):
     index = self.model.index(N, 0)
     aboveData =  self.model.data(index.siblingAtRow(N-1))
@@ -261,6 +257,9 @@ class StagesTable(TableWithSettings):
     else:
       newData = 'SyN'
     self.model.setData(index, newData)
+
+  def onRemoveButton(self):
+    pass # this is handled by antsRegistration Widget
   
 class MetricsTable(TableWithSettings):
   def __init__(self):
@@ -272,9 +271,6 @@ class MetricsTable(TableWithSettings):
 
     self.view.setItemDelegateForColumn(1, MRMLComboDelegate(self.model))
     self.view.setItemDelegateForColumn(2, MRMLComboDelegate(self.model))
-
-  def setDefaultFirstRow(self):
-    self.setDefaultNthRow(0)
 
   def setDefaultNthRow(self, N):
     index = self.model.index(N, 0)
@@ -306,12 +302,6 @@ class LevelsTable(CustomTable):
     levelsSettingsFrame.layout().addRow('Convergence Window Size: ', self.convergenceWindowSizeSpinBox)
 
     layout.addWidget(levelsSettingsFrame)
-
-  def setDefaultFirstRow(self):
-    defaults = [1000, 4, 8]
-    for i,d in enumerate(defaults):
-      index = self.model.index(0, i)
-      self.model.setData(index, d)
 
   def setDefaultNthRow(self, N):
     for column in range(3):
