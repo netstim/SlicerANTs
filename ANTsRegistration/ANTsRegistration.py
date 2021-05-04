@@ -200,7 +200,7 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     currentStage = int(self._parameterNode.GetParameter("CurrentStage"))
     self.ui.stagesTableWidget.view.setCurrentIndex(self.ui.stagesTableWidget.model.index(currentStage, 0))
     self.ui.stagePropertiesCollapsibleButton.text = 'Stage ' + str(currentStage + 1) + ' Properties'
-    # self.setCurrentStagePropertiesGUIFromJson()
+    self.setCurrentStagePropertiesGUIFromJson()
 
     self.ui.dimensionalitySpinBox.value = int(self._parameterNode.GetParameter("Dimensionality"))
     self.ui.histogramMatchingCheckBox.checked = int(self._parameterNode.GetParameter("HistogramMatching"))
@@ -227,8 +227,8 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
   def setCurrentStagePropertiesGUIFromJson(self):
     stagesDictionary = json.loads(self._parameterNode.GetParameter("StagesJson"))
-    currentStage = int(self._parameterNode.GetParameter("CurrentStage"))
-    self.ui.stagesTableWidget.setNthRowGUIFromParameters(currentStage, stagesDictionary[currentStage]['Transform'])
+    currentStage = self._parameterNode.GetParameter("CurrentStage")
+    self.ui.stagesTableWidget.setNthRowGUIFromParameters(int(currentStage), stagesDictionary[currentStage]['Transform'])
     self.ui.metricsTableWidget.setGUIFromParameters(stagesDictionary[currentStage]['Metrics'])
     self.ui.levelsTableWidget.setGUIFromParameters(stagesDictionary[currentStage]['Levels'])
     self.ui.fixedMaskComboBox.setCurrentNodeID(stagesDictionary[currentStage]['Masking']['Fixed'])
@@ -265,9 +265,9 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
   def updateAndGetStagesJson(self):
     stagesDictionary = json.loads(self._parameterNode.GetParameter("StagesJson"))
-    currentStage = int(self._parameterNode.GetParameter("CurrentStage"))
+    currentStage = self._parameterNode.GetParameter("CurrentStage")
     stagesDictionary[currentStage] = {}
-    stagesDictionary[currentStage]['Transform'] = self.ui.stagesTableWidget.getNthRowParametersFromGUI(currentStageNumber)
+    stagesDictionary[currentStage]['Transform'] = self.ui.stagesTableWidget.getNthRowParametersFromGUI(int(currentStage))
     stagesDictionary[currentStage]['Metrics'] = self.ui.metricsTableWidget.getParametersFromGUI()
     stagesDictionary[currentStage]['Levels'] = self.ui.levelsTableWidget.getParametersFromGUI()
     stagesDictionary[currentStage]['Masking'] = {'Fixed': self.ui.fixedMaskComboBox.currentNodeID, 'Moving': self.ui.movingMaskComboBox.currentNodeID}

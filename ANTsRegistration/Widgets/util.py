@@ -173,8 +173,11 @@ class CustomTable(qt.QWidget):
   def removeSelectedRow(self):
     selectedRow = self.getSelectedRow()
     if selectedRow is not None:
-      self.model.removeRow(selectedRow)
-      self.view.setFixedHeight(self.view.height-self.RowHeight)
+      self.removeRowAndSetHeight(rowNumber)
+
+  def removeRowAndSetHeight(self, rowNumber):
+    self.model.removeRow(rowNumber)
+    self.view.setFixedHeight(self.view.height-self.RowHeight)
 
   def getSelectedRow(self):
     selectedRows = self.view.selectionModel().selectedRows()
@@ -205,10 +208,12 @@ class CustomTable(qt.QWidget):
     return parameters
 
   def setGUIFromParameters(self, parameters):
-    self.model.clear()
     for N,params in enumerate(parameters):
-      self.model.insertRow(self.model.rowCount())
+      if N == self.model.rowCount():
+        self.model.insertRow(N)
       self.setNthRowGUIFromParameters(N, params)
+    while self.model.rowCount()-1 > N:
+      self.removeRowAndSetHeight(self.model.rowCount()-1)
 
   def setNthRowGUIFromParameters(self, N, parameters):
     for col,val in enumerate(parameters.values()):
