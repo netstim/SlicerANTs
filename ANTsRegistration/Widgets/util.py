@@ -129,7 +129,7 @@ class CustomTable(qt.QWidget):
     buttonsFrame.layout().addWidget(self.addButton)
     buttonsFrame.layout().addWidget(self.removeButton)
 
-    self.model = qt.QStandardItemModel(0, len(columnNames))
+    self.model = qt.QStandardItemModel(1, len(columnNames))
     for i, columnName in enumerate(columnNames):
       self.model.setHeaderData(i, qt.Qt.Horizontal, columnName)
 
@@ -142,14 +142,17 @@ class CustomTable(qt.QWidget):
     self.view.verticalHeader().setMaximumSectionSize(self.RowHeight)
     self.view.verticalHeader().setMinimumSectionSize(self.RowHeight)
     self.view.verticalHeader().setDefaultSectionSize(self.RowHeight)
-    self.view.setFixedHeight(40)
+    self.view.setFixedHeight(65)
     self.view.setModel(self.model)
+    self.view.setCurrentIndex(self.model.index(0,0))
 
     self.view.selectionModel().selectionChanged.connect(self.onSelectionChanged)
 
     layout = qt.QVBoxLayout(self)
     layout.addWidget(buttonsFrame)
     layout.addWidget(self.view)
+
+    self.setDefaultFirstRow()
 
     return layout
   
@@ -169,7 +172,7 @@ class CustomTable(qt.QWidget):
   
   def removeSelectedRow(self):
     selectedRow = self.getSelectedRow()
-    if selectedRow:
+    if selectedRow is not None:
       self.model.removeRow(selectedRow)
       self.view.setFixedHeight(self.view.height-self.RowHeight)
 

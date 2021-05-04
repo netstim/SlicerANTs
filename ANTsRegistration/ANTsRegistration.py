@@ -75,8 +75,6 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.stagesTableWidget = StagesTable()
     stagesTableLayout = qt.QVBoxLayout(self.ui.stagesFrame)
     stagesTableLayout.addWidget(self.ui.stagesTableWidget)
-    self.ui.stagesTableWidget.addButton.animateClick()
-
 
     self.ui.metricsTableWidget = MetricsTable()
     metricsTableLayout = qt.QVBoxLayout(self.ui.metricsFrame)
@@ -199,11 +197,9 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     # Make sure GUI changes do not call updateParameterNodeFromGUI (it could cause infinite loop)
     self._updatingGUIFromParameterNode = True
 
-    n = int(self._parameterNode.GetParameter("CurrentStageNumber")) - 1
-    index = self.ui.stagesTableWidget.model.index(0,0)
-    self.ui.stagesTableWidget.view.setCurrentIndex(index)
-    self.ui.stagePropertiesCollapsibleButton.text = 'Stage ' + self._parameterNode.GetParameter("CurrentStageNumber") + ' Properties'
-    self.ui.stagePropertiesCollapsibleButton.enabled = int(self._parameterNode.GetParameter("CurrentStageNumber"))
+    currentStage = int(self._parameterNode.GetParameter("CurrentStage"))
+    self.ui.stagesTableWidget.view.setCurrentIndex(self.ui.stagesTableWidget.model.index(currentStage, 0))
+    self.ui.stagePropertiesCollapsibleButton.text = 'Stage ' + str(currentStage + 1) + ' Properties'
     # self.setCurrentStagePropertiesGUIFromJson()
 
     self.ui.dimensionalitySpinBox.value = int(self._parameterNode.GetParameter("Dimensionality"))
@@ -231,12 +227,12 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
   def setCurrentStagePropertiesGUIFromJson(self):
     stagesDictionary = json.loads(self._parameterNode.GetParameter("StagesJson"))
-    currentStageNumber = self._parameterNode.GetParameter("CurrentStageNumber")
-    self.ui.stagesTableWidget.setNthRowGUIFromParameters(int(currentStageNumber)-1, stagesDictionary[currentStageNumber]['Transform'])
-    self.ui.metricsTableWidget.setGUIFromParameters(stagesDictionary[currentStageNumber]['Metrics'])
-    self.ui.levelsTableWidget.setGUIFromParameters(stagesDictionary[currentStageNumber]['Levels'])
-    self.ui.fixedMaskComboBox.setCurrentNodeID(stagesDictionary[currentStageNumber]['Masking']['Fixed'])
-    self.ui.movingMaskComboBox.setCurrentNodeID(stagesDictionary[currentStageNumber]['Masking']['Moving'])
+    currentStage = int(self._parameterNode.GetParameter("CurrentStage"))
+    self.ui.stagesTableWidget.setNthRowGUIFromParameters(currentStage, stagesDictionary[currentStage]['Transform'])
+    self.ui.metricsTableWidget.setGUIFromParameters(stagesDictionary[currentStage]['Metrics'])
+    self.ui.levelsTableWidget.setGUIFromParameters(stagesDictionary[currentStage]['Levels'])
+    self.ui.fixedMaskComboBox.setCurrentNodeID(stagesDictionary[currentStage]['Masking']['Fixed'])
+    self.ui.movingMaskComboBox.setCurrentNodeID(stagesDictionary[currentStage]['Masking']['Moving'])
 
 
   def updateParameterNodeFromGUI(self, caller=None, event=None):
@@ -250,12 +246,8 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     wasModified = self._parameterNode.StartModify()  # Modify all properties in a single batch
 
-    # selectedStageRow = self.ui.stagesTableWidget.getSelectedRow()
-    # if selectedStageRow is not None:
-    # self._parameterNode.SetParameter("CurrentStageNumber", str(selectedStageRow+1))
-    # self._parameterNode.SetParameter("StagesJson", self.updateAndGetStagesJson())
-    # else:
-    #   self._parameterNode.SetParameter("CurrentStageNumber", "0")
+    self._parameterNode.SetParameter("CurrentStage", str(self.ui.stagesTableWidget.getSelectedRow()))
+    self._parameterNode.SetParameter("StagesJson", self.updateAndGetStagesJson())
 
     self._parameterNode.SetParameter("Dimensionality", str(self.ui.dimensionalitySpinBox.value))
     self._parameterNode.SetParameter("HistogramMatching", str(int(self.ui.histogramMatchingCheckBox.checked)))
@@ -273,12 +265,12 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
   def updateAndGetStagesJson(self):
     stagesDictionary = json.loads(self._parameterNode.GetParameter("StagesJson"))
-    currentStageNumber = self._parameterNode.GetParameter("CurrentStageNumber")
-    stagesDictionary[currentStageNumber] = {}
-    stagesDictionary[currentStageNumber]['Transform'] = self.ui.stagesTableWidget.getNthRowParametersFromGUI(int(currentStageNumber)-1)
-    stagesDictionary[currentStageNumber]['Metrics'] = self.ui.metricsTableWidget.getParametersFromGUI()
-    stagesDictionary[currentStageNumber]['Levels'] = self.ui.levelsTableWidget.getParametersFromGUI()
-    stagesDictionary[currentStageNumber]['Masking'] = {'Fixed': self.ui.fixedMaskComboBox.currentNodeID, 'Moving': self.ui.movingMaskComboBox.currentNodeID}
+    currentStage = int(self._parameterNode.GetParameter("CurrentStage"))
+    stagesDictionary[currentStage] = {}
+    stagesDictionary[currentStage]['Transform'] = self.ui.stagesTableWidget.getNthRowParametersFromGUI(currentStageNumber)
+    stagesDictionary[currentStage]['Metrics'] = self.ui.metricsTableWidget.getParametersFromGUI()
+    stagesDictionary[currentStage]['Levels'] = self.ui.levelsTableWidget.getParametersFromGUI()
+    stagesDictionary[currentStage]['Masking'] = {'Fixed': self.ui.fixedMaskComboBox.currentNodeID, 'Moving': self.ui.movingMaskComboBox.currentNodeID}
     return json.dumps(stagesDictionary)
 
   def onRunRegistrationButton(self):
@@ -334,10 +326,11 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     Initialize parameter node with default settings.
     """
     if not parameterNode.GetParameter("StagesJson"):
-      with open(os.path.join(os.path.dirname(__file__),'Presets','basicRigid.json')) as json_file:
-        parameterNode.SetParameter("StagesJson", json.dumps(json.load(json_file)))
-    if not parameterNode.GetParameter("CurrentStageNumber"):
-      parameterNode.SetParameter("CurrentStageNumber", "1")
+      presetFilePath = os.path.join(os.path.dirname(__file__),'Presets','basicRigid.json')
+      with open(presetFilePath) as presetFile:
+        parameterNode.SetParameter("StagesJson", json.dumps(json.load(presetFile)))
+    if not parameterNode.GetParameter("CurrentStage"):
+      parameterNode.SetParameter("CurrentStage", "0")
 
     if not parameterNode.GetParameter("Dimensionality"):
       parameterNode.SetParameter("Dimensionality", "3")
