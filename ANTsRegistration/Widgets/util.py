@@ -216,7 +216,13 @@ class CustomTable(qt.QWidget):
   def setNthRowGUIFromParameters(self, N, parameters):
     for col,val in enumerate(parameters.values()):
       index = self.model.index(N, col)
-      self.model.setData(index, val)
+      try: # check if value is mrml node and save as user role
+        node = slicer.util.getNode(val)
+        self.model.setData(index, val, qt.Qt.UserRole)
+        val = node.GetName()
+      except:
+        pass
+      self.model.setData(index, val, qt.Qt.DisplayRole)
 
 class TableWithSettings(CustomTable):
   def __init__(self, columnNames):
@@ -276,8 +282,6 @@ class StagesTable(TableWithSettings):
     aboveData =  self.model.data(index.siblingAtRow(N-1))
     if aboveData == 'Rigid':
       newData = 'Affine'
-    elif aboveData == 'Affine':
-      newData = 'SyN'
     else:
       newData = 'SyN'
     self.model.setData(index, newData)
