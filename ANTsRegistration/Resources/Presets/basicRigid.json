@@ -13,13 +13,18 @@
                     "Settings": ""
                 }
             ],
-            "Levels": [
-                {
-                    "Convergence": 1000,
-                    "Smoothing Sigmas": 4,
-                    "Shrink Factors": 8
-                }
-            ],
+            "Levels": {
+                "Steps": [
+                    {
+                        "Convergence": 1000,
+                        "Smoothing Sigmas": 4,
+                        "Shrink Factors": 8
+                    }
+                ],
+                "SmoothingSigmasUnit": "vox",
+                "ConvergenceThreshold": 6,
+                "ConvergenceWindowSize": 10
+            },
             "Masking": {
                 "Fixed": "",
                 "Moving": ""

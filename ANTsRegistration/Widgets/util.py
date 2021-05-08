@@ -314,10 +314,8 @@ class LevelsTable(CustomTable):
     self.smoothingSigmasUnitComboBox.addItems(['vox', 'mm'])
 
     self.convergenceThresholdSpinBox = qt.QSpinBox()
-    self.convergenceThresholdSpinBox.value = 6
 
     self.convergenceWindowSizeSpinBox = qt.QSpinBox()
-    self.convergenceWindowSizeSpinBox.value = 10
 
     levelsSettingsFrame = qt.QFrame()
     levelsSettingsFrame.setLayout(qt.QFormLayout())
@@ -334,6 +332,19 @@ class LevelsTable(CustomTable):
       newData = max(1, round(self.model.data(aboveIndex) * 0.5))
       self.model.setData(index, newData)
 
+  def getParametersFromGUI(self):
+    parameters = {}
+    parameters['Steps'] = super().getParametersFromGUI()
+    parameters['SmoothingSigmasUnit'] = self.smoothingSigmasUnitComboBox.currentText
+    parameters['ConvergenceThreshold'] = self.convergenceThresholdSpinBox.value
+    parameters['ConvergenceWindowSize'] = self.convergenceWindowSizeSpinBox.value
+    return parameters
+
+  def setGUIFromParameters(self, parameters):
+    super().setGUIFromParameters(parameters['Steps'])
+    self.smoothingSigmasUnitComboBox.currentText = parameters['SmoothingSigmasUnit']
+    self.convergenceThresholdSpinBox.value = int(parameters['ConvergenceThreshold'])
+    self.convergenceWindowSizeSpinBox.value = int(parameters['ConvergenceWindowSize'])
 
 # TODO: set text formats
 
