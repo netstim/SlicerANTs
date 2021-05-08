@@ -242,16 +242,16 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.setCurrentStagePropertiesGUIFromList(stagesList)
 
   def setTransformsGUIFromList(self, stagesList):
-    transformsParameters = [stage['Transform'] for stage in stagesList]
+    transformsParameters = [stage['transform'] for stage in stagesList]
     self.ui.stagesTableWidget.setGUIFromParameters(transformsParameters)
 
   def setCurrentStagePropertiesGUIFromList(self, stagesList):
     currentStage = int(self._parameterNode.GetParameter("CurrentStage"))
-    if 'Metrics' in stagesList[currentStage].keys():
-      self.ui.metricsTableWidget.setGUIFromParameters(stagesList[currentStage]['Metrics'])
-      self.ui.levelsTableWidget.setGUIFromParameters(stagesList[currentStage]['Levels'])
-      self.ui.fixedMaskComboBox.setCurrentNodeID(stagesList[currentStage]['Masking']['Fixed'])
-      self.ui.movingMaskComboBox.setCurrentNodeID(stagesList[currentStage]['Masking']['Moving'])
+    if 'metrics' in stagesList[currentStage].keys():
+      self.ui.metricsTableWidget.setGUIFromParameters(stagesList[currentStage]['metrics'])
+      self.ui.levelsTableWidget.setGUIFromParameters(stagesList[currentStage]['levels'])
+      self.ui.fixedMaskComboBox.setCurrentNodeID(stagesList[currentStage]['masking']['fixed'])
+      self.ui.movingMaskComboBox.setCurrentNodeID(stagesList[currentStage]['masking']['moving'])
 
 
   def updateParameterNodeFromGUI(self, caller=None, event=None):
@@ -295,13 +295,13 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     for stageNumber,transformParameters in enumerate(self.ui.stagesTableWidget.getParametersFromGUI()):
       if stageNumber == len(stagesList):
         stagesList.append({})
-      stagesList[stageNumber]['Transform'] = transformParameters
+      stagesList[stageNumber]['transform'] = transformParameters
 
   def setCurrentStagePropertiesToStagesList(self, stagesList):
     currentStage = int(self._parameterNode.GetParameter("CurrentStage"))
-    stagesList[currentStage]['Metrics'] = self.ui.metricsTableWidget.getParametersFromGUI()
-    stagesList[currentStage]['Levels'] = self.ui.levelsTableWidget.getParametersFromGUI()
-    stagesList[currentStage]['Masking'] = {'Fixed': self.ui.fixedMaskComboBox.currentNodeID, 'Moving': self.ui.movingMaskComboBox.currentNodeID}
+    stagesList[currentStage]['metrics'] = self.ui.metricsTableWidget.getParametersFromGUI()
+    stagesList[currentStage]['levels'] = self.ui.levelsTableWidget.getParametersFromGUI()
+    stagesList[currentStage]['masking'] = {'fixed': self.ui.fixedMaskComboBox.currentNodeID, 'moving': self.ui.movingMaskComboBox.currentNodeID}
 
   def onRemoveStageButtonClicked(self):
     stagesList = json.loads(self._parameterNode.GetParameter("StagesJson"))
@@ -317,26 +317,8 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
 
   def onRunRegistrationButton(self):
-    """
-    Run processing when user clicks "Apply" button.
-    """
-    pass
-    # try:
-
-    #   # Compute output
-    #   self.logic.process(self.ui.inputSelector.currentNode(), self.ui.outputSelector.currentNode(),
-    #     self.ui.imageThresholdSliderWidget.value, self.ui.invertOutputCheckBox.checked)
-
-    #   # Compute inverted output (if needed)
-    #   if self.ui.invertedOutputSelector.currentNode():
-    #     # If additional output volume is selected then result with inverted threshold is written there
-    #     self.logic.process(self.ui.inputSelector.currentNode(), self.ui.invertedOutputSelector.currentNode(),
-    #       self.ui.imageThresholdSliderWidget.value, not self.ui.invertOutputCheckBox.checked, showResult=False)
-
-    # except Exception as e:
-    #   slicer.util.errorDisplay("Failed to compute results: "+str(e))
-    #   import traceback
-    #   traceback.print_exc()
+    parameters = {}
+    parameters['stages'] = self._parameterNode.GetParameter("StagesJson")
 
 
 #
@@ -370,17 +352,17 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     """
     presetParameters = self.getPresetParameters()
     if not parameterNode.GetParameter("StagesJson"):
-      parameterNode.SetParameter("StagesJson",  json.dumps(presetParameters["Stages"]))
+      parameterNode.SetParameter("StagesJson",  json.dumps(presetParameters["stages"]))
     if not parameterNode.GetParameter("CurrentStage"):
       parameterNode.SetParameter("CurrentStage", "0")
 
     if not parameterNode.GetParameter("OutputInterpolation"):
-      parameterNode.SetParameter("OutputInterpolation", str(presetParameters["OutputInterpolation"]))
+      parameterNode.SetParameter("OutputInterpolation", str(presetParameters["outputInterpolation"]))
     if not parameterNode.GetParameter("OutputVolume"):
       parameterNode.SetParameter("OutputVolume", "")
 
     if not parameterNode.GetParameter("InitialTransformType"):
-      parameterNode.SetParameter("InitialTransformType", str(presetParameters["InitialTransformType"]))
+      parameterNode.SetParameter("InitialTransformType", str(presetParameters["initialTransformType"]))
     if not parameterNode.GetParameter("InitialTransformFixed"):
       parameterNode.SetParameter("InitialTransformFixed", "")
     if not parameterNode.GetParameter("InitialTransformMoving"):
@@ -389,13 +371,13 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
       parameterNode.SetParameter("InitialTransform", "")
 
     if not parameterNode.GetParameter("Dimensionality"):
-      parameterNode.SetParameter("Dimensionality", str(presetParameters["Dimensionality"]))
+      parameterNode.SetParameter("Dimensionality", str(presetParameters["dimensionality"]))
     if not parameterNode.GetParameter("HistogramMatching"):
-      parameterNode.SetParameter("HistogramMatching", str(presetParameters["HistogramMatching"]))
+      parameterNode.SetParameter("HistogramMatching", str(presetParameters["histogramMatching"]))
     if not parameterNode.GetParameter("WinsorizeImageIntensities"):
-      parameterNode.SetParameter("WinsorizeImageIntensities", str(presetParameters["WinsorizeImageIntensities"]))
+      parameterNode.SetParameter("WinsorizeImageIntensities", str(presetParameters["winsorizeImageIntensities"]))
     if not parameterNode.GetParameter("FloatComputation"):
-      parameterNode.SetParameter("FloatComputation", str(presetParameters["FloatComputation"]))
+      parameterNode.SetParameter("FloatComputation", str(presetParameters["floatComputation"]))
 
 
   def getPresetParameters(self):
@@ -426,37 +408,126 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
 
     raise ValueError('ANTs not found')
 
-  def process(self, inputVolume, outputVolume, imageThreshold, invert=False, showResult=True):
+  def process(self, stages, outputs, initialMovingTransform={}, generalSettings={}):
     """
-    Run the processing algorithm.
-    Can be used without GUI widget.
-    :param inputVolume: volume to be thresholded
-    :param outputVolume: thresholding result
-    :param imageThreshold: values above/below this threshold will be set to 0
-    :param invert: if True then values above the threshold will be set to 0, otherwise values below are set to 0
-    :param showResult: show output volume in slice viewers
+    :param stages: list defining registration stages
+    :param outputs: dictionary defining output settings
+    :param initialMovingTransform: dictionary defining initial moving transform
+    :param generalSettings: dictionary defining general registration settings
+    See presets examples to see how these are specified
     """
 
-    if not inputVolume or not outputVolume:
-      raise ValueError("Input or output volume is invalid")
+
+    antsCommand = self.getGeneralSettingsCommand(**generalSettings)
+    antsCommand = antsCommand + " " + self.getOutputCommand(interpolation=outputs['outputInterpolation'])
+    antsCommand = antsCommand + " " + self.getInitialMovingTransformCommand(**initialMovingTransform)
+    for stage in stages:
+      antsCommand = antsCommand + " " + self.getStageCommand(**stage)
 
     import time
     startTime = time.time()
     logging.info('Processing started')
 
-    # Compute the thresholded output volume using the "Threshold Scalar Volume" CLI module
-    cliParams = {
-      'InputVolume': inputVolume.GetID(),
-      'OutputVolume': outputVolume.GetID(),
-      'ThresholdValue' : imageThreshold,
-      'ThresholdType' : 'Above' if invert else 'Below'
-      }
-    cliNode = slicer.cli.run(slicer.modules.thresholdscalarvolume, None, cliParams, wait_for_completion=True, update_display=showResult)
-    # We don't need the CLI module node anymore, remove it to not clutter the scene with it
-    slicer.mrmlScene.RemoveNode(cliNode)
 
     stopTime = time.time()
     logging.info('Processing completed in {0:.2f} seconds'.format(stopTime-startTime))
+
+
+  def getGeneralSettingsCommand(self, dimensionality=3, histogramMatching=False, winsorizeImageIntensities=(0,1), floatComputation=False):
+    command = "--dimensionality %i" % dimensionality
+    command = command + " --use-histogram-matching %i" % histogramMatching
+    command = command + " --winsorize-image-intensities [%.3f,%.3f]" % winsorizeImageIntensities
+    command = command + " --float %i" % floatComputation
+    return command
+
+  def getOutputCommand(self, interpolation='Linear'):
+    command = "--interpolation %s" % interpolation
+    command = command + " --output [%s,%s]" % os.path.join(self.getTempDirectory(), 'output'), os.path.join(self.getTempDirectory(), 'warpedImage.nii')
+    command = command + " --write-composite-transform 1"
+    command = command + " --collapse-output-transforms 1"
+    return command
+
+  def getInitialMovingTransformCommand(self, initialTransformNode=None, initializationFeature=None, fixedImageNode=None, movingImageNode=None):
+    if initialTransformNode is not None:
+      return "--initialTransform %s" % self.saveNodeAndGetPath(initialTransformNode)
+    elif initializationFeature is not None:
+      return "--initialTransform [%s,%s,%i]" % self.saveNodeAndGetPath(fixedImageNode), self.saveNodeAndGetPath(movingImageNode), initializationFeature
+    else:
+      return ""
+
+  def getStageCommand(self, transform, metrics, levels, masks):
+    command = self.getTransformCommand(**transform)
+    for metric in metrics:
+      command = command + " " + self.getMetricCommand(**metric)
+    command = command + " " + self.getLevelsCommand(**levels)
+    command = command + " " + self.getMasksCommand(**masks)
+
+  def getTransformCommand(self, transformType, settingsString):
+    return "--transform %s[%s]" % transformType, settingsString
+
+  def getMetricCommand(self, metricType, fixedImageNode, movingImageNode, settingsString):
+    return "--metric %s[%s,%s,%s]" % metricType, self.saveNodeAndGetPath(fixedImageNode), self.saveNodeAndGetPath(movingImageNode), settingsString
+
+  def getMasksCommand(self, fixedMaskNode=None, movingMaskNode=None):
+    fixedMask = self.saveNodeAndGetPath(fixedMaskNode) if fixedMaskNode else 'NULL'
+    movingMask = self.saveNodeAndGetPath(movingMaskNode) if movingMaskNode else 'NULL'
+    return " --masks [%s,%s]" % fixedMask, movingMask
+
+  def getLevelsCommand(self, steps, convergenceThreshold, convergenceWindowSize, smoothingSigmasUnit):
+    convergence = self.joinStepsInfoForKey(steps, 'convergence')
+    smoothingSigmas = self.joinStepsInfoForKey(steps, 'smoothingSigmas')
+    shrinkFactors = self.joinStepsInfoForKey(steps, 'shrinkFactors')
+    command = "--convergence [%s,1e-%i,%i]" % convergence, convergenceThreshold, convergenceWindowSize
+    command = command + " --smoothing-sigmas %s%s" % smoothingSigmas, smoothingSigmasUnit
+    command = command + "  --shrink-factors %s" % shrinkFactors
+    return command
+
+  def joinStepsInfoForKey(self, steps, key):
+    out = [str(step[key]) for step in steps]
+    return "x".join(out)
+
+  def saveNodeAndGetPath(self, node):
+    # New location definition
+    fileExtension = '.nii' if isinstance(node, slicer.vtkMRMLVolumeNode) else '.h5'
+    filePath = os.path.join(self.getTempDirectory(), node.GetID() + fileExtension)
+    if os.path.isfile(filePath):
+      return filePath # same node used in different metrics
+    # Save original file paths
+    originalFilePath = ""
+    originalFilePaths = []
+    storageNode = node.GetStorageNode()
+    if storageNode:
+      originalFilePath = storageNode.GetFileName()
+      for fileIndex in range(storageNode.GetNumberOfFileNames()):
+        originalFilePaths.append(storageNode.GetNthFileName(fileIndex))
+    # Save to new location
+    slicer.util.saveNode(node, filePath, {"useCompression": False})
+    # Restore original file paths
+    if storageNode:
+      storageNode.ResetFileNameList()
+      storageNode.SetFileName(originalFilePath)
+      for fileIndex in range(storageNode.GetNumberOfFileNames()):
+        storageNode.AddFileName(originalFilePaths[fileIndex])
+    else:
+      # temporary storage node was created, remove it to restore original state
+      storageNode = node.GetStorageNode()
+      slicer.mrmlScene.RemoveNode(storageNode)
+    return filePath
+
+  def getTempDirectory(self):
+    tempDir = qt.QDir(self.getTempDirectoryBase())
+    tempDirName = qt.QDateTime().currentDateTime().toString("yyyyMMdd_hhmmss_zzz")
+    fileInfo = qt.QFileInfo(qt.QDir(tempDir), tempDirName)
+    dirPath = fileInfo.absoluteFilePath()
+    qt.QDir().mkpath(dirPath)
+    return dirPath
+
+  def getTempDirectoryBase(self):
+    tempDir = qt.QDir(slicer.app.temporaryPath)
+    fileInfo = qt.QFileInfo(qt.QDir(tempDir), "antsRegistration")
+    dirPath = fileInfo.absoluteFilePath()
+    qt.QDir().mkpath(dirPath)
+    return dirPath
 
 #
 # antsRegistrationTest

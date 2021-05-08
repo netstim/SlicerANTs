@@ -1,40 +1,40 @@
 {
-    "Stages": [
+    "stages": [
         {
-            "Transform": {
-                "Transform": "Rigid",
-                "Settings": ""
+            "transform": {
+                "transform": "Rigid",
+                "settings": ""
             },
-            "Metrics": [
+            "metrics": [
                 {
-                    "Type": "MI",
-                    "Fixed": "",
-                    "Moving": "",
-                    "Settings": ""
+                    "type": "MI",
+                    "fixed": "",
+                    "moving": "",
+                    "settings": ""
                 }
             ],
-            "Levels": {
-                "Steps": [
+            "levels": {
+                "steps": [
                     {
-                        "Convergence": 1000,
-                        "Smoothing Sigmas": 4,
-                        "Shrink Factors": 8
+                        "convergence": 1000,
+                        "smoothingSigmas": 4,
+                        "shrinkFactors": 8
                     }
                 ],
-                "SmoothingSigmasUnit": "vox",
-                "ConvergenceThreshold": 6,
-                "ConvergenceWindowSize": 10
+                "smoothingSigmasUnit": "vox",
+                "convergenceThreshold": 6,
+                "convergenceWindowSize": 10
             },
-            "Masking": {
-                "Fixed": "",
-                "Moving": ""
+            "masking": {
+                "fixed": "",
+                "moving": ""
             }
         }
     ],
-    "OutputInterpolation": "Linear",
-    "InitialTransformType": "None",
-    "Dimensionality": 3,
-    "HistogramMatching": 0,
-    "WinsorizeImageIntensities": "0.005,0.995",
-    "FloatComputation": 1
+    "outputInterpolation": "Linear",
+    "initialTransformType": "None",
+    "dimensionality": 3,
+    "histogramMatching": 0,
+    "winsorizeImageIntensities": "0.005,0.995",
+    "floatComputation": 1
 }

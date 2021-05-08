@@ -202,8 +202,13 @@ class CustomTable(qt.QWidget):
         data = itemData[qt.Qt.DisplayRole]
       else:
         data = ''
-      parameters[self.model.headerData(col, qt.Qt.Horizontal)] = data
+      parameters[self.camelCaseHeader(col)] = data
     return parameters
+
+  def camelCaseHeader(self, column):
+    out = self.model.headerData(column, qt.Qt.Horizontal)
+    out = out.replace(' ', '')
+    return out[0].lower() + out[1:]
 
   def setGUIFromParameters(self, parameters):
     for N,params in enumerate(parameters):
@@ -338,17 +343,17 @@ class LevelsTable(CustomTable):
 
   def getParametersFromGUI(self):
     parameters = {}
-    parameters['Steps'] = super().getParametersFromGUI()
-    parameters['SmoothingSigmasUnit'] = self.smoothingSigmasUnitComboBox.currentText
-    parameters['ConvergenceThreshold'] = self.convergenceThresholdSpinBox.value
-    parameters['ConvergenceWindowSize'] = self.convergenceWindowSizeSpinBox.value
+    parameters['steps'] = super().getParametersFromGUI()
+    parameters['smoothingSigmasUnit'] = self.smoothingSigmasUnitComboBox.currentText
+    parameters['convergenceThreshold'] = self.convergenceThresholdSpinBox.value
+    parameters['convergenceWindowSize'] = self.convergenceWindowSizeSpinBox.value
     return parameters
 
   def setGUIFromParameters(self, parameters):
-    super().setGUIFromParameters(parameters['Steps'])
-    self.smoothingSigmasUnitComboBox.currentText = parameters['SmoothingSigmasUnit']
-    self.convergenceThresholdSpinBox.value = int(parameters['ConvergenceThreshold'])
-    self.convergenceWindowSizeSpinBox.value = int(parameters['ConvergenceWindowSize'])
+    super().setGUIFromParameters(parameters['steps'])
+    self.smoothingSigmasUnitComboBox.currentText = parameters['smoothingSigmasUnit']
+    self.convergenceThresholdSpinBox.value = int(parameters['convergenceThreshold'])
+    self.convergenceWindowSizeSpinBox.value = int(parameters['convergenceWindowSize'])
 
 # TODO: set text formats
 
