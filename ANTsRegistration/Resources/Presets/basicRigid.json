@@ -1,27 +1,33 @@
-[
-    {
-        "Transform": {
-            "Transform": "Rigid",
-            "Settings": ""
-        },
-        "Metrics": [
-            {
-                "Type": "MI",
-                "Fixed": "",
-                "Moving": "",
+{
+    "Stages": [
+        {
+            "Transform": {
+                "Transform": "Rigid",
                 "Settings": ""
+            },
+            "Metrics": [
+                {
+                    "Type": "MI",
+                    "Fixed": "",
+                    "Moving": "",
+                    "Settings": ""
+                }
+            ],
+            "Levels": [
+                {
+                    "Convergence": 1000,
+                    "Smoothing Sigmas": 4,
+                    "Shrink Factors": 8
+                }
+            ],
+            "Masking": {
+                "Fixed": "",
+                "Moving": ""
             }
-        ],
-        "Levels": [
-            {
-                "Convergence": 1000,
-                "Smoothing Sigmas": 4,
-                "Shrink Factors": 8
-            }
-        ],
-        "Masking": {
-            "Fixed": "",
-            "Moving": ""
         }
-    }
-]
+    ],
+    "Dimensionality": 3,
+    "HistogramMatching": 0,
+    "WinsorizeImageIntensities": "0.005,0.995",
+    "FloatComputation": 1
+}

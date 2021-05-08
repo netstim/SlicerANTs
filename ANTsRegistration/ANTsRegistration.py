@@ -366,21 +366,24 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     """
     Initialize parameter node with default settings.
     """
+    presetParameters = self.getPresetParameters()
     if not parameterNode.GetParameter("StagesJson"):
-      presetFilePath = os.path.join(os.path.dirname(__file__),'Presets','basicRigid.json')
-      with open(presetFilePath) as presetFile:
-        parameterNode.SetParameter("StagesJson", json.dumps(json.load(presetFile)))
+      parameterNode.SetParameter("StagesJson",  json.dumps(presetParameters["Stages"]))
     if not parameterNode.GetParameter("CurrentStage"):
       parameterNode.SetParameter("CurrentStage", "0")
-
     if not parameterNode.GetParameter("Dimensionality"):
-      parameterNode.SetParameter("Dimensionality", "3")
+      parameterNode.SetParameter("Dimensionality", str(presetParameters["Dimensionality"]))
     if not parameterNode.GetParameter("HistogramMatching"):
-      parameterNode.SetParameter("HistogramMatching", "0")
+      parameterNode.SetParameter("HistogramMatching", str(presetParameters["HistogramMatching"]))
     if not parameterNode.GetParameter("WinsorizeImageIntensities"):
-      parameterNode.SetParameter("WinsorizeImageIntensities", "0.005,0.995")
+      parameterNode.SetParameter("WinsorizeImageIntensities", str(presetParameters["WinsorizeImageIntensities"]))
     if not parameterNode.GetParameter("FloatComputation"):
-      parameterNode.SetParameter("FloatComputation", "1")
+      parameterNode.SetParameter("FloatComputation", str(presetParameters["FloatComputation"]))
+
+  def getPresetParameters(self):
+    presetFilePath = os.path.join(os.path.dirname(__file__),'Resources','Presets','basicRigid.json')
+    with open(presetFilePath) as presetFile:
+      return json.load(presetFile)
 
   def getantsRegistrationExecutable(self):
     """
