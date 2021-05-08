@@ -102,14 +102,13 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     # These connections ensure that whenever user changes some settings on the GUI, that is saved in the MRML scene
     # (in the selected parameter node).
-    # self.ui.inputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
-    # self.ui.outputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
-    # self.ui.imageThresholdSliderWidget.connect("valueChanged(double)", self.updateParameterNodeFromGUI)
-    # self.ui.invertOutputCheckBox.connect("toggled(bool)", self.updateParameterNodeFromGUI)
-    # self.ui.invertedOutputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
-
     self.ui.stagesTableWidget.view.selectionModel().selectionChanged.connect(self.updateParameterNodeFromGUI)
-
+    self.ui.outputInterpolationComboBox.connect("currentIndexChanged(int)", self.updateParameterNodeFromGUI)
+    self.ui.outputVolumeComboBox.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
+    self.ui.initialTransformTypeComboBox.connect("currentIndexChanged(int)", self.updateParameterNodeFromGUI)
+    self.ui.initialTransformFixedNodeComboBox.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
+    self.ui.initialTransformMovingNodeComboBox.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
+    self.ui.initialTransformNodeComboBox.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
     self.ui.dimensionalitySpinBox.connect("valueChanged(int)", self.updateParameterNodeFromGUI)
     self.ui.histogramMatchingCheckBox.connect("toggled(bool)", self.updateParameterNodeFromGUI)
     self.ui.winsorizeRangeWidget.connect("rangeChanged(double,double)", self.updateParameterNodeFromGUI)
@@ -216,25 +215,23 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.stagePropertiesCollapsibleButton.text = 'Stage ' + str(currentStage + 1) + ' Properties'
     self.updateStagesGUIFromParameter()
 
+    self.ui.outputInterpolationComboBox.currentText = self._parameterNode.GetParameter("OutputInterpolation")
+    self.ui.outputVolumeComboBox.setCurrentNode(self._parameterNode.GetNodeReference("OutputVolume"))
+
+    self.ui.initialTransformTypeComboBox.currentText = self._parameterNode.GetParameter("InitialTransformType")
+    self.ui.initialTransformNodeComboBox.setCurrentNode(self._parameterNode.GetNodeReference("InitialTransform"))
+    self.ui.initialTransformFixedNodeComboBox.setCurrentNode(self._parameterNode.GetNodeReference("InitialTransformFixed"))
+    self.ui.initialTransformMovingNodeComboBox.setCurrentNode(self._parameterNode.GetNodeReference("InitialTransformMoving"))
+
+    self.ui.initialTransformNodeComboBox.enabled = self.ui.initialTransformTypeComboBox.currentIndex == 1
+    self.ui.initialTransformFixedNodeComboBox.enabled = self.ui.initialTransformTypeComboBox.currentIndex > 1
+    self.ui.initialTransformMovingNodeComboBox.enabled = self.ui.initialTransformTypeComboBox.currentIndex > 1
+
     self.ui.dimensionalitySpinBox.value = int(self._parameterNode.GetParameter("Dimensionality"))
     self.ui.histogramMatchingCheckBox.checked = int(self._parameterNode.GetParameter("HistogramMatching"))
     self.ui.winsorizeRangeWidget.setMinimumValue(float(self._parameterNode.GetParameter("WinsorizeImageIntensities").split(",")[0]))
     self.ui.winsorizeRangeWidget.setMaximumValue(float(self._parameterNode.GetParameter("WinsorizeImageIntensities").split(",")[1]))
     self.ui.floatComputationCheckBox.checked = int(self._parameterNode.GetParameter("FloatComputation"))
-
-    # self.ui.inputSelector.setCurrentNode(self._parameterNode.GetNodeReference("InputVolume"))
-    # self.ui.outputSelector.setCurrentNode(self._parameterNode.GetNodeReference("OutputVolume"))
-    # self.ui.invertedOutputSelector.setCurrentNode(self._parameterNode.GetNodeReference("OutputVolumeInverse"))
-    # self.ui.imageThresholdSliderWidget.value = float(self._parameterNode.GetParameter("Threshold"))
-    # self.ui.invertOutputCheckBox.checked = (self._parameterNode.GetParameter("Invert") == "true")
-
-    # # Update buttons states and tooltips
-    # if self._parameterNode.GetNodeReference("InputVolume") and self._parameterNode.GetNodeReference("OutputVolume"):
-    #   self.ui.applyButton.toolTip = "Compute output volume"
-    #   self.ui.applyButton.enabled = True
-    # else:
-    #   self.ui.applyButton.toolTip = "Select input and output volume nodes"
-    #   self.ui.applyButton.enabled = False
 
     # All the GUI updates are done
     self._updatingGUIFromParameterNode = False
@@ -270,16 +267,18 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     self._parameterNode.SetParameter("CurrentStage", str(self.ui.stagesTableWidget.getSelectedRow()))
     
+    self._parameterNode.SetParameter("OutputInterpolation", self.ui.outputInterpolationComboBox.currentText)
+    self._parameterNode.SetNodeReferenceID("OutputVolume", self.ui.outputVolumeComboBox.currentNodeID)
+
+    self._parameterNode.SetParameter("InitialTransformType", self.ui.initialTransformTypeComboBox.currentText)
+    self._parameterNode.SetNodeReferenceID("InitialTransform", self.ui.initialTransformNodeComboBox.currentNodeID)
+    self._parameterNode.SetNodeReferenceID("InitialTransformFixed", self.ui.initialTransformFixedNodeComboBox.currentNodeID)
+    self._parameterNode.SetNodeReferenceID("InitialTransformMoving", self.ui.initialTransformMovingNodeComboBox.currentNodeID)
+
     self._parameterNode.SetParameter("Dimensionality", str(self.ui.dimensionalitySpinBox.value))
     self._parameterNode.SetParameter("HistogramMatching", str(int(self.ui.histogramMatchingCheckBox.checked)))
     self._parameterNode.SetParameter("WinsorizeImageIntensities", ",".join([str(self.ui.winsorizeRangeWidget.minimumValue),str(self.ui.winsorizeRangeWidget.maximumValue)]))
     self._parameterNode.SetParameter("FloatComputation",  str(int(self.ui.floatComputationCheckBox.checked)))
-
-    # self._parameterNode.SetNodeReferenceID("InputVolume", self.ui.inputSelector.currentNodeID)
-    # self._parameterNode.SetNodeReferenceID("OutputVolume", self.ui.outputSelector.currentNodeID)
-    # self._parameterNode.SetParameter("Threshold", str(self.ui.imageThresholdSliderWidget.value))
-    # self._parameterNode.SetParameter("Invert", "true" if self.ui.invertOutputCheckBox.checked else "false")
-    # self._parameterNode.SetNodeReferenceID("OutputVolumeInverse", self.ui.invertedOutputSelector.currentNodeID)
 
     self._parameterNode.EndModify(wasModified)
 
@@ -374,6 +373,21 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
       parameterNode.SetParameter("StagesJson",  json.dumps(presetParameters["Stages"]))
     if not parameterNode.GetParameter("CurrentStage"):
       parameterNode.SetParameter("CurrentStage", "0")
+
+    if not parameterNode.GetParameter("OutputInterpolation"):
+      parameterNode.SetParameter("OutputInterpolation", str(presetParameters["OutputInterpolation"]))
+    if not parameterNode.GetParameter("OutputVolume"):
+      parameterNode.SetParameter("OutputVolume", "")
+
+    if not parameterNode.GetParameter("InitialTransformType"):
+      parameterNode.SetParameter("InitialTransformType", str(presetParameters["InitialTransformType"]))
+    if not parameterNode.GetParameter("InitialTransformFixed"):
+      parameterNode.SetParameter("InitialTransformFixed", "")
+    if not parameterNode.GetParameter("InitialTransformMoving"):
+      parameterNode.SetParameter("InitialTransformFixed", "")
+    if not parameterNode.GetParameter("InitialTransform"):
+      parameterNode.SetParameter("InitialTransform", "")
+
     if not parameterNode.GetParameter("Dimensionality"):
       parameterNode.SetParameter("Dimensionality", str(presetParameters["Dimensionality"]))
     if not parameterNode.GetParameter("HistogramMatching"):
@@ -382,6 +396,7 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
       parameterNode.SetParameter("WinsorizeImageIntensities", str(presetParameters["WinsorizeImageIntensities"]))
     if not parameterNode.GetParameter("FloatComputation"):
       parameterNode.SetParameter("FloatComputation", str(presetParameters["FloatComputation"]))
+
 
   def getPresetParameters(self):
     presetFilePath = os.path.join(os.path.dirname(__file__),'Resources','Presets','basicRigid.json')

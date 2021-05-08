@@ -31,6 +31,8 @@
             }
         }
     ],
+    "OutputInterpolation": "Linear",
+    "InitialTransformType": "None",
     "Dimensionality": 3,
     "HistogramMatching": 0,
     "WinsorizeImageIntensities": "0.005,0.995",
