@@ -1,7 +1,7 @@
 {
     "stages": [
         {
-            "transform": {
+            "transformParameters": {
                 "transform": "Rigid",
                 "settings": ""
             },
@@ -25,16 +25,24 @@
                 "convergenceThreshold": 6,
                 "convergenceWindowSize": 10
             },
-            "masking": {
+            "masks": {
                 "fixed": "",
                 "moving": ""
             }
         }
     ],
-    "outputInterpolation": "Linear",
-    "initialTransformType": "None",
-    "dimensionality": 3,
-    "histogramMatching": 0,
-    "winsorizeImageIntensities": "0.005,0.995",
-    "floatComputation": 1
+    "outputSettings": {
+        "interpolation": "Linear"
+    },
+    "initialTransformSettings": {
+        "initializationFeature": 0
+    },
+    "generalSettings": {
+        "dimensionality": 3,
+        "histogramMatching": 0,
+        "winsorizeImageIntensities": [
+            0.005,
+            0.995],
+        "floatComputation": 1
+    }
 }
