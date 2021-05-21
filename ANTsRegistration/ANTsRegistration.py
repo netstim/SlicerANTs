@@ -474,11 +474,6 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     antsBinDir = self.getAntsBinDir()
     antsEnv = os.environ.copy()
     antsEnv["PATH"] = antsBinDir + os.pathsep + antsEnv["PATH"] if antsEnv.get("PATH") else antsBinDir
-    
-    if platform.system() != 'Windows':
-      antsLibDir = os.path.abspath(os.path.join(antsBinDir, '../lib'))
-      antsEnv["LD_LIBRARY_PATH"] = antsLibDir + os.pathsep + antsEnv["LD_LIBRARY_PATH"] if antsEnv.get("LD_LIBRARY_PATH") else antsLibDir
-
     return antsEnv
 
   def getAntsBinDir(self):
