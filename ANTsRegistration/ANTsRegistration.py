@@ -220,9 +220,9 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.outputInterpolationComboBox.enabled = self._parameterNode.GetNodeReference("OutputVolume") is not None
 
     self.ui.initialTransformTypeComboBox.currentIndex = int(self._parameterNode.GetParameter("initializationFeature")) + 2
-    self.ui.initialTransformNodeComboBox.setCurrentNode(self._parameterNode.GetNodeReference("InitialTransform"))
-    self.ui.initialTransformFixedNodeComboBox.setCurrentNode(self._parameterNode.GetNodeReference("InitialTransformFixed"))
-    self.ui.initialTransformMovingNodeComboBox.setCurrentNode(self._parameterNode.GetNodeReference("InitialTransformMoving"))
+    self.ui.initialTransformNodeComboBox.setCurrentNode(self._parameterNode.GetNodeReference("InitialTransform") if self.ui.initialTransformTypeComboBox.currentIndex == 1 else None)
+    self.ui.initialTransformFixedNodeComboBox.setCurrentNode(self._parameterNode.GetNodeReference("InitialTransformFixed") if self.ui.initialTransformTypeComboBox.currentIndex > 1 else None)
+    self.ui.initialTransformMovingNodeComboBox.setCurrentNode(self._parameterNode.GetNodeReference("InitialTransformMoving") if self.ui.initialTransformTypeComboBox.currentIndex > 1 else None)
 
     self.ui.initialTransformNodeComboBox.enabled = self.ui.initialTransformTypeComboBox.currentIndex == 1
     self.ui.initialTransformFixedNodeComboBox.enabled = self.ui.initialTransformTypeComboBox.currentIndex > 1
