@@ -111,7 +111,7 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.dimensionalitySpinBox.connect("valueChanged(int)", self.updateParameterNodeFromGUI)
     self.ui.histogramMatchingCheckBox.connect("toggled(bool)", self.updateParameterNodeFromGUI)
     self.ui.winsorizeRangeWidget.connect("rangeChanged(double,double)", self.updateParameterNodeFromGUI)
-    self.ui.floatComputationCheckBox.connect("toggled(bool)", self.updateParameterNodeFromGUI)
+    self.ui.computationPrecisionComboBox.connect("currentIndexChanged(int)", self.updateParameterNodeFromGUI)
 
     # Stages Parameter
     self.ui.stagesTableWidget.removeButton.clicked.connect(self.onRemoveStageButtonClicked)
@@ -232,7 +232,7 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.histogramMatchingCheckBox.checked = int(self._parameterNode.GetParameter("HistogramMatching"))
     self.ui.winsorizeRangeWidget.setMinimumValue(float(self._parameterNode.GetParameter("WinsorizeImageIntensities").split(",")[0]))
     self.ui.winsorizeRangeWidget.setMaximumValue(float(self._parameterNode.GetParameter("WinsorizeImageIntensities").split(",")[1]))
-    self.ui.floatComputationCheckBox.checked = int(self._parameterNode.GetParameter("FloatComputation"))
+    self.ui.computationPrecisionComboBox.currentText = self._parameterNode.GetParameter("ComputationPrecision")
 
     # All the GUI updates are done
     self._updatingGUIFromParameterNode = False
@@ -280,7 +280,7 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self._parameterNode.SetParameter("Dimensionality", str(self.ui.dimensionalitySpinBox.value))
     self._parameterNode.SetParameter("HistogramMatching", str(int(self.ui.histogramMatchingCheckBox.checked)))
     self._parameterNode.SetParameter("WinsorizeImageIntensities", ",".join([str(self.ui.winsorizeRangeWidget.minimumValue),str(self.ui.winsorizeRangeWidget.maximumValue)]))
-    self._parameterNode.SetParameter("FloatComputation",  str(int(self.ui.floatComputationCheckBox.checked)))
+    self._parameterNode.SetParameter("ComputationPrecision",  self.ui.computationPrecisionComboBox.currentText)
 
     self._parameterNode.EndModify(wasModified)
 
@@ -345,7 +345,7 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     parameters['generalSettings']['dimensionality'] = self.ui.dimensionalitySpinBox.value
     parameters['generalSettings']['histogramMatching'] = int(self.ui.histogramMatchingCheckBox.checked)
     parameters['generalSettings']['winsorizeImageIntensities'] = [self.ui.winsorizeRangeWidget.minimumValue, self.ui.winsorizeRangeWidget.maximumValue]
-    parameters['generalSettings']['floatComputation'] = int(self.ui.floatComputationCheckBox.checked)
+    parameters['generalSettings']['computationPrecision'] = self.ui.computationPrecisionComboBox.currentText
 
     self.logic.process(**parameters)
 
@@ -415,8 +415,8 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
       parameterNode.SetParameter("HistogramMatching", str(presetParameters["generalSettings"]["histogramMatching"]))
     if not parameterNode.GetParameter("WinsorizeImageIntensities"):
       parameterNode.SetParameter("WinsorizeImageIntensities", ",".join([str(x) for x in presetParameters["generalSettings"]["winsorizeImageIntensities"]]))
-    if not parameterNode.GetParameter("FloatComputation"):
-      parameterNode.SetParameter("FloatComputation", str(presetParameters["generalSettings"]["floatComputation"]))
+    if not parameterNode.GetParameter("ComputationPrecision"):
+      parameterNode.SetParameter("ComputationPrecision", presetParameters["generalSettings"]["computationPrecision"])
 
 
   def getPresetParameters(self):
@@ -514,11 +514,11 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
       antsCommand = antsCommand + self.getStageCommand(**stage)
     return antsCommand
 
-  def getGeneralSettingsCommand(self, dimensionality=3, histogramMatching=False, winsorizeImageIntensities=[0,1], floatComputation=False):
+  def getGeneralSettingsCommand(self, dimensionality=3, histogramMatching=False, winsorizeImageIntensities=[0,1], computationPrecision="float"):
     command = "--dimensionality %i" % dimensionality
     command = command + " --use-histogram-matching %i" % histogramMatching
     command = command + " --winsorize-image-intensities [%.3f,%.3f]" % tuple(winsorizeImageIntensities)
-    command = command + " --float %i" % floatComputation
+    command = command + " --float %i" % computationPrecision == "float"
     command = command + " --verbose 1"
     return command
 

@@ -323,7 +323,7 @@
       <item row="1" column="0">
        <widget class="QLabel" name="label_2">
         <property name="text">
-         <string>Transformed volume:</string>
+         <string>Transformed Volume:</string>
         </property>
        </widget>
       </item>
@@ -430,7 +430,7 @@
       <string>General Settings</string>
      </property>
      <property name="collapsed">
-      <bool>true</bool>
+      <bool>false</bool>
      </property>
      <layout class="QFormLayout" name="formLayout_3">
       <item row="0" column="0">
@@ -477,14 +477,7 @@
       <item row="3" column="0">
        <widget class="QLabel" name="label_8">
         <property name="text">
-         <string>Float Computation: </string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="1">
-       <widget class="QCheckBox" name="floatComputationCheckBox">
-        <property name="text">
-         <string/>
+         <string>Computation Precision: </string>
         </property>
        </widget>
       </item>
@@ -505,6 +498,20 @@
         <property name="maximumValue">
          <double>0.995000000000000</double>
         </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QComboBox" name="computationPrecisionComboBox">
+        <item>
+         <property name="text">
+          <string>float</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>double</string>
+         </property>
+        </item>
        </widget>
       </item>
      </layout>
