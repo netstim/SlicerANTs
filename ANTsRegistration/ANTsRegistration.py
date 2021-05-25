@@ -214,8 +214,10 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.stagePropertiesCollapsibleButton.text = 'Stage ' + str(currentStage + 1) + ' Properties'
     self.updateStagesGUIFromParameter()
 
-    self.ui.outputInterpolationComboBox.currentText = self._parameterNode.GetParameter("OutputInterpolation")
+    self.ui.outputTransformComboBox.setCurrentNode(self._parameterNode.GetNodeReference("OutputTransform"))
     self.ui.outputVolumeComboBox.setCurrentNode(self._parameterNode.GetNodeReference("OutputVolume"))
+    self.ui.outputInterpolationComboBox.currentText = self._parameterNode.GetParameter("OutputInterpolation")
+    self.ui.outputInterpolationComboBox.enabled = self._parameterNode.GetNodeReference("OutputVolume") is not None
 
     self.ui.initialTransformTypeComboBox.currentIndex = int(self._parameterNode.GetParameter("initializationFeature")) + 2
     self.ui.initialTransformNodeComboBox.setCurrentNode(self._parameterNode.GetNodeReference("InitialTransform"))
@@ -231,8 +233,6 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.winsorizeRangeWidget.setMinimumValue(float(self._parameterNode.GetParameter("WinsorizeImageIntensities").split(",")[0]))
     self.ui.winsorizeRangeWidget.setMaximumValue(float(self._parameterNode.GetParameter("WinsorizeImageIntensities").split(",")[1]))
     self.ui.floatComputationCheckBox.checked = int(self._parameterNode.GetParameter("FloatComputation"))
-
-    self.ui.runRegistrationButton.enabled = True
 
     # All the GUI updates are done
     self._updatingGUIFromParameterNode = False
@@ -268,8 +268,9 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     self._parameterNode.SetParameter("CurrentStage", str(self.ui.stagesTableWidget.getSelectedRow()))
     
-    self._parameterNode.SetParameter("OutputInterpolation", self.ui.outputInterpolationComboBox.currentText)
+    self._parameterNode.SetNodeReferenceID("OutputTransform", self.ui.outputTransformComboBox.currentNodeID)
     self._parameterNode.SetNodeReferenceID("OutputVolume", self.ui.outputVolumeComboBox.currentNodeID)
+    self._parameterNode.SetParameter("OutputInterpolation", self.ui.outputInterpolationComboBox.currentText)
 
     self._parameterNode.SetParameter("initializationFeature", str(self.ui.initialTransformTypeComboBox.currentIndex-2))
     self._parameterNode.SetNodeReferenceID("InitialTransform", self.ui.initialTransformNodeComboBox.currentNodeID)
@@ -330,8 +331,9 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       stage['masks']['moving'] = slicer.util.getNode(stage['masks']['moving']) if stage['masks']['moving'] else ''
 
     parameters['outputSettings'] = {}
-    parameters['outputSettings']['interpolation'] = self.ui.outputInterpolationComboBox.currentText
+    parameters['outputSettings']['transform'] = self.ui.outputTransformComboBox.currentNode()
     parameters['outputSettings']['volume'] = self.ui.outputVolumeComboBox.currentNode()
+    parameters['outputSettings']['interpolation'] = self.ui.outputInterpolationComboBox.currentText
 
     parameters['initialTransformSettings'] = {}
     parameters['initialTransformSettings']['initializationFeature'] = int(self._parameterNode.GetParameter("initializationFeature"))
@@ -345,7 +347,7 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     parameters['generalSettings']['winsorizeImageIntensities'] = [self.ui.winsorizeRangeWidget.minimumValue, self.ui.winsorizeRangeWidget.maximumValue]
     parameters['generalSettings']['floatComputation'] = int(self.ui.floatComputationCheckBox.checked)
 
-    print(self.logic.process(**parameters))
+    self.logic.process(**parameters)
 
 
 #
@@ -374,8 +376,12 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
       importlib.reload(Widgets.util)
 
     self.tempDirectory = ''
+    self.outputVolumeFileName = 'outputVolume.nii'
+    self.outputTransformPrefix = 'outputTransform'
     executableExt = '.exe' if platform.system() == 'Windows' else ''
     self.antsRegistrationFileName = 'antsRegistration' + executableExt
+    self.antsApplyTransformsFileName = 'antsApplyTransforms' + executableExt
+
 
   def setDefaultParameters(self, parameterNode):
     """
@@ -387,10 +393,12 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     if not parameterNode.GetParameter("CurrentStage"):
       parameterNode.SetParameter("CurrentStage", "0")
 
-    if not parameterNode.GetParameter("OutputInterpolation"):
-      parameterNode.SetParameter("OutputInterpolation", str(presetParameters["outputSettings"]["interpolation"]))
+    if not parameterNode.GetParameter("OutputTransform"):
+      parameterNode.SetParameter("OutputTransform", "")
     if not parameterNode.GetParameter("OutputVolume"):
       parameterNode.SetParameter("OutputVolume", "")
+    if not parameterNode.GetParameter("OutputInterpolation"):
+      parameterNode.SetParameter("OutputInterpolation", str(presetParameters["outputSettings"]["interpolation"]))
 
     if not parameterNode.GetParameter("initializationFeature"):
       parameterNode.SetParameter("initializationFeature", str(presetParameters["initialTransformSettings"]["initializationFeature"]))
@@ -425,17 +433,25 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     :param generalSettings: dictionary defining general registration settings
     See presets examples to see how these are specified
     """
+    self.resetTempDirectory()
 
     antsRegistraionCommand = self.getAntsRegistrationCommand(stages, outputSettings, initialTransformSettings, generalSettings)
     self.runAntsRegistrationCommand(antsRegistraionCommand)
 
+    if outputSettings['transform'] is not None:
+      self.loadOutputTransformNode(outputSettings['transform'])
     if outputSettings['volume'] is not None:
       self.loadOutputVolumeNode(outputSettings['volume'])
 
-    self.tempDirectory = ''
+
+  def loadOutputTransformNode(self, outputTransformNode):
+    outputTransformPath = os.path.join(self.getTempDirectory(), self.outputTransformPrefix + 'Composite.h5')
+    loadedOutputTransformNode = slicer.util.loadTransform(outputTransformPath)
+    outputTransformNode.SetAndObserveTransformToParent(loadedOutputTransformNode.GetTransformToParent())
+    slicer.mrmlScene.RemoveNode(loadedOutputTransformNode)
 
   def loadOutputVolumeNode(self, outputVolumeNode):
-    outputVolumePath = os.path.join(self.getTempDirectory(), "transformed.nii")
+    outputVolumePath = os.path.join(self.getTempDirectory(), self.outputVolumeFileName)
     loadedOutputVolumeNode = slicer.util.loadVolume(outputVolumePath)
     outputVolumeNode.SetAndObserveImageData(loadedOutputVolumeNode.GetImageData())
     ijkToRas = vtk.vtkMatrix4x4()
@@ -508,7 +524,7 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
 
   def getOutputCommand(self, interpolation='Linear'):
     command = " --interpolation %s" % interpolation
-    command = command + " --output [%s,%s]" % (os.path.join(self.getTempDirectory(), 'output'), os.path.join(self.getTempDirectory(), 'transformed.nii'))
+    command = command + " --output [%s,%s]" % (os.path.join(self.getTempDirectory(), self.outputTransformPrefix), os.path.join(self.getTempDirectory(), self.outputVolumeFileName))
     command = command + " --write-composite-transform 1"
     command = command + " --collapse-output-transforms 1"
     return command
@@ -586,6 +602,9 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
       storageNode = node.GetStorageNode()
       slicer.mrmlScene.RemoveNode(storageNode)
     return filePath
+
+  def resetTempDirectory(self):
+    self.tempDirectory = ''
 
   def getTempDirectory(self):
     if not self.tempDirectory:

@@ -35,7 +35,7 @@
         "interpolation": "Linear"
     },
     "initialTransformSettings": {
-        "initializationFeature": 0
+        "initializationFeature": -2
     },
     "generalSettings": {
         "dimensionality": 3,
