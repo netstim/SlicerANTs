@@ -32,15 +32,12 @@ class TextEditDelegate(qt.QItemDelegate):
     self.nameInfoDictionary = nameInfoDictionary
 
   def createEditor(self, parent, option, index):
-    textEdit = qt.QPlainTextEdit(parent)
-    textEdit.setVerticalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOff)
-    textEdit.setHorizontalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOff)
-    textEdit.setLineWrapMode(textEdit.NoWrap)
-    return textEdit
+    lineEdit = qt.QLineEdit(parent)
+    return lineEdit
 
   def setEditorData(self, editor, index):
     editor.blockSignals(True)
-    editor.plainText = index.model().data(index) if index.model().data(index) else self.getDefaultSettings(index)
+    editor.text = index.model().data(index) if index.model().data(index) else self.getDefaultSettings(index)
     editor.blockSignals(False)
   
   def getDefaultSettings(self, index):
@@ -48,7 +45,7 @@ class TextEditDelegate(qt.QItemDelegate):
     return self.nameInfoDictionary[key]['Default']
 
   def setModelData(self, editor, model, index):
-    model.setData(index, editor.plainText.replace('\n',''))
+    model.setData(index, editor.text)
 
 
 class MRMLComboDelegate(qt.QItemDelegate):
