@@ -9,6 +9,7 @@ import platform
 import json
 from Widgets.util import StagesTable, MetricsTable, LevelsTable
 import subprocess
+import shutil
 
 #
 # antsRegistration
@@ -448,12 +449,18 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     self.resetTempDirectory()
 
     antsRegistraionCommand = self.getAntsRegistrationCommand(stages, outputSettings, initialTransformSettings, generalSettings)
-    self.runAntsRegistrationCommand(antsRegistraionCommand)
+    antsFailed = self.runAntsRegistrationCommand(antsRegistraionCommand)
 
-    if outputSettings['transform'] is not None:
-      self.loadOutputTransformNode(outputSettings['transform'])
-    if outputSettings['volume'] is not None:
-      self.loadOutputVolumeNode(outputSettings['volume'])
+    if not antsFailed:
+      if outputSettings['transform'] is not None:
+        self.loadOutputTransformNode(outputSettings['transform'])
+      if outputSettings['volume'] is not None:
+        self.loadOutputVolumeNode(outputSettings['volume'])
+
+    self.resetTempDirectory()
+
+    if antsFailed:
+      raise RuntimeError("antsRegistration failed")
 
 
   def loadOutputTransformNode(self, outputTransformNode):
@@ -487,6 +494,7 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
       logging.info(stdout_line.rstrip())
       slicer.app.processEvents()
     process.stdout.close()
+    return process.wait()
 
   def getStartupInfo(self):
     info = subprocess.STARTUPINFO()
@@ -530,7 +538,7 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     command = "--dimensionality %i" % dimensionality
     command = command + " --use-histogram-matching %i" % histogramMatching
     command = command + " --winsorize-image-intensities [%.3f,%.3f]" % tuple(winsorizeImageIntensities)
-    command = command + " --float %i" % computationPrecision == "float"
+    command = command + " --float %i" % (computationPrecision == "float")
     command = command + " --verbose 1"
     return command
 
@@ -616,6 +624,8 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     return filePath
 
   def resetTempDirectory(self):
+    if os.path.isdir(self.tempDirectory):
+      shutil.rmtree(self.tempDirectory)
     self.tempDirectory = ''
 
   def getTempDirectory(self):
