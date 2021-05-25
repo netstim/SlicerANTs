@@ -125,6 +125,9 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.levelsTableWidget.smoothingSigmasUnitComboBox.currentTextChanged.connect(self.updateStagesParameterFromGUI)
     self.ui.levelsTableWidget.convergenceThresholdSpinBox.valueChanged.connect(self.updateStagesParameterFromGUI)
     self.ui.levelsTableWidget.convergenceWindowSizeSpinBox.valueChanged.connect(self.updateStagesParameterFromGUI)
+    self.ui.metricsTableWidget.linkStagesPushButton.toggled.connect(self.updateStagesParameterFromGUI)
+    self.ui.levelsTableWidget.linkStagesPushButton.toggled.connect(self.updateStagesParameterFromGUI)
+    self.ui.linkMaskingStagesPushButton.toggled.connect(self.updateStagesParameterFromGUI)
 
     # Buttons
     self.ui.runRegistrationButton.connect('clicked(bool)', self.onRunRegistrationButton)
@@ -300,10 +303,19 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       stagesList[stageNumber]['transformParameters'] = transformParameters
 
   def setCurrentStagePropertiesToStagesList(self, stagesList):
-    currentStage = int(self._parameterNode.GetParameter("CurrentStage"))
-    stagesList[currentStage]['metrics'] = self.ui.metricsTableWidget.getParametersFromGUI()
-    stagesList[currentStage]['levels'] = self.ui.levelsTableWidget.getParametersFromGUI()
-    stagesList[currentStage]['masks'] = {'fixed': self.ui.fixedMaskComboBox.currentNodeID, 'moving': self.ui.movingMaskComboBox.currentNodeID}
+    stageNumber = int(self._parameterNode.GetParameter("CurrentStage"))
+
+    modifyMetricStagesIterator = range(len(stagesList)) if self.ui.metricsTableWidget.linkStagesPushButton.checked else [stageNumber]
+    for stageNumber in modifyMetricStagesIterator:
+      stagesList[stageNumber]['metrics'] = self.ui.metricsTableWidget.getParametersFromGUI()
+
+    modifyLevelStagesIterator = range(len(stagesList)) if self.ui.levelsTableWidget.linkStagesPushButton.checked else [stageNumber]
+    for stageNumber in modifyLevelStagesIterator:
+      stagesList[stageNumber]['levels'] = self.ui.levelsTableWidget.getParametersFromGUI()
+
+    modifyMasksStagesIterator = range(len(stagesList)) if self.ui.linkMaskingStagesPushButton.checked else [stageNumber]
+    for stageNumber in modifyMasksStagesIterator:
+      stagesList[stageNumber]['masks'] = {'fixed': self.ui.fixedMaskComboBox.currentNodeID, 'moving': self.ui.movingMaskComboBox.currentNodeID}
 
   def onRemoveStageButtonClicked(self):
     stagesList = json.loads(self._parameterNode.GetParameter("StagesJson"))

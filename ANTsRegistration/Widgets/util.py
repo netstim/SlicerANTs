@@ -118,11 +118,16 @@ class CustomTable(qt.QWidget):
     self.removeButton = qt.QPushButton('-')
     self.removeButton.clicked.connect(self.onRemoveButton)
 
+    self.linkStagesPushButton = qt.QPushButton('Link Stages')
+    self.linkStagesPushButton.checkable = True
+    self.linkStagesPushButton.checked = True
+
     buttonsFrame = qt.QFrame()
     buttonsFrame.setSizePolicy(qt.QSizePolicy.Preferred, qt.QSizePolicy.Minimum)
     buttonsFrame.setLayout(qt.QHBoxLayout())
     buttonsFrame.layout().addWidget(self.addButton)
     buttonsFrame.layout().addWidget(self.removeButton)
+    buttonsFrame.layout().addWidget(self.linkStagesPushButton)
 
     self.model = qt.QStandardItemModel(1, len(columnNames))
     for i, columnName in enumerate(columnNames):
@@ -278,6 +283,7 @@ class StagesTable(TableWithSettings):
     TableWithSettings.__init__(self, columnNames)
 
     self.settingsFormatText.setToolTip("The gradientStep or learningRate characterizes the gradient descent optimization and is scaled appropriately for each transform using the shift scales estimator. Subsequent parameters are transform-specific and can be determined from the usage. For the B-spline transforms one can also specify the smoothing in terms of spline distance (i.e. knot spacing).")
+    self.linkStagesPushButton.delete()
 
   def setDefaultNthRow(self, N):
     index = self.model.index(N, 0)
