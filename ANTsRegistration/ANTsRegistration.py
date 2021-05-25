@@ -427,30 +427,21 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     """
 
     antsRegistraionCommand = self.getAntsRegistrationCommand(stages, outputSettings, initialTransformSettings, generalSettings)
-    process = self.runAntsRegistrationCommand(antsRegistraionCommand)
-    self.logProcessOutput(process)
-    # self.loadOutputVolumeNode(outputSettings['volume'])
+    self.runAntsRegistrationCommand(antsRegistraionCommand)
+
+    if outputSettings['volume'] is not None:
+      self.loadOutputVolumeNode(outputSettings['volume'])
 
     self.tempDirectory = ''
 
   def loadOutputVolumeNode(self, outputVolumeNode):
-    if outputVolumeNode:
-      outputVolumePath = os.path.join(self.getTempDirectory(), "transformed.nii")
-      [success, loadedOutputVolumeNode] = slicer.util.loadVolume(outputVolumePath)
-      if success:
-        outputVolumeNode.SetAndObserveImageData(loadedOutputVolumeNode.GetImageData())
-        ijkToRas = vtk.vtkMatrix4x4()
-        loadedOutputVolumeNode.GetIJKToRASMatrix(ijkToRas)
-        outputVolumeNode.SetIJKToRASMatrix(ijkToRas)
-        slicer.mrmlScene.RemoveNode(loadedOutputVolumeNode)
-      else:
-        logging.info("Failed to load output volume from " + outputVolumePath)
-
-  def logProcessOutput(self, process):
-    for stdout_line in iter(process.stdout.readline, ""):
-      logging.info(stdout_line.rstrip())
-      slicer.app.processEvents()
-    process.stdout.close()
+    outputVolumePath = os.path.join(self.getTempDirectory(), "transformed.nii")
+    loadedOutputVolumeNode = slicer.util.loadVolume(outputVolumePath)
+    outputVolumeNode.SetAndObserveImageData(loadedOutputVolumeNode.GetImageData())
+    ijkToRas = vtk.vtkMatrix4x4()
+    loadedOutputVolumeNode.GetIJKToRASMatrix(ijkToRas)
+    outputVolumeNode.SetIJKToRASMatrix(ijkToRas)
+    slicer.mrmlScene.RemoveNode(loadedOutputVolumeNode)
 
   def runAntsRegistrationCommand(self, antsRegistraionCommand):
     params = {}
@@ -462,7 +453,12 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
 
     executableFilePath = os.path.join(self.getAntsBinDir(), self.antsRegistrationFileName)
     logging.info("Register volumes using: " + executableFilePath + " " + antsRegistraionCommand)
-    return subprocess.Popen([executableFilePath] + antsRegistraionCommand.split(" "), **params)
+    process = subprocess.Popen([executableFilePath] + antsRegistraionCommand.split(" "), **params)
+
+    for stdout_line in iter(process.stdout.readline, ""):
+      logging.info(stdout_line.rstrip())
+      slicer.app.processEvents()
+    process.stdout.close()
 
   def getStartupInfo(self):
     info = subprocess.STARTUPINFO()
