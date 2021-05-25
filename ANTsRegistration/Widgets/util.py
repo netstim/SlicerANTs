@@ -424,7 +424,7 @@ MetricsNameInfo = {\
   'MI': {\
     'Details': 'Mutual Information',\
     'Format': 'metricWeight, numberOfBins, <samplingStrategy={None,Regular,Random}>, <samplingPercentage=[0,1]>',\
-    'Default': ''},\
+    'Default': '1.25,32,Random,0.25'},\
   'Mattes': {\
     'Details': '',\
     'Format': 'metricWeight, numberOfBins, <samplingStrategy={None,Regular,Random}>, <samplingPercentage=[0,1]>',\
