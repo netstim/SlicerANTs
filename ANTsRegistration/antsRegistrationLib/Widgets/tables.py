@@ -134,28 +134,17 @@ class TableWithSettings(CustomTable):
     layout = CustomTable.__init__(self, columnNames)
 
     self.settingsFormatText = ctk.ctkFittedTextBrowser()
-    self.settingsFormatText.setSizePolicy(qt.QSizePolicy.Ignored, qt.QSizePolicy.Preferred)
-    self.settingsFormatText.sizePolicy.setHorizontalStretch(1)
-    self.settingsFormatText.sizePolicy.setVerticalStretch(0)
     self.settingsFormatText.setFrameShape(qt.QFrame.NoFrame)
     self.settingsFormatText.setFrameShadow(qt.QFrame.Plain)
-    self.settingsFormatText.openExternalLinks = 1
-    self.settingsFormatText.openLinks = 1
-    self.settingsFormatText.showDetailsText = 'Show Settings Format.'
-    self.settingsFormatText.hideDetailsText = 'Hide Settings Format.'
+    self.settingsFormatText.setCollapsibleText('')
 
-    self.settingsFormatText.setCollapsibleText('<html><br> </html>')
-    # self.settingsFormatText.setCollapsibleText(\
-    #   '<html>Paint with a round brush<br>.\
-    #   <p><ul style=\margin: 0\>\
-    #   <li><b>Left-button drag-and-drop:</b> paint strokes.</li>\
-    #   <li><b>Shift + mouse wheel</b> or <b>+/- keys:</b> adjust brush size.</li>\
-    #   <li><b>Ctrl + mouse wheel:</b> slice view zoom in/out.</li>\
-    #   </ul><p>\
-    #   Editing is available both in slice and 3D views.\
-    #   <p></html>')
+    gb = ctk.ctkCollapsibleGroupBox()
+    gb.title = 'Settings Format'
+    gb.collapsed = True
+    gblayout = qt.QVBoxLayout(gb)
+    gblayout.addWidget(self.settingsFormatText)
 
-    layout.addWidget(self.settingsFormatText)
+    layout.addWidget(gb)
 
     self.view.setItemDelegateForColumn(0, ComboDelegate(self.model, self.antsType, self.setSettingsFormatTextFromName))
     self.view.setItemDelegateForColumn(self.model.columnCount()-1, TextEditDelegate(self.model, self.antsType))
@@ -169,10 +158,8 @@ class TableWithSettings(CustomTable):
       
   def setSettingsFormatTextFromName(self, name):
     text = self.antsType.getSubClassByName(name).settingsFormat
-    self.settingsFormatText.setCollapsibleText('<html><br> ' + text + ' </html>')
-    self.settingsFormatText.setMinimumHeight(self.settingsFormatText.sizeHint.height())
-    if self.settingsFormatText.layout():
-      self.settingsFormatText.layout().update()
+    self.settingsFormatText.setCollapsibleText(text)
+
 
 class StagesTable(TableWithSettings):
   def __init__(self):

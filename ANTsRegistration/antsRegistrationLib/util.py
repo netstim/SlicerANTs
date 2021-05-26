@@ -25,6 +25,7 @@ class CC(antsMetric):
   def __init__(self):
     super().__init__()
     self.details = 'ANTS neighborhood cross correlation'
+    self.settingsFormat = 'metricWeight, radius, &lt;samplingStrategy={None,Regular,Random}&gt;, &lt;samplingPercentage=[0,1]&gt;'
 
 
 class MI(antsMetric):
@@ -44,39 +45,39 @@ class Mattes(antsMetric):
 MetricsNameInfo = {\
   'CC': {\
     'Details': 'ANTS neighborhood cross correlation',\
-    'Format': 'metricWeight, radius, <samplingStrategy={None,Regular,Random}>, <samplingPercentage=[0,1]>',\
+    'Format': 'metricWeight, radius, &lt;samplingStrategy={None,Regular,Random}&gt;, &lt;samplingPercentage=[0,1]&gt;',\
     'Default': ''},\
   'MI': {\
     'Details': 'Mutual Information',\
-    'Format': 'metricWeight, numberOfBins, <samplingStrategy={None,Regular,Random}>, <samplingPercentage=[0,1]>',\
+    'Format': 'metricWeight, numberOfBins, &lt;samplingStrategy={None,Regular,Random}&gt;, &lt;samplingPercentage=[0,1]&gt;',\
     'Default': '1.25,32,Random,0.25'},\
   'Mattes': {\
     'Details': '',\
-    'Format': 'metricWeight, numberOfBins, <samplingStrategy={None,Regular,Random}>, <samplingPercentage=[0,1]>',\
+    'Format': 'metricWeight, numberOfBins, &lt;samplingStrategy={None,Regular,Random}&gt;, &lt;samplingPercentage=[0,1]&gt;',\
     'Default': ''},\
   'MeanSquares': {\
     'Details': '',\
-    'Format': 'metricWeight, radius=NA, <samplingStrategy={None,Regular,Random}>, <samplingPercentage=[0,1]>',\
+    'Format': 'metricWeight, radius=NA, &lt;samplingStrategy={None,Regular,Random}&gt;, &lt;samplingPercentage=[0,1]&gt;',\
     'Default': ''},\
   'Demons': {\
     'Details': '',\
-    'Format': 'metricWeight, radius=NA, <samplingStrategy={None,Regular,Random}>, <samplingPercentage=[0,1]>',\
+    'Format': 'metricWeight, radius=NA, &lt;samplingStrategy={None,Regular,Random}&gt;, &lt;samplingPercentage=[0,1]&gt;',\
     'Default': ''},\
   'GC': {\
     'Details': 'Global Correlation',\
-    'Format': 'metricWeight, radius=NA, <samplingStrategy={None,Regular,Random}>, <samplingPercentage=[0,1]>',\
+    'Format': 'metricWeight, radius=NA, &lt;samplingStrategy={None,Regular,Random}&gt;, &lt;samplingPercentage=[0,1]&gt;',\
     'Default': ''},\
   'ICP': {\
     'Details': 'Euclidean',\
-    'Format': 'metricWeight, <samplingPercentage=[0,1]>, <boundaryPointsOnly=0>',\
+    'Format': 'metricWeight, &lt;samplingPercentage=[0,1]&gt;, &lt;boundaryPointsOnly=0&gt;',\
     'Default': ''},\
   'PSE': {\
     'Details': 'Point-set expectation',\
-    'Format': 'metricWeight, <samplingPercentage=[0,1]>, <boundaryPointsOnly=0>,<pointSetSigma=1>, <kNeighborhood=50>',\
+    'Format': 'metricWeight, &lt;samplingPercentage=[0,1]&gt;, &lt;boundaryPointsOnly=0&gt;,&lt;pointSetSigma=1&gt;, &lt;kNeighborhood=50&gt;',\
     'Default': ''},\
   'JHCT': {\
     'Details': 'Jensen-Havrda-Charvet-Tsallis',\
-    'Format': 'metricWeight, <samplingPercentage=[0,1]>, <boundaryPointsOnly=0>, <pointSetSigma=1>, <kNeighborhood=50>, <alpha=1.1>, <useAnisotropicCovariances=1>',\
+    'Format': 'metricWeight, &lt;samplingPercentage=[0,1]&gt;, &lt;boundaryPointsOnly=0&gt;, &lt;pointSetSigma=1&gt;, &lt;kNeighborhood=50&gt;, &lt;alpha=1.1&gt;, &lt;useAnisotropicCovariances=1&gt;',\
     'Default': ''}\
 }
 
@@ -138,7 +139,7 @@ TransformsNameInfo = {\
     'Default': ''},\
   'BSplineDisplacementField': {\
     'Details': '',\
-    'Format': 'gradientStep, updateFieldMeshSizeAtBaseLevel, <totalFieldMeshSizeAtBaseLevel=0>, <splineOrder=3>',\
+    'Format': 'gradientStep, updateFieldMeshSizeAtBaseLevel, &lt;totalFieldMeshSizeAtBaseLevel=0&gt;, &lt;splineOrder=3&gt;',\
     'Default': ''},\
   'TimeVaryingVelocityField': {\
     'Details': '',\
@@ -146,22 +147,22 @@ TransformsNameInfo = {\
     'Default': ''},\
   'TimeVaryingBSplineVelocityField': {\
     'Details': '',\
-    'Format': 'gradientStep, velocityFieldMeshSize, <numberOfTimePointSamples=4>, <splineOrder=3>',\
+    'Format': 'gradientStep, velocityFieldMeshSize, &lt;numberOfTimePointSamples=4&gt;, &lt;splineOrder=3&gt;',\
     'Default': ''},\
   'SyN': {\
     'Details': '',\
-    'Format': 'gradientStep, <updateFieldVarianceInVoxelSpace= 3>, <totalFieldVarianceInVoxelSpace=0>',\
+    'Format': 'gradientStep, &lt;updateFieldVarianceInVoxelSpace= 3&gt;, &lt;totalFieldVarianceInVoxelSpace=0&gt;',\
     'Default': ''},\
   'BSplineSyN': {\
     'Details': '',\
-    'Format': 'gradientStep, updateFieldMeshSizeAtBaseLevel, <totalFieldMeshSizeAtBaseLevel=0>, <splineOrder=3>',\
+    'Format': 'gradientStep, updateFieldMeshSizeAtBaseLevel, &lt;totalFieldMeshSizeAtBaseLevel=0&gt;, &lt;splineOrder=3&gt;',\
     'Default': ''},\
   'Exponential': {\
     'Details': '',\
-    'Format': 'gradientStep, updateFieldVarianceInVoxelSpace, velocityFieldVarianceInVoxelSpace, <numberOfIntegrationSteps>',\
+    'Format': 'gradientStep, updateFieldVarianceInVoxelSpace, velocityFieldVarianceInVoxelSpace, &lt;numberOfIntegrationSteps&gt;',\
     'Default': ''},\
   'BSplineExponential': {\
     'Details': '',\
-    'Format': 'gradientStep, updateFieldMeshSizeAtBaseLevel, <velocityFieldMeshSizeAtBaseLevel=0>, <numberOfIntegrationSteps>, <splineOrder=3>',\
+    'Format': 'gradientStep, updateFieldMeshSizeAtBaseLevel, &lt;velocityFieldMeshSizeAtBaseLevel=0&gt;, &lt;numberOfIntegrationSteps&gt;, &lt;splineOrder=3&gt;',\
     'Default': ''}\
 }
