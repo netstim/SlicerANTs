@@ -324,9 +324,13 @@
         <property name="enabled">
          <bool>false</bool>
         </property>
+        <property name="toolTip">
+         <string>Select output transform. Choosing a Grid Transform Node will force a grid output. In this case, also choose a volume to use as Grid Reference.</string>
+        </property>
         <property name="nodeTypes">
          <stringlist>
           <string>vtkMRMLTransformNode</string>
+          <string>vtkMRMLGridTransformNode</string>
          </stringlist>
         </property>
         <property name="noneEnabled">
@@ -337,14 +341,14 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="0">
+      <item row="2" column="0">
        <widget class="QLabel" name="label_2">
         <property name="text">
          <string>Transformed Volume:</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="1">
+      <item row="2" column="1">
        <widget class="qMRMLNodeComboBox" name="outputVolumeComboBox">
         <property name="enabled">
          <bool>false</bool>
@@ -374,17 +378,20 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="0">
+      <item row="3" column="0">
        <widget class="QLabel" name="label_4">
         <property name="text">
          <string>Interpolation: </string>
         </property>
        </widget>
       </item>
-      <item row="2" column="1">
+      <item row="3" column="1">
        <widget class="QComboBox" name="outputInterpolationComboBox">
         <property name="enabled">
          <bool>false</bool>
+        </property>
+        <property name="toolTip">
+         <string>Select an interpolation to generate the output transformed volume.</string>
         </property>
         <item>
          <property name="text">
@@ -436,6 +443,37 @@
           <string>GenericLabel</string>
          </property>
         </item>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_15">
+        <property name="text">
+         <string>Grid Reference: </string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="qMRMLNodeComboBox" name="gridReferenceComboBox">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="toolTip">
+         <string>Select a volume to use as reference for the Grid Transform.</string>
+        </property>
+        <property name="nodeTypes">
+         <stringlist>
+          <string>vtkMRMLVolumeNode</string>
+         </stringlist>
+        </property>
+        <property name="noneEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="addEnabled">
+         <bool>false</bool>
+        </property>
+        <property name="removeEnabled">
+         <bool>false</bool>
+        </property>
        </widget>
       </item>
      </layout>
@@ -697,6 +735,22 @@
     <hint type="destinationlabel">
      <x>274</x>
      <y>320</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>antsRegistration</sender>
+   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
+   <receiver>gridReferenceComboBox</receiver>
+   <slot>setMRMLScene(vtkMRMLScene*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>218</x>
+     <y>477</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>274</x>
+     <y>462</y>
     </hint>
    </hints>
   </connection>

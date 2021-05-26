@@ -104,6 +104,8 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     # (in the selected parameter node).
     self.ui.stagesTableWidget.view.selectionModel().selectionChanged.connect(self.updateParameterNodeFromGUI)
     self.ui.outputInterpolationComboBox.connect("currentIndexChanged(int)", self.updateParameterNodeFromGUI)
+    self.ui.outputTransformComboBox.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
+    self.ui.gridReferenceComboBox.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
     self.ui.outputVolumeComboBox.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
     self.ui.initialTransformTypeComboBox.connect("currentIndexChanged(int)", self.updateParameterNodeFromGUI)
     self.ui.initialTransformFixedNodeComboBox.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
@@ -218,7 +220,10 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.stagePropertiesCollapsibleButton.text = 'Stage ' + str(currentStage + 1) + ' Properties'
     self.updateStagesGUIFromParameter()
 
+    gridOutput = isinstance(self._parameterNode.GetNodeReference("OutputTransform"), slicer.vtkMRMLGridTransformNode)
     self.ui.outputTransformComboBox.setCurrentNode(self._parameterNode.GetNodeReference("OutputTransform"))
+    self.ui.gridReferenceComboBox.setCurrentNode(self._parameterNode.GetNodeReference("OutputGridReference") if gridOutput else None)
+    self.ui.gridReferenceComboBox.enabled = gridOutput
     self.ui.outputVolumeComboBox.setCurrentNode(self._parameterNode.GetNodeReference("OutputVolume"))
     self.ui.outputInterpolationComboBox.currentText = self._parameterNode.GetParameter("OutputInterpolation")
     self.ui.outputInterpolationComboBox.enabled = self._parameterNode.GetNodeReference("OutputVolume") is not None
@@ -273,6 +278,7 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self._parameterNode.SetParameter("CurrentStage", str(self.ui.stagesTableWidget.getSelectedRow()))
     
     self._parameterNode.SetNodeReferenceID("OutputTransform", self.ui.outputTransformComboBox.currentNodeID)
+    self._parameterNode.SetNodeReferenceID("OutputGridReference", self.ui.gridReferenceComboBox.currentNodeID)
     self._parameterNode.SetNodeReferenceID("OutputVolume", self.ui.outputVolumeComboBox.currentNodeID)
     self._parameterNode.SetParameter("OutputInterpolation", self.ui.outputInterpolationComboBox.currentText)
 
@@ -345,6 +351,7 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     parameters['outputSettings'] = {}
     parameters['outputSettings']['transform'] = self.ui.outputTransformComboBox.currentNode()
+    parameters['outputSettings']['gridReference'] = self.ui.gridReferenceComboBox.currentNode()
     parameters['outputSettings']['volume'] = self.ui.outputVolumeComboBox.currentNode()
     parameters['outputSettings']['interpolation'] = self.ui.outputInterpolationComboBox.currentText
 
@@ -408,6 +415,8 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
 
     if not parameterNode.GetParameter("OutputTransform"):
       parameterNode.SetParameter("OutputTransform", "")
+    if not parameterNode.GetParameter("OutputGridReference"):
+      parameterNode.SetParameter("OutputGridReference", "")
     if not parameterNode.GetParameter("OutputVolume"):
       parameterNode.SetParameter("OutputVolume", "")
     if not parameterNode.GetParameter("OutputInterpolation"):
@@ -449,22 +458,23 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     self.resetTempDirectory()
 
     antsRegistraionCommand = self.getAntsRegistrationCommand(stages, outputSettings, initialTransformSettings, generalSettings)
-    antsFailed = self.runAntsRegistrationCommand(antsRegistraionCommand)
+    self.runAntsCommand(self.antsRegistrationFileName, antsRegistraionCommand)
 
-    if not antsFailed:
-      if outputSettings['transform'] is not None:
-        self.loadOutputTransformNode(outputSettings['transform'])
-      if outputSettings['volume'] is not None:
-        self.loadOutputVolumeNode(outputSettings['volume'])
+    if outputSettings['gridReference'] is not None:
+      antsApplyTransformsCommand = self.getAntsApplyTransformsCommand(outputSettings['gridReference'])
+      self.runAntsCommand(self.antsApplyTransformsFileName, antsApplyTransformsCommand)
 
-    self.resetTempDirectory()
+    if outputSettings['transform'] is not None:
+      self.loadOutputTransformNode(outputSettings['transform'])
 
-    if antsFailed:
-      raise RuntimeError("antsRegistration failed")
+    if outputSettings['volume'] is not None:
+      self.loadOutputVolumeNode(outputSettings['volume'])
 
+    self.resetTempDirectory()    
 
   def loadOutputTransformNode(self, outputTransformNode):
-    outputTransformPath = os.path.join(self.getTempDirectory(), self.outputTransformPrefix + 'Composite.h5')
+    fileExt = '.nii.gz' if isinstance(outputTransformNode, slicer.vtkMRMLGridTransformNode) else '.h5'
+    outputTransformPath = os.path.join(self.getTempDirectory(), self.outputTransformPrefix + 'Composite' + fileExt)
     loadedOutputTransformNode = slicer.util.loadTransform(outputTransformPath)
     outputTransformNode.SetAndObserveTransformToParent(loadedOutputTransformNode.GetTransformToParent())
     slicer.mrmlScene.RemoveNode(loadedOutputTransformNode)
@@ -478,7 +488,7 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     outputVolumeNode.SetIJKToRASMatrix(ijkToRas)
     slicer.mrmlScene.RemoveNode(loadedOutputVolumeNode)
 
-  def runAntsRegistrationCommand(self, antsRegistraionCommand):
+  def runAntsCommand(self, executableFileName, command):
     params = {}
     params['env'] = self.getAntsEnv()
     params['stdout'] = subprocess.PIPE
@@ -486,15 +496,16 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     if sys.platform == 'win32':
       params['startupinfo'] = self.getStartupInfo()
 
-    executableFilePath = os.path.join(self.getAntsBinDir(), self.antsRegistrationFileName)
-    logging.info("Register volumes using: " + executableFilePath + " " + antsRegistraionCommand)
-    process = subprocess.Popen([executableFilePath] + antsRegistraionCommand.split(" "), **params)
+    executableFilePath = os.path.join(self.getAntsBinDir(), executableFileName)
+    logging.info("Running ANTs Command: " + executableFilePath + " " + command)
+    process = subprocess.Popen([executableFilePath] + command.split(" "), **params)
 
     for stdout_line in iter(process.stdout.readline, ""):
       logging.info(stdout_line.rstrip())
       slicer.app.processEvents()
     process.stdout.close()
-    return process.wait()
+    if process.wait():
+      raise RuntimeError(executableFileName + " failed")
 
   def getStartupInfo(self):
     info = subprocess.STARTUPINFO()
@@ -525,6 +536,13 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
         return os.path.abspath(antsBinDirCandidate)
 
     raise ValueError('ANTs not found')
+
+  def getAntsApplyTransformsCommand(self, gridReferenceNode):
+    antsCommand = "--transform %s" % os.path.join(self.getTempDirectory(), self.outputTransformPrefix + 'Composite.h5')
+    antsCommand = antsCommand + " --reference-image %s" % self.saveNodeAndGetPath(gridReferenceNode)
+    antsCommand = antsCommand + " --output [%s,1]" % os.path.join(self.getTempDirectory(), self.outputTransformPrefix + 'Composite.nii.gz')
+    antsCommand = antsCommand + " --verbose 1"
+    return antsCommand
 
   def getAntsRegistrationCommand(self, stages, outputSettings, initialTransformSettings={}, generalSettings={}):
     antsCommand = self.getGeneralSettingsCommand(**generalSettings)
