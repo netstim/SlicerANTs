@@ -1,0 +1,48 @@
+{
+    "stages": [
+        {
+            "transformParameters": {
+                "transform": "Rigid",
+                "settings": ""
+            },
+            "metrics": [
+                {
+                    "type": "MI",
+                    "fixed": "",
+                    "moving": "",
+                    "settings": ""
+                }
+            ],
+            "levels": {
+                "steps": [
+                    {
+                        "convergence": 1000,
+                        "smoothingSigmas": 4,
+                        "shrinkFactors": 8
+                    }
+                ],
+                "smoothingSigmasUnit": "vox",
+                "convergenceThreshold": 6,
+                "convergenceWindowSize": 10
+            },
+            "masks": {
+                "fixed": "",
+                "moving": ""
+            }
+        }
+    ],
+    "outputSettings": {
+        "interpolation": "Linear"
+    },
+    "initialTransformSettings": {
+        "initializationFeature": -2
+    },
+    "generalSettings": {
+        "dimensionality": 3,
+        "histogramMatching": 0,
+        "winsorizeImageIntensities": [
+            0.005,
+            0.995],
+        "computationPrecision": "float"
+    }
+}
