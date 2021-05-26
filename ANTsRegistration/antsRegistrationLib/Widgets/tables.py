@@ -1,118 +1,7 @@
 import qt, ctk, slicer
-from ..metrics import antsMetric
+from .delegates import ComboDelegate, MRMLComboDelegate, SpinBoxDelegate, TextEditDelegate
+from ..util import antsTransform, antsMetric
 
-#
-# Delegates
-#
-
-class ComboDelegate(qt.QItemDelegate):
-  def __init__(self, parent, nameInfoDictionary, setSettingsFormatFunction):
-    qt.QItemDelegate.__init__(self, parent)
-    self.nameInfoDictionary = nameInfoDictionary
-    self.setSettingsFormatFunction = setSettingsFormatFunction
-
-  def createEditor(self, parent, option, index):
-    combo = qt.QComboBox(parent)
-    # combo.addItems(list(self.nameInfoDictionary.keys()))
-    combo.currentTextChanged.connect(lambda text: self.setSettingsFormatFunction(text))
-    return combo
-
-  def setEditorData(self, editor, index):
-    editor.blockSignals(True)
-    editor.setCurrentText(index.model().data(index))
-    editor.blockSignals(False)
-
-  def setModelData(self, editor, model, index):
-    model.setData(index, editor.currentText, qt.Qt.DisplayRole)
-    model.setData(index, self.nameInfoDictionary[editor.currentText]['Details'], qt.Qt.ToolTipRole)
-
-class MetricComboDelegate(ComboDelegate):
-  def __init__(self, parent, setSettingsFormatFunction):
-    super().__init__(parent, None, setSettingsFormatFunction)
-  
-  def createEditor(self, parent, option, index):
-      combo = super().createEditor(parent, option, index)
-      combo.addItems([cls.__name__ for cls in antsMetric.__subclasses__()])
-      return combo
-
-class TextEditDelegate(qt.QItemDelegate):
-  def __init__(self, parent, nameInfoDictionary):
-    qt.QItemDelegate.__init__(self, parent)
-    self.nameInfoDictionary = nameInfoDictionary
-
-  def createEditor(self, parent, option, index):
-    lineEdit = qt.QLineEdit(parent)
-    return lineEdit
-
-  def setEditorData(self, editor, index):
-    editor.blockSignals(True)
-    editor.text = index.model().data(index) if index.model().data(index) else self.getDefaultSettings(index)
-    editor.blockSignals(False)
-  
-  def getDefaultSettings(self, index):
-    key = index.model().data(index.siblingAtColumn(0))
-    return self.nameInfoDictionary[key]['Default']
-
-  def setModelData(self, editor, model, index):
-    model.setData(index, editor.text)
-
-
-class MRMLComboDelegate(qt.QItemDelegate):
-  def __init__(self, parent):
-    qt.QItemDelegate.__init__(self, parent)
-
-  def createEditor(self, parent, option, index):
-    metricType = index.model().data(index.siblingAtColumn(0))
-    if metricType in ['ICP', 'PSE', 'JHCT']:
-      nodeTypes = ["vtkMRMLMarkupsFiducialNode"]
-    else:
-      nodeTypes = ["vtkMRMLScalarVolumeNode", "vtkMRMLLabelMapVolumeNode"]
-    combo = slicer.qMRMLNodeComboBox(parent)
-    combo.setEnabled(True)
-    combo.nodeTypes = nodeTypes
-    combo.addEnabled = False
-    combo.noneEnabled = True
-    combo.removeEnabled = False
-    combo.setMRMLScene(slicer.mrmlScene)
-    return combo
-
-  def setEditorData(self, editor, index):
-    editor.blockSignals(True)
-    editor.setCurrentNodeID(index.model().data(index, qt.Qt.UserRole))
-    editor.blockSignals(False)
-
-  def setModelData(self, editor, model, index):
-    currentNode = editor.currentNode()
-    currentNodeName = currentNode.GetName() if currentNode else ''
-    currentNodeID = currentNode.GetID() if currentNode else ''
-    model.setData(index, currentNodeName, qt.Qt.DisplayRole)
-    model.setData(index, currentNodeID, qt.Qt.UserRole)
-
-
-class SpinBoxDelegate(qt.QItemDelegate):
-  def __init__(self, parent):
-    qt.QItemDelegate.__init__(self, parent)
-
-  def createEditor(self, parent, option, index):
-    spinBox = qt.QSpinBox(parent)
-    spinBox.setSingleStep(1)
-    spinBox.maximum = 1e4
-    return spinBox
-
-  def setEditorData(self, editor, index):
-    editor.blockSignals(True)
-    editor.value = index.model().data(index) if index.model().data(index) else 0
-    editor.blockSignals(False)
-
-  def setModelData(self, editor, model, index):
-    model.setData(index, editor.value)
-
-
-
-
-#
-# Tables
-#
 
 class CustomTable(qt.QWidget):
 
@@ -268,18 +157,18 @@ class TableWithSettings(CustomTable):
 
     layout.addWidget(self.settingsFormatText)
 
-    self.view.setItemDelegateForColumn(0, ComboDelegate(self.model, self.nameInfoDictionary, self.setSettingsFormatTextFromKey))
-    self.view.setItemDelegateForColumn(self.model.columnCount()-1, TextEditDelegate(self.model, self.nameInfoDictionary))
+    self.view.setItemDelegateForColumn(0, ComboDelegate(self.model, self.antsType, self.setSettingsFormatTextFromName))
+    self.view.setItemDelegateForColumn(self.model.columnCount()-1, TextEditDelegate(self.model, self.antsType))
 
   def onSelectionChanged(self, selection):
     super().onSelectionChanged(selection)
     indexes = selection.indexes()
     if indexes:
       key = self.model.data(indexes[0].siblingAtColumn(0))
-      self.setSettingsFormatTextFromKey(key)
+      self.setSettingsFormatTextFromName(key)
       
-  def setSettingsFormatTextFromKey(self, key):
-    text = self.nameInfoDictionary[key]['Format']
+  def setSettingsFormatTextFromName(self, name):
+    text = self.antsType.getSubClassByName(name).settingsFormat
     self.settingsFormatText.setCollapsibleText('<html><br> ' + text + ' </html>')
     self.settingsFormatText.setMinimumHeight(self.settingsFormatText.sizeHint.height())
     if self.settingsFormatText.layout():
@@ -288,7 +177,7 @@ class TableWithSettings(CustomTable):
 class StagesTable(TableWithSettings):
   def __init__(self):
     columnNames = ['Transform', 'Settings']
-    self.nameInfoDictionary = TransformsNameInfo
+    self.antsType = antsTransform()
     TableWithSettings.__init__(self, columnNames)
 
     self.settingsFormatText.setToolTip("The gradientStep or learningRate characterizes the gradient descent optimization and is scaled appropriately for each transform using the shift scales estimator. Subsequent parameters are transform-specific and can be determined from the usage. For the B-spline transforms one can also specify the smoothing in terms of spline distance (i.e. knot spacing).")
@@ -309,12 +198,11 @@ class StagesTable(TableWithSettings):
 class MetricsTable(TableWithSettings):
   def __init__(self):
     columnNames = ['Type', 'Fixed', 'Moving', 'Settings']
-    self.nameInfoDictionary = MetricsNameInfo
+    self.antsType = antsMetric()
     TableWithSettings.__init__(self, columnNames)
 
     self.settingsFormatText.setToolTip(" The 'metricWeight' variable is used to modulate the per stage weighting of the metrics. The metrics can also employ a sampling strategy defined by a sampling percentage. The sampling strategy defaults to 'None' (aka a dense sampling of one sample per voxel), otherwise it defines a point set over which to optimize the metric. The point set can be on a regular lattice or a random lattice of points slightly perturbed to minimize aliasing artifacts. samplingPercentage defines the fraction of points to select from the domain.")
 
-    self.view.setItemDelegateForColumn(0, MetricComboDelegate(self.model, self.setSettingsFormatTextFromKey))
     self.view.setItemDelegateForColumn(1, MRMLComboDelegate(self.model))
     self.view.setItemDelegateForColumn(2, MRMLComboDelegate(self.model))
 
@@ -367,103 +255,3 @@ class LevelsTable(CustomTable):
     self.smoothingSigmasUnitComboBox.currentText = parameters['smoothingSigmasUnit']
     self.convergenceThresholdSpinBox.value = int(parameters['convergenceThreshold'])
     self.convergenceWindowSizeSpinBox.value = int(parameters['convergenceWindowSize'])
-
-# TODO: set text formats
-
-TransformsNameInfo = {\
-  'Rigid': {\
-    'Details': '',\
-    'Format': 'gradientStep',\
-    'Default': '0.1'},\
-  'Affine': {\
-    'Details': '',\
-    'Format': 'gradientStep',\
-    'Default': ''},\
-  'CompositeAffine': {\
-    'Details': '',\
-    'Format': 'gradientStep',\
-    'Default': ''},\
-  'Similarity': {\
-    'Details': '',\
-    'Format': 'gradientStep',\
-    'Default': ''},\
-  'Translation': {\
-    'Details': '',\
-    'Format': 'gradientStep',\
-    'Default': ''},\
-  'BSpline': {\
-    'Details': '',\
-    'Format': 'gradientStep, meshSizeAtBaseLevel',\
-    'Default': ''},\
-  'GaussianDisplacementField': {\
-    'Details': '',\
-    'Format': 'gradientStep, updateFieldVarianceInVoxelSpace, totalFieldVarianceInVoxelSpace',\
-    'Default': ''},\
-  'BSplineDisplacementField': {\
-    'Details': '',\
-    'Format': 'gradientStep, updateFieldMeshSizeAtBaseLevel, <totalFieldMeshSizeAtBaseLevel=0>, <splineOrder=3>',\
-    'Default': ''},\
-  'TimeVaryingVelocityField': {\
-    'Details': '',\
-    'Format': 'gradientStep, numberOfTimeIndices, updateFieldVarianceInVoxelSpace, updateFieldTimeVariance, totalFieldVarianceInVoxelSpace, totalFieldTimeVariance',\
-    'Default': ''},\
-  'TimeVaryingBSplineVelocityField': {\
-    'Details': '',\
-    'Format': 'gradientStep, velocityFieldMeshSize, <numberOfTimePointSamples=4>, <splineOrder=3>',\
-    'Default': ''},\
-  'SyN': {\
-    'Details': '',\
-    'Format': 'gradientStep, <updateFieldVarianceInVoxelSpace= 3>, <totalFieldVarianceInVoxelSpace=0>',\
-    'Default': ''},\
-  'BSplineSyN': {\
-    'Details': '',\
-    'Format': 'gradientStep, updateFieldMeshSizeAtBaseLevel, <totalFieldMeshSizeAtBaseLevel=0>, <splineOrder=3>',\
-    'Default': ''},\
-  'Exponential': {\
-    'Details': '',\
-    'Format': 'gradientStep, updateFieldVarianceInVoxelSpace, velocityFieldVarianceInVoxelSpace, <numberOfIntegrationSteps>',\
-    'Default': ''},\
-  'BSplineExponential': {\
-    'Details': '',\
-    'Format': 'gradientStep, updateFieldMeshSizeAtBaseLevel, <velocityFieldMeshSizeAtBaseLevel=0>, <numberOfIntegrationSteps>, <splineOrder=3>',\
-    'Default': ''}\
-}
-
-MetricsNameInfo = {\
-  'CC': {\
-    'Details': 'ANTS neighborhood cross correlation',\
-    'Format': 'metricWeight, radius, <samplingStrategy={None,Regular,Random}>, <samplingPercentage=[0,1]>',\
-    'Default': ''},\
-  'MI': {\
-    'Details': 'Mutual Information',\
-    'Format': 'metricWeight, numberOfBins, <samplingStrategy={None,Regular,Random}>, <samplingPercentage=[0,1]>',\
-    'Default': '1.25,32,Random,0.25'},\
-  'Mattes': {\
-    'Details': '',\
-    'Format': 'metricWeight, numberOfBins, <samplingStrategy={None,Regular,Random}>, <samplingPercentage=[0,1]>',\
-    'Default': ''},\
-  'MeanSquares': {\
-    'Details': '',\
-    'Format': 'metricWeight, radius=NA, <samplingStrategy={None,Regular,Random}>, <samplingPercentage=[0,1]>',\
-    'Default': ''},\
-  'Demons': {\
-    'Details': '',\
-    'Format': 'metricWeight, radius=NA, <samplingStrategy={None,Regular,Random}>, <samplingPercentage=[0,1]>',\
-    'Default': ''},\
-  'GC': {\
-    'Details': 'Global Correlation',\
-    'Format': 'metricWeight, radius=NA, <samplingStrategy={None,Regular,Random}>, <samplingPercentage=[0,1]>',\
-    'Default': ''},\
-  'ICP': {\
-    'Details': 'Euclidean',\
-    'Format': 'metricWeight, <samplingPercentage=[0,1]>, <boundaryPointsOnly=0>',\
-    'Default': ''},\
-  'PSE': {\
-    'Details': 'Point-set expectation',\
-    'Format': 'metricWeight, <samplingPercentage=[0,1]>, <boundaryPointsOnly=0>,<pointSetSigma=1>, <kNeighborhood=50>',\
-    'Default': ''},\
-  'JHCT': {\
-    'Details': 'Jensen-Havrda-Charvet-Tsallis',\
-    'Format': 'metricWeight, <samplingPercentage=[0,1]>, <boundaryPointsOnly=0>, <pointSetSigma=1>, <kNeighborhood=50>, <alpha=1.1>, <useAnisotropicCovariances=1>',\
-    'Default': ''}\
-}

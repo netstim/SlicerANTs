@@ -10,7 +10,7 @@ import json
 import subprocess
 import shutil
 
-from antsRegistrationLib.Widgets.util import StagesTable, MetricsTable, LevelsTable
+from antsRegistrationLib.Widgets.tables import StagesTable, MetricsTable, LevelsTable
 
 #
 # antsRegistration

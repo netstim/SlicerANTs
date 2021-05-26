@@ -1,7 +1,7 @@
 set(ANTS_LIB_PYTHON_SCRIPTS
-  metrics.py
-  transforms.py
-  Widgets/util.py
+  util.py
+  Widgets/delegates.py
+  Widgets/tables.py
   )
 
 set(ANTS_LIB_PYTHON_RESOURCES
