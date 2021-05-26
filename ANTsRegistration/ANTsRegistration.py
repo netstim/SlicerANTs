@@ -7,9 +7,10 @@ from slicer.util import VTKObservationMixin
 
 import platform
 import json
-from Widgets.util import StagesTable, MetricsTable, LevelsTable
 import subprocess
 import shutil
+
+from antsRegistrationLib.Widgets.util import StagesTable, MetricsTable, LevelsTable
 
 #
 # antsRegistration
@@ -397,10 +398,19 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     """
     ScriptedLoadableModuleLogic.__init__(self)
     if slicer.util.settingsValue('Developer/DeveloperMode', False, converter=slicer.util.toBool):
-      import importlib
-      import Widgets
-      import Widgets.util
-      importlib.reload(Widgets.util)
+      import importlib, glob
+      import antsRegistrationLib
+      antsRegistrationLibPath = os.path.join(os.path.dirname(__file__), 'antsRegistrationLib')
+      G = glob.glob(os.path.join(antsRegistrationLibPath, '**','*.py'))
+      for g in G:
+        relativePath = os.path.relpath(g, antsRegistrationLibPath) # relative path
+        relativePath = os.path.splitext(relativePath)[0] # get rid of .py
+        moduleParts = relativePath.split(os.path.sep) # separate
+        importlib.import_module('.'.join(['antsRegistrationLib']+moduleParts)) # import module
+        module = antsRegistrationLib
+        for modulePart in moduleParts: # iterate over parts in order to load subpkgs
+          module = getattr(module, modulePart)
+        importlib.reload(module) # reload
 
     self.antsLogLine = ''
     self.tempDirectory = ''

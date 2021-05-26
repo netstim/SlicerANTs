@@ -1,4 +1,5 @@
 import qt, ctk, slicer
+from ..metrics import antsMetric
 
 #
 # Delegates
@@ -12,7 +13,7 @@ class ComboDelegate(qt.QItemDelegate):
 
   def createEditor(self, parent, option, index):
     combo = qt.QComboBox(parent)
-    combo.addItems(list(self.nameInfoDictionary.keys()))
+    # combo.addItems(list(self.nameInfoDictionary.keys()))
     combo.currentTextChanged.connect(lambda text: self.setSettingsFormatFunction(text))
     return combo
 
@@ -25,6 +26,14 @@ class ComboDelegate(qt.QItemDelegate):
     model.setData(index, editor.currentText, qt.Qt.DisplayRole)
     model.setData(index, self.nameInfoDictionary[editor.currentText]['Details'], qt.Qt.ToolTipRole)
 
+class MetricComboDelegate(ComboDelegate):
+  def __init__(self, parent, setSettingsFormatFunction):
+    super().__init__(parent, None, setSettingsFormatFunction)
+  
+  def createEditor(self, parent, option, index):
+      combo = super().createEditor(parent, option, index)
+      combo.addItems([cls.__name__ for cls in antsMetric.__subclasses__()])
+      return combo
 
 class TextEditDelegate(qt.QItemDelegate):
   def __init__(self, parent, nameInfoDictionary):
@@ -305,6 +314,7 @@ class MetricsTable(TableWithSettings):
 
     self.settingsFormatText.setToolTip(" The 'metricWeight' variable is used to modulate the per stage weighting of the metrics. The metrics can also employ a sampling strategy defined by a sampling percentage. The sampling strategy defaults to 'None' (aka a dense sampling of one sample per voxel), otherwise it defines a point set over which to optimize the metric. The point set can be on a regular lattice or a random lattice of points slightly perturbed to minimize aliasing artifacts. samplingPercentage defines the fraction of points to select from the domain.")
 
+    self.view.setItemDelegateForColumn(0, MetricComboDelegate(self.model, self.setSettingsFormatTextFromKey))
     self.view.setItemDelegateForColumn(1, MRMLComboDelegate(self.model))
     self.view.setItemDelegateForColumn(2, MRMLComboDelegate(self.model))
 

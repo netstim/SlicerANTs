@@ -1,7 +1,6 @@
 #-----------------------------------------------------------------------------
 set(MODULE_NAME antsRegistration)
 
-add_subdirectory(Widgets)
 add_subdirectory(antsRegistrationLib)
 
 #-----------------------------------------------------------------------------
