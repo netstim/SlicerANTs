@@ -2,6 +2,7 @@
 set(MODULE_NAME antsRegistration)
 
 add_subdirectory(Widgets)
+add_subdirectory(antsRegistrationLib)
 
 #-----------------------------------------------------------------------------
 set(MODULE_PYTHON_SCRIPTS
@@ -11,8 +12,15 @@ set(MODULE_PYTHON_SCRIPTS
 set(MODULE_PYTHON_RESOURCES
   Resources/Icons/${MODULE_NAME}.png
   Resources/UI/${MODULE_NAME}.ui
-  Resources/Presets/basicRigid.json
   )
+
+set(REGISTRATION_PRESET_FILES
+  basicRigid.json
+  )
+
+foreach (presetfile ${REGISTRATION_PRESET_FILES})
+  set(MODULE_PYTHON_RESOURCES ${MODULE_PYTHON_RESOURCES} "Resources/Presets/${presetfile}")
+endforeach()
 
 #-----------------------------------------------------------------------------
 slicerMacroBuildScriptedModule(

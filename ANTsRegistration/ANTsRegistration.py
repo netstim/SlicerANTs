@@ -306,16 +306,16 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
   def setCurrentStagePropertiesToStagesList(self, stagesList):
     stageNumber = int(self._parameterNode.GetParameter("CurrentStage"))
 
-    modifyMetricStagesIterator = range(len(stagesList)) if self.ui.metricsTableWidget.linkStagesPushButton.checked else [stageNumber]
-    for stageNumber in modifyMetricStagesIterator:
+    stagesIterator = range(len(stagesList)) if self.ui.metricsTableWidget.linkStagesPushButton.checked else [stageNumber]
+    for stageNumber in stagesIterator:
       stagesList[stageNumber]['metrics'] = self.ui.metricsTableWidget.getParametersFromGUI()
 
-    modifyLevelStagesIterator = range(len(stagesList)) if self.ui.levelsTableWidget.linkStagesPushButton.checked else [stageNumber]
-    for stageNumber in modifyLevelStagesIterator:
+    stagesIterator = range(len(stagesList)) if self.ui.levelsTableWidget.linkStagesPushButton.checked else [stageNumber]
+    for stageNumber in stagesIterator:
       stagesList[stageNumber]['levels'] = self.ui.levelsTableWidget.getParametersFromGUI()
 
-    modifyMasksStagesIterator = range(len(stagesList)) if self.ui.linkMaskingStagesPushButton.checked else [stageNumber]
-    for stageNumber in modifyMasksStagesIterator:
+    stagesIterator = range(len(stagesList)) if self.ui.linkMaskingStagesPushButton.checked else [stageNumber]
+    for stageNumber in stagesIterator:
       stagesList[stageNumber]['masks'] = {'fixed': self.ui.fixedMaskComboBox.currentNodeID, 'moving': self.ui.movingMaskComboBox.currentNodeID}
 
   def onRemoveStageButtonClicked(self):
