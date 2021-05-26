@@ -367,7 +367,14 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     parameters['generalSettings']['winsorizeImageIntensities'] = [self.ui.winsorizeRangeWidget.minimumValue, self.ui.winsorizeRangeWidget.maximumValue]
     parameters['generalSettings']['computationPrecision'] = self.ui.computationPrecisionComboBox.currentText
 
+    logLabelTimer = qt.QTimer()
+    logLabelTimer.timeout.connect(lambda: self.ui.antsLogFittedText.setText(self.logic.antsLogLine))
+    logLabelTimer.start(100)
+
     self.logic.process(**parameters)
+
+    logLabelTimer.stop()
+    self.ui.antsLogFittedText.setText(self.logic.antsLogLine)
 
 
 #
@@ -395,6 +402,7 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
       import Widgets.util
       importlib.reload(Widgets.util)
 
+    self.antsLogLine = ''
     self.tempDirectory = ''
     self.outputVolumeFileName = 'outputVolume.nii'
     self.outputTransformPrefix = 'outputTransform'
@@ -501,7 +509,8 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     process = subprocess.Popen([executableFilePath] + command.split(" "), **params)
 
     for stdout_line in iter(process.stdout.readline, ""):
-      logging.info(stdout_line.rstrip())
+      self.antsLogLine = stdout_line.rstrip()
+      logging.info(self.antsLogLine)
       slicer.app.processEvents()
     process.stdout.close()
     if process.wait():
