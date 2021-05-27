@@ -130,8 +130,10 @@ class CustomTable(qt.QWidget):
       self.model.setData(index, val, qt.Qt.DisplayRole)
 
 class TableWithSettings(CustomTable):
-  def __init__(self, columnNames):
+  def __init__(self, columnNames, antsType):
     layout = CustomTable.__init__(self, columnNames)
+
+    self.antsType = antsType
 
     self.settingsFormatText = ctk.ctkFittedTextBrowser()
     self.settingsFormatText.setFrameShape(qt.QFrame.NoFrame)
@@ -164,8 +166,7 @@ class TableWithSettings(CustomTable):
 class StagesTable(TableWithSettings):
   def __init__(self):
     columnNames = ['Transform', 'Settings']
-    self.antsType = antsTransform()
-    TableWithSettings.__init__(self, columnNames)
+    TableWithSettings.__init__(self, columnNames, antsTransform())
 
     self.settingsFormatText.setToolTip("The gradientStep or learningRate characterizes the gradient descent optimization and is scaled appropriately for each transform using the shift scales estimator. Subsequent parameters are transform-specific and can be determined from the usage. For the B-spline transforms one can also specify the smoothing in terms of spline distance (i.e. knot spacing).")
     self.linkStagesPushButton.delete()
@@ -185,8 +186,7 @@ class StagesTable(TableWithSettings):
 class MetricsTable(TableWithSettings):
   def __init__(self):
     columnNames = ['Type', 'Fixed', 'Moving', 'Settings']
-    self.antsType = antsMetric()
-    TableWithSettings.__init__(self, columnNames)
+    TableWithSettings.__init__(self, columnNames, antsMetric())
 
     self.settingsFormatText.setToolTip(" The 'metricWeight' variable is used to modulate the per stage weighting of the metrics. The metrics can also employ a sampling strategy defined by a sampling percentage. The sampling strategy defaults to 'None' (aka a dense sampling of one sample per voxel), otherwise it defines a point set over which to optimize the metric. The point set can be on a regular lattice or a random lattice of points slightly perturbed to minimize aliasing artifacts. samplingPercentage defines the fraction of points to select from the domain.")
 
