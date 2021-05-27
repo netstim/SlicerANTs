@@ -50,7 +50,7 @@ class MRMLComboDelegate(qt.QItemDelegate):
   def createEditor(self, parent, option, index):
     metricType = index.model().data(index.siblingAtColumn(0))
     if metricType in ['ICP', 'PSE', 'JHCT']:
-      nodeTypes = ["vtkMRMLMarkupsFiducialNode"]
+      nodeTypes = ["vtkMRMLLabelMapVolumeNode"]
     else:
       nodeTypes = ["vtkMRMLScalarVolumeNode", "vtkMRMLLabelMapVolumeNode"]
     combo = slicer.qMRMLNodeComboBox(parent)

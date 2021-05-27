@@ -633,8 +633,6 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
       fileExtension = '.nii'
     elif isinstance(node, slicer.vtkMRMLTransformNode):
       fileExtension =  '.h5'
-    elif isinstance(node, slicer.vtkMRMLMarkupsNode):
-      fileExtension =  '.' # TODO
     filePath = os.path.join(self.getTempDirectory(), node.GetID() + fileExtension)
     if os.path.isfile(filePath):
       return filePath # same node used in different metrics
