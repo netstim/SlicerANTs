@@ -1,14 +1,15 @@
 import qt, slicer
+from ..util import antsBase
 
 class ComboDelegate(qt.QItemDelegate):
-  def __init__(self, parent, antsType, setSettingsFormatFunction):
+  def __init__(self, parent, comboItems, setSettingsFormatFunction):
     qt.QItemDelegate.__init__(self, parent)
-    self.antsType = antsType
+    self.comboItems = comboItems
     self.setSettingsFormatFunction = setSettingsFormatFunction
 
   def createEditor(self, parent, option, index):
     combo = qt.QComboBox(parent)
-    combo.addItems(self.antsType.getSubClassesNames())
+    combo.addItems(self.comboItems)
     combo.currentTextChanged.connect(lambda text: self.setSettingsFormatFunction(text))
     return combo
 
@@ -18,13 +19,13 @@ class ComboDelegate(qt.QItemDelegate):
     editor.blockSignals(False)
 
   def setModelData(self, editor, model, index):
-    model.setData(index, editor.currentText, qt.Qt.DisplayRole)
-    model.setData(index, self.antsType.getSubClassByName(editor.currentText).details, qt.Qt.ToolTipRole)
+    name = editor.currentText
+    model.setData(index, name, qt.Qt.DisplayRole)
+    model.setData(index, antsBase().getSubClassByName(name).details, qt.Qt.ToolTipRole)
 
 class TextEditDelegate(qt.QItemDelegate):
-  def __init__(self, parent, antsType):
+  def __init__(self, parent):
     qt.QItemDelegate.__init__(self, parent)
-    self.antsType = antsType
 
   def createEditor(self, parent, option, index):
     lineEdit = qt.QLineEdit(parent)
@@ -37,7 +38,7 @@ class TextEditDelegate(qt.QItemDelegate):
   
   def getDefaultSettings(self, index):
     name = index.model().data(index.siblingAtColumn(0))
-    return self.antsType.getSubClassByName(name).settingsDefault
+    return antsBase().getSubClassByName(name).settingsDefault
 
   def setModelData(self, editor, model, index):
     model.setData(index, editor.text)
@@ -48,19 +49,18 @@ class MRMLComboDelegate(qt.QItemDelegate):
     qt.QItemDelegate.__init__(self, parent)
 
   def createEditor(self, parent, option, index):
-    metricType = index.model().data(index.siblingAtColumn(0))
-    if metricType in ['ICP', 'PSE', 'JHCT']:
-      nodeTypes = ["vtkMRMLLabelMapVolumeNode"]
-    else:
-      nodeTypes = ["vtkMRMLScalarVolumeNode", "vtkMRMLLabelMapVolumeNode"]
     combo = slicer.qMRMLNodeComboBox(parent)
     combo.setEnabled(True)
-    combo.nodeTypes = nodeTypes
+    combo.nodeTypes = self.getNodeTypes(index)
     combo.addEnabled = False
     combo.noneEnabled = True
     combo.removeEnabled = False
     combo.setMRMLScene(slicer.mrmlScene)
     return combo
+
+  def getNodeTypes(self, index):
+    name = index.model().data(index.siblingAtColumn(0))
+    return antsBase().getSubClassByName(name).nodeTypes
 
   def setEditorData(self, editor, index):
     editor.blockSignals(True)

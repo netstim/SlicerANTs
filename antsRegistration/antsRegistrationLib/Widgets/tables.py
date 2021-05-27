@@ -1,6 +1,6 @@
 import qt, ctk, slicer
 from .delegates import ComboDelegate, MRMLComboDelegate, SpinBoxDelegate, TextEditDelegate
-from ..util import antsTransform, antsMetric
+from ..util import antsBase, antsTransform, antsMetric
 
 
 class CustomTable(qt.QWidget):
@@ -133,8 +133,6 @@ class TableWithSettings(CustomTable):
   def __init__(self, columnNames, antsType):
     layout = CustomTable.__init__(self, columnNames)
 
-    self.antsType = antsType
-
     self.settingsFormatText = ctk.ctkFittedTextBrowser()
     self.settingsFormatText.setFrameShape(qt.QFrame.NoFrame)
     self.settingsFormatText.setFrameShadow(qt.QFrame.Plain)
@@ -148,8 +146,8 @@ class TableWithSettings(CustomTable):
 
     layout.addWidget(gb)
 
-    self.view.setItemDelegateForColumn(0, ComboDelegate(self.model, self.antsType, self.setSettingsFormatTextFromName))
-    self.view.setItemDelegateForColumn(self.model.columnCount()-1, TextEditDelegate(self.model, self.antsType))
+    self.view.setItemDelegateForColumn(0, ComboDelegate(self.model, antsType.getSubClassesNames(), self.setSettingsFormatTextFromName))
+    self.view.setItemDelegateForColumn(self.model.columnCount()-1, TextEditDelegate(self.model))
 
   def onSelectionChanged(self, selection):
     super().onSelectionChanged(selection)
@@ -159,7 +157,7 @@ class TableWithSettings(CustomTable):
       self.setSettingsFormatTextFromName(key)
       
   def setSettingsFormatTextFromName(self, name):
-    text = self.antsType.getSubClassByName(name).settingsFormat
+    text = antsBase().getSubClassByName(name).settingsFormat
     self.settingsFormatText.setCollapsibleText(text)
 
 

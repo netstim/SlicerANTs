@@ -5,14 +5,21 @@ class antsBase:
     self.details = ''
     self.settingsFormat = ''
     self.settingsDefault = ''
+    self.nodeTypes = []
 
   @classmethod
   def getSubClassesNames(cls):
-    return [subcls.__name__ for subcls in cls.__subclasses__()]
+    return [subcls.__name__ for subcls in cls.getSubClasses()]
+
+  @classmethod
+  def getSubClasses(cls):
+    for subcls in cls.__subclasses__():
+      yield from subcls.getSubClasses()
+      yield subcls
 
   @classmethod
   def getSubClassByName(cls, name):
-    for subcls in cls.__subclasses__():
+    for subcls in cls.getSubClasses():
       if subcls.__name__ == name:
         return subcls()
 
@@ -23,6 +30,7 @@ class antsBase:
 class antsMetric(antsBase):
   def __init__(self):
     super().__init__()
+    self.nodeTypes = ["vtkMRMLScalarVolumeNode", "vtkMRMLLabelMapVolumeNode"]
     
 class CC(antsMetric):
   def __init__(self):
@@ -68,6 +76,7 @@ class ICP(antsMetric):
     self.details = 'Euclidean'
     self.settingsFormat = '<b>metricWeight</b>, &lt;<b>samplingPercentage</b>=[0,1]&gt;, &lt;<b>boundaryPointsOnly</b>=0&gt;'
     self.settingsDefault = '1,0.25,0'
+    self.nodeTypes = ["vtkMRMLLabelMapVolumeNode"]
 
 class PSE(antsMetric):
   def __init__(self):
@@ -75,6 +84,7 @@ class PSE(antsMetric):
     self.details = 'Point-set expectation'
     self.settingsFormat = '<b>metricWeight</b>, &lt;<b>samplingPercentage</b>=[0,1]&gt;, &lt;<b>boundaryPointsOnly</b>=0&gt;,&lt;<b>pointSetSigma</b>=1&gt;, &lt;<b>kNeighborhood</b>=50&gt;'
     self.settingsDefault = '1,0.25,0,1,50'
+    self.nodeTypes = ["vtkMRMLLabelMapVolumeNode"]
 
 class JHCT(antsMetric):
   def __init__(self):
@@ -82,6 +92,7 @@ class JHCT(antsMetric):
     self.details = 'Jensen-Havrda-Charvet-Tsallis'
     self.settingsFormat = '<b>metricWeight</b>, &lt;<b>samplingPercentage</b>=[0,1]&gt;, &lt;<b>boundaryPointsOnly</b>=0&gt;, &lt;<b>pointSetSigma</b>=1&gt;, &lt;<b>kNeighborhood</b>=50&gt;, &lt;<b>alpha</b>=1.1&gt;, &lt;<b>useAnisotropicCovariances</b>=1&gt;'
     self.settingsDefault = '1,0.25,0,1,50,1.1,1'
+    self.nodeTypes = ["vtkMRMLLabelMapVolumeNode"]
 
 #
 # Transforms
