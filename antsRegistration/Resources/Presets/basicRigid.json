@@ -3,14 +3,14 @@
         {
             "transformParameters": {
                 "transform": "Rigid",
-                "settings": ""
+                "settings": "0.1"
             },
             "metrics": [
                 {
                     "type": "MI",
-                    "fixed": "",
-                    "moving": "",
-                    "settings": ""
+                    "fixed": null,
+                    "moving": null,
+                    "settings": "1,32,Random,0.25"
                 }
             ],
             "levels": {
@@ -26,12 +26,14 @@
                 "convergenceWindowSize": 10
             },
             "masks": {
-                "fixed": "",
-                "moving": ""
+                "fixed": null,
+                "moving": null
             }
         }
     ],
     "outputSettings": {
+        "transform": null,
+        "volume": null,
         "interpolation": "Linear"
     },
     "initialTransformSettings": {

@@ -452,14 +452,14 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     """
     self.resetTempDirectory()
 
-    initialTransformSettings['fixedImageNode'] = stages[0]['metrics']['fixed']
-    initialTransformSettings['movingImageNode'] = stages[0]['metrics']['moving']
+    initialTransformSettings['fixedImageNode'] = stages[0]['metrics'][0]['fixed']
+    initialTransformSettings['movingImageNode'] = stages[0]['metrics'][0]['moving']
 
     antsRegistraionCommand = self.getAntsRegistrationCommand(stages, outputSettings, initialTransformSettings, generalSettings)
     self.runAntsCommand(self.antsRegistrationFileName, antsRegistraionCommand)
 
     if isinstance(outputSettings['transform'], slicer.vtkMRMLGridTransformNode):
-      gridReferenceNode = stages[0]['metrics']['fixed']
+      gridReferenceNode = stages[0]['metrics'][0]['fixed']
       antsApplyTransformsCommand = self.getAntsApplyTransformsCommand(gridReferenceNode)
       self.runAntsCommand(self.antsApplyTransformsFileName, antsApplyTransformsCommand)
 
@@ -700,32 +700,22 @@ class antsRegistrationTest(ScriptedLoadableModuleTest):
     # Get/create input data
 
     import SampleData
-    registerSampleData()
-    inputVolume = SampleData.downloadSample('antsRegistration1')
-    self.delayDisplay('Loaded test data set')
+    sampleDataLogic = SampleData.SampleDataLogic()
+    tumor1 = sampleDataLogic.downloadMRBrainTumor1()
+    tumor2 = sampleDataLogic.downloadMRBrainTumor2()
 
-    inputScalarRange = inputVolume.GetImageData().GetScalarRange()
-    self.assertEqual(inputScalarRange[0], 0)
-    self.assertEqual(inputScalarRange[1], 695)
-
-    outputVolume = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode")
-    threshold = 100
-
-    # Test the module logic
+    outputVolume = slicer.vtkMRMLScalarVolumeNode()
+    slicer.mrmlScene.AddNode(outputVolume)
+    outputVolume.CreateDefaultDisplayNodes()
 
     logic = antsRegistrationLogic()
 
-    # Test algorithm with non-inverted threshold
-    logic.process(inputVolume, outputVolume, threshold, True)
-    outputScalarRange = outputVolume.GetImageData().GetScalarRange()
-    self.assertEqual(outputScalarRange[0], inputScalarRange[0])
-    self.assertEqual(outputScalarRange[1], threshold)
+    presetParameters = logic.getPresetParameters()
+    presetParameters['stages'][0]['metrics'][0]['fixed'] = tumor1
+    presetParameters['stages'][0]['metrics'][0]['moving'] = tumor2
+    presetParameters['outputSettings']['volume'] = outputVolume
 
-    # Test algorithm with inverted threshold
-    logic.process(inputVolume, outputVolume, threshold, False)
-    outputScalarRange = outputVolume.GetImageData().GetScalarRange()
-    self.assertEqual(outputScalarRange[0], inputScalarRange[0])
-    self.assertEqual(outputScalarRange[1], inputScalarRange[1])
+    logic.process(**presetParameters)
 
-    self.delayDisplay('Test passed')
+    self.delayDisplay('Test passed!')
 
