@@ -106,11 +106,8 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.stagesTableWidget.view.selectionModel().selectionChanged.connect(self.updateParameterNodeFromGUI)
     self.ui.outputInterpolationComboBox.connect("currentIndexChanged(int)", self.updateParameterNodeFromGUI)
     self.ui.outputTransformComboBox.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
-    self.ui.gridReferenceComboBox.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
     self.ui.outputVolumeComboBox.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
     self.ui.initialTransformTypeComboBox.connect("currentIndexChanged(int)", self.updateParameterNodeFromGUI)
-    self.ui.initialTransformFixedNodeComboBox.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
-    self.ui.initialTransformMovingNodeComboBox.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
     self.ui.initialTransformNodeComboBox.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
     self.ui.dimensionalitySpinBox.connect("valueChanged(int)", self.updateParameterNodeFromGUI)
     self.ui.histogramMatchingCheckBox.connect("toggled(bool)", self.updateParameterNodeFromGUI)
@@ -221,22 +218,14 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.stagePropertiesCollapsibleButton.text = 'Stage ' + str(currentStage + 1) + ' Properties'
     self.updateStagesGUIFromParameter()
 
-    gridOutput = isinstance(self._parameterNode.GetNodeReference("OutputTransform"), slicer.vtkMRMLGridTransformNode)
     self.ui.outputTransformComboBox.setCurrentNode(self._parameterNode.GetNodeReference("OutputTransform"))
-    self.ui.gridReferenceComboBox.setCurrentNode(self._parameterNode.GetNodeReference("OutputGridReference") if gridOutput else None)
-    self.ui.gridReferenceComboBox.enabled = gridOutput
     self.ui.outputVolumeComboBox.setCurrentNode(self._parameterNode.GetNodeReference("OutputVolume"))
     self.ui.outputInterpolationComboBox.currentText = self._parameterNode.GetParameter("OutputInterpolation")
     self.ui.outputInterpolationComboBox.enabled = self._parameterNode.GetNodeReference("OutputVolume") is not None
 
     self.ui.initialTransformTypeComboBox.currentIndex = int(self._parameterNode.GetParameter("initializationFeature")) + 2
     self.ui.initialTransformNodeComboBox.setCurrentNode(self._parameterNode.GetNodeReference("InitialTransform") if self.ui.initialTransformTypeComboBox.currentIndex == 1 else None)
-    self.ui.initialTransformFixedNodeComboBox.setCurrentNode(self._parameterNode.GetNodeReference("InitialTransformFixed") if self.ui.initialTransformTypeComboBox.currentIndex > 1 else None)
-    self.ui.initialTransformMovingNodeComboBox.setCurrentNode(self._parameterNode.GetNodeReference("InitialTransformMoving") if self.ui.initialTransformTypeComboBox.currentIndex > 1 else None)
-
     self.ui.initialTransformNodeComboBox.enabled = self.ui.initialTransformTypeComboBox.currentIndex == 1
-    self.ui.initialTransformFixedNodeComboBox.enabled = self.ui.initialTransformTypeComboBox.currentIndex > 1
-    self.ui.initialTransformMovingNodeComboBox.enabled = self.ui.initialTransformTypeComboBox.currentIndex > 1
 
     self.ui.dimensionalitySpinBox.value = int(self._parameterNode.GetParameter("Dimensionality"))
     self.ui.histogramMatchingCheckBox.checked = int(self._parameterNode.GetParameter("HistogramMatching"))
@@ -279,14 +268,11 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self._parameterNode.SetParameter("CurrentStage", str(self.ui.stagesTableWidget.getSelectedRow()))
     
     self._parameterNode.SetNodeReferenceID("OutputTransform", self.ui.outputTransformComboBox.currentNodeID)
-    self._parameterNode.SetNodeReferenceID("OutputGridReference", self.ui.gridReferenceComboBox.currentNodeID)
     self._parameterNode.SetNodeReferenceID("OutputVolume", self.ui.outputVolumeComboBox.currentNodeID)
     self._parameterNode.SetParameter("OutputInterpolation", self.ui.outputInterpolationComboBox.currentText)
 
     self._parameterNode.SetParameter("initializationFeature", str(self.ui.initialTransformTypeComboBox.currentIndex-2))
     self._parameterNode.SetNodeReferenceID("InitialTransform", self.ui.initialTransformNodeComboBox.currentNodeID)
-    self._parameterNode.SetNodeReferenceID("InitialTransformFixed", self.ui.initialTransformFixedNodeComboBox.currentNodeID)
-    self._parameterNode.SetNodeReferenceID("InitialTransformMoving", self.ui.initialTransformMovingNodeComboBox.currentNodeID)
 
     self._parameterNode.SetParameter("Dimensionality", str(self.ui.dimensionalitySpinBox.value))
     self._parameterNode.SetParameter("HistogramMatching", str(int(self.ui.histogramMatchingCheckBox.checked)))
@@ -352,15 +338,12 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     parameters['outputSettings'] = {}
     parameters['outputSettings']['transform'] = self.ui.outputTransformComboBox.currentNode()
-    parameters['outputSettings']['gridReference'] = self.ui.gridReferenceComboBox.currentNode()
     parameters['outputSettings']['volume'] = self.ui.outputVolumeComboBox.currentNode()
     parameters['outputSettings']['interpolation'] = self.ui.outputInterpolationComboBox.currentText
 
     parameters['initialTransformSettings'] = {}
     parameters['initialTransformSettings']['initializationFeature'] = int(self._parameterNode.GetParameter("initializationFeature"))
     parameters['initialTransformSettings']['initialTransformNode'] = self.ui.initialTransformNodeComboBox.currentNode()
-    parameters['initialTransformSettings']['fixedImageNode'] = self.ui.initialTransformFixedNodeComboBox.currentNode()
-    parameters['initialTransformSettings']['movingImageNode'] = self.ui.initialTransformMovingNodeComboBox.currentNode()
 
     parameters['generalSettings'] = {}
     parameters['generalSettings']['dimensionality'] = self.ui.dimensionalitySpinBox.value
@@ -433,8 +416,6 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
 
     if not parameterNode.GetParameter("OutputTransform"):
       parameterNode.SetParameter("OutputTransform", "")
-    if not parameterNode.GetParameter("OutputGridReference"):
-      parameterNode.SetParameter("OutputGridReference", "")
     if not parameterNode.GetParameter("OutputVolume"):
       parameterNode.SetParameter("OutputVolume", "")
     if not parameterNode.GetParameter("OutputInterpolation"):
@@ -442,10 +423,6 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
 
     if not parameterNode.GetParameter("initializationFeature"):
       parameterNode.SetParameter("initializationFeature", str(presetParameters["initialTransformSettings"]["initializationFeature"]))
-    if not parameterNode.GetParameter("InitialTransformFixed"):
-      parameterNode.SetParameter("InitialTransformFixed", "")
-    if not parameterNode.GetParameter("InitialTransformMoving"):
-      parameterNode.SetParameter("InitialTransformFixed", "")
     if not parameterNode.GetParameter("InitialTransform"):
       parameterNode.SetParameter("InitialTransform", "")
 
@@ -475,11 +452,15 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     """
     self.resetTempDirectory()
 
+    initialTransformSettings['fixedImageNode'] = stages[0]['metrics']['fixed']
+    initialTransformSettings['movingImageNode'] = stages[0]['metrics']['moving']
+
     antsRegistraionCommand = self.getAntsRegistrationCommand(stages, outputSettings, initialTransformSettings, generalSettings)
     self.runAntsCommand(self.antsRegistrationFileName, antsRegistraionCommand)
 
-    if outputSettings['gridReference'] is not None:
-      antsApplyTransformsCommand = self.getAntsApplyTransformsCommand(outputSettings['gridReference'])
+    if isinstance(outputSettings['transform'], slicer.vtkMRMLGridTransformNode):
+      gridReferenceNode = stages[0]['metrics']['fixed']
+      antsApplyTransformsCommand = self.getAntsApplyTransformsCommand(gridReferenceNode)
       self.runAntsCommand(self.antsApplyTransformsFileName, antsApplyTransformsCommand)
 
     if outputSettings['transform'] is not None:

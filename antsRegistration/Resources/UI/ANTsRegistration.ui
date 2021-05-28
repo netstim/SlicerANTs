@@ -196,29 +196,11 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_10">
-        <property name="text">
-         <string>Transform Node: </string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="label_11">
-        <property name="text">
-         <string>Fixed Image: </string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="label_12">
-        <property name="text">
-         <string>Moving Image:</string>
-        </property>
-       </widget>
-      </item>
       <item row="0" column="1">
        <widget class="QComboBox" name="initialTransformTypeComboBox">
+        <property name="toolTip">
+         <string>Choose Initialization feature. When it's based on images, the moving and fixed nodes from the first metric will be used.</string>
+        </property>
         <item>
          <property name="text">
           <string>None</string>
@@ -246,47 +228,18 @@
         </item>
        </widget>
       </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_10">
+        <property name="text">
+         <string>Transform Node: </string>
+        </property>
+       </widget>
+      </item>
       <item row="1" column="1">
        <widget class="qMRMLNodeComboBox" name="initialTransformNodeComboBox">
         <property name="nodeTypes">
          <stringlist>
           <string>vtkMRMLTransformNode</string>
-         </stringlist>
-        </property>
-        <property name="noneEnabled">
-         <bool>true</bool>
-        </property>
-        <property name="addEnabled">
-         <bool>false</bool>
-        </property>
-        <property name="removeEnabled">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="qMRMLNodeComboBox" name="initialTransformFixedNodeComboBox">
-        <property name="nodeTypes">
-         <stringlist>
-          <string>vtkMRMLScalarVolumeNode</string>
-         </stringlist>
-        </property>
-        <property name="noneEnabled">
-         <bool>true</bool>
-        </property>
-        <property name="addEnabled">
-         <bool>false</bool>
-        </property>
-        <property name="removeEnabled">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="1">
-       <widget class="qMRMLNodeComboBox" name="initialTransformMovingNodeComboBox">
-        <property name="nodeTypes">
-         <stringlist>
-          <string>vtkMRMLScalarVolumeNode</string>
          </stringlist>
         </property>
         <property name="noneEnabled">
@@ -325,7 +278,7 @@
          <bool>false</bool>
         </property>
         <property name="toolTip">
-         <string>Select output transform. Choosing a Grid Transform Node will force a grid output. In this case, also choose a volume to use as Grid Reference.</string>
+         <string>Select output transform. Choosing a Grid Transform Node will force a grid output. In this case, the fixed node from the first metric will be used as grid reference.</string>
         </property>
         <property name="nodeTypes">
          <stringlist>
@@ -341,14 +294,14 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="0">
+      <item row="1" column="0">
        <widget class="QLabel" name="label_2">
         <property name="text">
          <string>Transformed Volume:</string>
         </property>
        </widget>
       </item>
-      <item row="2" column="1">
+      <item row="1" column="1">
        <widget class="qMRMLNodeComboBox" name="outputVolumeComboBox">
         <property name="enabled">
          <bool>false</bool>
@@ -378,14 +331,14 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="0">
+      <item row="2" column="0">
        <widget class="QLabel" name="label_4">
         <property name="text">
          <string>Interpolation: </string>
         </property>
        </widget>
       </item>
-      <item row="3" column="1">
+      <item row="2" column="1">
        <widget class="QComboBox" name="outputInterpolationComboBox">
         <property name="enabled">
          <bool>false</bool>
@@ -443,37 +396,6 @@
           <string>GenericLabel</string>
          </property>
         </item>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_15">
-        <property name="text">
-         <string>Grid Reference: </string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="qMRMLNodeComboBox" name="gridReferenceComboBox">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="toolTip">
-         <string>Select a volume to use as reference for the Grid Transform.</string>
-        </property>
-        <property name="nodeTypes">
-         <stringlist>
-          <string>vtkMRMLVolumeNode</string>
-         </stringlist>
-        </property>
-        <property name="noneEnabled">
-         <bool>true</bool>
-        </property>
-        <property name="addEnabled">
-         <bool>false</bool>
-        </property>
-        <property name="removeEnabled">
-         <bool>false</bool>
-        </property>
        </widget>
       </item>
      </layout>
@@ -717,38 +639,6 @@
   <connection>
    <sender>antsRegistration</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
-   <receiver>initialTransformFixedNodeComboBox</receiver>
-   <slot>setMRMLScene(vtkMRMLScene*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>218</x>
-     <y>477</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>264</x>
-     <y>413</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>antsRegistration</sender>
-   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
-   <receiver>initialTransformMovingNodeComboBox</receiver>
-   <slot>setMRMLScene(vtkMRMLScene*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>218</x>
-     <y>477</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>264</x>
-     <y>439</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>antsRegistration</sender>
-   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
    <receiver>outputTransformComboBox</receiver>
    <slot>setMRMLScene(vtkMRMLScene*)</slot>
    <hints>
@@ -759,22 +649,6 @@
     <hint type="destinationlabel">
      <x>274</x>
      <y>320</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>antsRegistration</sender>
-   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
-   <receiver>gridReferenceComboBox</receiver>
-   <slot>setMRMLScene(vtkMRMLScene*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>218</x>
-     <y>477</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>274</x>
-     <y>462</y>
     </hint>
    </hints>
   </connection>
