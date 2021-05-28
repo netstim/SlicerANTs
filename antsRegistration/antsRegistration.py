@@ -1,5 +1,4 @@
 import os, sys
-import unittest
 import logging
 import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
@@ -728,16 +727,21 @@ class antsRegistrationTest(ScriptedLoadableModuleTest):
     tumor1 = sampleDataLogic.downloadMRBrainTumor1()
     tumor2 = sampleDataLogic.downloadMRBrainTumor2()
 
-    outputVolume = slicer.vtkMRMLScalarVolumeNode()
-    slicer.mrmlScene.AddNode(outputVolume)
-    outputVolume.CreateDefaultDisplayNodes()
+    outputVolume = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLScalarVolumeNode')
+    outputTransform = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLGridTransformNode')
 
     logic = antsRegistrationLogic()
+    presetParameters = logic.getPresetParametersByName('quickSyN')
+    for stage in presetParameters['stages']:
+      for metric in stage['metrics']:
+        metric['fixed'] = tumor1
+        metric['moving'] = tumor2
+      for step in stage['levels']['steps']: # let's make this quick
+        step['convergenceThreshold'] = 4
+        step['convergenceWindowSize'] = 5
 
-    presetParameters = logic.getPresetParametersByName()
-    presetParameters['stages'][0]['metrics'][0]['fixed'] = tumor1
-    presetParameters['stages'][0]['metrics'][0]['moving'] = tumor2
     presetParameters['outputSettings']['volume'] = outputVolume
+    presetParameters['outputSettings']['transform'] = outputTransform
 
     logic.process(**presetParameters)
 
