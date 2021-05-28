@@ -4,12 +4,12 @@ project(SlicerANTs)
 
 #-----------------------------------------------------------------------------
 # Extension meta-information
-set(EXTENSION_HOMEPAGE "https://www.slicer.org/wiki/Documentation/Nightly/Extensions/SlicerANTs")
+set(EXTENSION_HOMEPAGE "https://github.com/simonoxen/SlicerANTs")
 set(EXTENSION_CATEGORY "Registration")
-set(EXTENSION_CONTRIBUTORS "John Doe (AnyWare Corp.)")
-set(EXTENSION_DESCRIPTION "This is an example of an extension using SuperBuild to build a dependent project named ANTs")
-set(EXTENSION_ICONURL "http://www.example.com/Slicer/Extensions/SlicerANTs.png")
-set(EXTENSION_SCREENSHOTURLS "http://www.example.com/Slicer/Extensions/SlicerANTs/Screenshots/1.png")
+set(EXTENSION_CONTRIBUTORS "Simon Oxenford (Neststim Berlin)")
+set(EXTENSION_DESCRIPTION "This extension implements ANTs Registration into Slicer")
+set(EXTENSION_ICONURL "https://raw.githubusercontent.com/simonoxen/SlicerANTs/master/logo.png")
+set(EXTENSION_SCREENSHOTURLS "https://raw.githubusercontent.com/simonoxen/SlicerANTs/master/Documentation/ModuleUI.png")
 set(EXTENSION_DEPENDS "NA") # Specified as a list or "NA" if no dependencies
 set(EXTENSION_BUILD_SUBDIRECTORY inner-build)
 
