@@ -59,28 +59,9 @@ if(NOT DEFINED ${proj}_DIR AND NOT ${SUPERBUILD_TOPLEVEL_PROJECT}_USE_SYSTEM_${p
       -DZLIB_INCLUDE_DIR:PATH=${ZLIB_INCLUDE_DIR}
       # ITK
       -DUSE_SYSTEM_ITK:BOOL=OFF
-      # -DITK_DIR:STRING=${ITK_DIR}
-      # Install directories
-      # XXX The following two variables should be updated to match the
-      #     requirements of a real CMake based external project
-      # XXX Then, this comment and the one above should be removed. Really.
-      # -DANTs_INSTALL_RUNTIME_DIR:STRING=${Slicer_INSTALL_THIRDPARTY_LIB_DIR}
-      # -DANTs_INSTALL_LIBRARY_DIR:STRING=${Slicer_INSTALL_THIRDPARTY_LIB_DIR}
-      # -DCMAKE_INSTALL_PREFIX:STRING=${Slicer_INSTALL_THIRDPARTY_LIB_DIR}
-      # Output directories for CLIs
-      #-DSlicerExecutionModel_DEFAULT_CLI_RUNTIME_OUTPUT_DIRECTORY:PATH=${SlicerExecutionModel_DEFAULT_CLI_RUNTIME_OUTPUT_DIRECTORY}
-      #-DSlicerExecutionModel_DEFAULT_CLI_RUNTIME_LIBRARY_DIRECTORY:PATH=${SlicerExecutionModel_DEFAULT_CLI_LIBRARY_OUTPUT_DIRECTORY}
-      #-DSlicerExecutionModel_DEFAULT_CLI_RUNTIME_ARCHIVE_DIRECTORY:PATH=${SlicerExecutionModel_DEFAULT_CLI_ARCHIVE_OUTPUT_DIRECTORY}
       # Options
       -DBUILD_TESTING:BOOL=OFF
       # Dependencies
-      # -DBar_DIR:PATH=${Bar_DIR}
-    # CONFIGURE_COMMAND ${CMAKE_COMMAND} -E echo
-    #   "This CONFIGURE_COMMAND is just here as a placeholder."
-    #   "Remove this line to enable configuring of a real CMake based external project"
-    # BUILD_COMMAND ${CMAKE_COMMAND} -E echo
-    #   "This BUILD_COMMAND is just here as a placeholder."
-    #   "Remove this line to enable building of a real CMake based external project"
     INSTALL_COMMAND ""
     DEPENDS
       ${${proj}_DEPENDS}
