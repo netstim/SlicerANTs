@@ -14,12 +14,13 @@ set(MODULE_PYTHON_RESOURCES
   )
 
 set(REGISTRATION_PRESET_FILES
-  forTesting.json
-  quickSyN.json
+  Rigid
+  Rigid+Affine
+  QuickSyN
   )
 
 foreach (presetfile ${REGISTRATION_PRESET_FILES})
-  set(MODULE_PYTHON_RESOURCES ${MODULE_PYTHON_RESOURCES} "Resources/Presets/${presetfile}")
+  set(MODULE_PYTHON_RESOURCES ${MODULE_PYTHON_RESOURCES} "Resources/Presets/${presetfile}.json")
 endforeach()
 
 #-----------------------------------------------------------------------------
