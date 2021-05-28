@@ -9,6 +9,7 @@ import platform
 import json
 import subprocess
 import shutil
+import glob
 
 from antsRegistrationLib.Widgets.tables import StagesTable, MetricsTable, LevelsTable
 
@@ -85,6 +86,10 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     levelsTableLayout = qt.QVBoxLayout(self.ui.levelsFrame)
     levelsTableLayout.addWidget(self.ui.levelsTableWidget)
 
+    G = glob.glob(os.path.join(os.path.dirname(__file__),'Resources','Presets','*.json'))
+    presetNames = [os.path.splitext(os.path.basename(g))[0] for g in G]
+    self.ui.stagesTableWidget.loadPresetComboBox.addItems(['Load from preset'] + presetNames)
+
     # Set scene in MRML widgets. Make sure that in Qt designer the top-level qMRMLWidget's
     # "mrmlSceneChanged(vtkMRMLScene*)" signal in is connected to each MRML widget's.
     # "setMRMLScene(vtkMRMLScene*)" slot.
@@ -129,6 +134,9 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.metricsTableWidget.linkStagesPushButton.toggled.connect(self.updateStagesParameterFromGUI)
     self.ui.levelsTableWidget.linkStagesPushButton.toggled.connect(self.updateStagesParameterFromGUI)
     self.ui.linkMaskingStagesPushButton.toggled.connect(self.updateStagesParameterFromGUI)
+
+    # Preset Stages
+    self.ui.stagesTableWidget.loadPresetComboBox.currentTextChanged.connect(self.onPresetSelected)
 
     # Buttons
     self.ui.runRegistrationButton.connect('clicked(bool)', self.onRunRegistrationButton)
@@ -326,7 +334,19 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self._parameterNode.SetParameter("StagesJson", json.dumps(stagesList))
     self._parameterNode.EndModify(wasModified)
 
-
+  def onPresetSelected(self, presetName):
+    if presetName == 'Load from preset':
+      return
+    presetParameters = self.logic.getPresetParametersByName(presetName)
+    self._updatingGUIFromParameterNode = True
+    self.ui.metricsTableWidget.linkStagesPushButton.checked = False
+    self.ui.levelsTableWidget.linkStagesPushButton.checked = False
+    self.ui.linkMaskingStagesPushButton.checked = False
+    wasModified = self._parameterNode.StartModify()  # Modify in a single batch
+    self._parameterNode.SetParameter("CurrentStage", "0")
+    self._parameterNode.SetParameter("StagesJson", json.dumps(presetParameters['stages']))
+    self._updatingGUIFromParameterNode = False
+    self._parameterNode.EndModify(wasModified)
 
   def onRunRegistrationButton(self):
     parameters = {}
@@ -385,7 +405,7 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     """
     ScriptedLoadableModuleLogic.__init__(self)
     if slicer.util.settingsValue('Developer/DeveloperMode', False, converter=slicer.util.toBool):
-      import importlib, glob
+      import importlib
       import antsRegistrationLib
       antsRegistrationLibPath = os.path.join(os.path.dirname(__file__), 'antsRegistrationLib')
       G = glob.glob(os.path.join(antsRegistrationLibPath, '**','*.py'))
@@ -412,7 +432,7 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     """
     Initialize parameter node with default settings.
     """
-    presetParameters = self.getPresetParameters()
+    presetParameters = self.getPresetParametersByName()
     if not parameterNode.GetParameter("StagesJson"):
       parameterNode.SetParameter("StagesJson",  json.dumps(presetParameters["stages"]))
     if not parameterNode.GetParameter("CurrentStage"):
@@ -440,8 +460,8 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
       parameterNode.SetParameter("ComputationPrecision", presetParameters["generalSettings"]["computationPrecision"])
 
 
-  def getPresetParameters(self):
-    presetFilePath = os.path.join(os.path.dirname(__file__),'Resources','Presets','basicRigid.json')
+  def getPresetParametersByName(self, name='forTesting'):
+    presetFilePath = os.path.join(os.path.dirname(__file__),'Resources','Presets', name + '.json')
     with open(presetFilePath) as presetFile:
       return json.load(presetFile)
 
@@ -714,7 +734,7 @@ class antsRegistrationTest(ScriptedLoadableModuleTest):
 
     logic = antsRegistrationLogic()
 
-    presetParameters = logic.getPresetParameters()
+    presetParameters = logic.getPresetParametersByName()
     presetParameters['stages'][0]['metrics'][0]['fixed'] = tumor1
     presetParameters['stages'][0]['metrics'][0]['moving'] = tumor2
     presetParameters['outputSettings']['volume'] = outputVolume

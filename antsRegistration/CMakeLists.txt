@@ -14,7 +14,8 @@ set(MODULE_PYTHON_RESOURCES
   )
 
 set(REGISTRATION_PRESET_FILES
-  basicRigid.json
+  forTesting.json
+  quickSyN.json
   )
 
 foreach (presetfile ${REGISTRATION_PRESET_FILES})

@@ -1,7 +1,8 @@
+from posixpath import basename
 import qt, ctk, slicer
 from .delegates import ComboDelegate, MRMLComboDelegate, SpinBoxDelegate, TextEditDelegate
 from ..util import antsBase, antsTransform, antsMetric
-
+import os, glob
 
 class CustomTable(qt.QWidget):
 
@@ -21,12 +22,12 @@ class CustomTable(qt.QWidget):
     self.linkStagesPushButton.checkable = True
     self.linkStagesPushButton.checked = True
 
-    buttonsFrame = qt.QFrame()
-    buttonsFrame.setSizePolicy(qt.QSizePolicy.Preferred, qt.QSizePolicy.Minimum)
-    buttonsFrame.setLayout(qt.QHBoxLayout())
-    buttonsFrame.layout().addWidget(self.addButton)
-    buttonsFrame.layout().addWidget(self.removeButton)
-    buttonsFrame.layout().addWidget(self.linkStagesPushButton)
+    self.buttonsFrame = qt.QFrame()
+    self.buttonsFrame.setSizePolicy(qt.QSizePolicy.Preferred, qt.QSizePolicy.Minimum)
+    self.buttonsFrame.setLayout(qt.QHBoxLayout())
+    self.buttonsFrame.layout().addWidget(self.addButton)
+    self.buttonsFrame.layout().addWidget(self.removeButton)
+    self.buttonsFrame.layout().addWidget(self.linkStagesPushButton)
 
     self.model = qt.QStandardItemModel(1, len(columnNames))
     for i, columnName in enumerate(columnNames):
@@ -48,7 +49,7 @@ class CustomTable(qt.QWidget):
     self.view.selectionModel().selectionChanged.connect(self.onSelectionChanged)
 
     layout = qt.QVBoxLayout(self)
-    layout.addWidget(buttonsFrame)
+    layout.addWidget(self.buttonsFrame)
     layout.addWidget(self.view)
 
     return layout
@@ -171,6 +172,9 @@ class StagesTable(TableWithSettings):
     self.settingsFormatText.setToolTip("The gradientStep or learningRate characterizes the gradient descent optimization and is scaled appropriately for each transform using the shift scales estimator. Subsequent parameters are transform-specific and can be determined from the usage. For the B-spline transforms one can also specify the smoothing in terms of spline distance (i.e. knot spacing).")
     self.linkStagesPushButton.delete()
 
+    self.loadPresetComboBox = qt.QComboBox()
+    self.buttonsFrame.layout().addWidget(self.loadPresetComboBox)
+
   def setDefaultNthRow(self, N):
     index = self.model.index(N, 0)
     aboveData =  self.model.data(index.siblingAtRow(N-1))
@@ -182,7 +186,8 @@ class StagesTable(TableWithSettings):
 
   def onRemoveButton(self):
     pass # this is handled by antsRegistration Widget
-  
+
+
 class MetricsTable(TableWithSettings):
   def __init__(self):
     columnNames = ['Type', 'Fixed', 'Moving', 'Settings']
