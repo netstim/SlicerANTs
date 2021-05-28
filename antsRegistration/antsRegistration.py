@@ -136,6 +136,10 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     # Make sure parameter node is initialized (needed for module reload)
     self.initializeParameterNode()
 
+    # Init tables
+    self.ui.stagesTableWidget.view.selectionModel().emitSelectionChanged(self.ui.stagesTableWidget.view.selectionModel().selection, qt.QItemSelection())
+    self.ui.metricsTableWidget.view.selectionModel().emitSelectionChanged(self.ui.metricsTableWidget.view.selectionModel().selection, qt.QItemSelection())
+
   def cleanup(self):
     """
     Called when the application closes and the module widget is destroyed.

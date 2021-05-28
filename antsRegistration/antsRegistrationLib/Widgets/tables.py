@@ -16,7 +16,8 @@ class CustomTable(qt.QWidget):
     self.removeButton = qt.QPushButton('-')
     self.removeButton.clicked.connect(self.onRemoveButton)
 
-    self.linkStagesPushButton = qt.QPushButton('Link Stages')
+    self.linkStagesPushButton = qt.QPushButton('Link Across Stages')
+    self.linkStagesPushButton.toolTip = 'When checked, settings will be the same for all stages.'
     self.linkStagesPushButton.checkable = True
     self.linkStagesPushButton.checked = True
 
