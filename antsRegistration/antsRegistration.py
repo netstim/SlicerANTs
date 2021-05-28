@@ -459,7 +459,7 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
       parameterNode.SetParameter("ComputationPrecision", presetParameters["generalSettings"]["computationPrecision"])
 
 
-  def getPresetParametersByName(self, name='forTesting'):
+  def getPresetParametersByName(self, name='Rigid'):
     presetFilePath = os.path.join(os.path.dirname(__file__),'Resources','Presets', name + '.json')
     with open(presetFilePath) as presetFile:
       return json.load(presetFile)
@@ -728,17 +728,19 @@ class antsRegistrationTest(ScriptedLoadableModuleTest):
     tumor2 = sampleDataLogic.downloadMRBrainTumor2()
 
     outputVolume = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLScalarVolumeNode')
-    outputTransform = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLGridTransformNode')
+    outputTransform = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLGridTransformNode') # test antsApplyTransforms
 
     logic = antsRegistrationLogic()
-    presetParameters = logic.getPresetParametersByName('quickSyN')
+    presetParameters = logic.getPresetParametersByName('QuickSyN')
     for stage in presetParameters['stages']:
       for metric in stage['metrics']:
         metric['fixed'] = tumor1
         metric['moving'] = tumor2
-      for step in stage['levels']['steps']: # let's make this quick
-        step['convergenceThreshold'] = 4
-        step['convergenceWindowSize'] = 5
+      # let's make it quick
+      for step in stage['levels']['steps']:
+        step['shrinkFactors'] = 10
+      stage['levels']['convergenceThreshold'] = 1
+      stage['levels']['convergenceWindowSize'] = 5
 
     presetParameters['outputSettings']['volume'] = outputVolume
     presetParameters['outputSettings']['transform'] = outputTransform

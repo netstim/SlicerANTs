@@ -18,7 +18,27 @@
                     {
                         "convergence": 1000,
                         "smoothingSigmas": 4,
+                        "shrinkFactors": 12
+                    },
+                    {
+                        "convergence": 500,
+                        "smoothingSigmas": 3,
                         "shrinkFactors": 8
+                    },
+                    {
+                        "convergence": 250,
+                        "smoothingSigmas": 2,
+                        "shrinkFactors": 4
+                    },
+                    {
+                        "convergence": 100,
+                        "smoothingSigmas": 1,
+                        "shrinkFactors": 2
+                    },
+                    {
+                        "convergence": 0,
+                        "smoothingSigmas": 1,
+                        "shrinkFactors": 1
                     }
                 ],
                 "smoothingSigmasUnit": "vox",

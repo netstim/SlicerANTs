@@ -1,0 +1,115 @@
+{
+    "stages": [
+        {
+            "transformParameters": {
+                "transform": "Rigid",
+                "settings": "0.1"
+            },
+            "metrics": [
+                {
+                    "type": "MI",
+                    "fixed": null,
+                    "moving": null,
+                    "settings": "1,32,Regular,0.25"
+                }
+            ],
+            "levels": {
+                "steps": [
+                    {
+                        "convergence": 1000,
+                        "smoothingSigmas": 4,
+                        "shrinkFactors": 12
+                    },
+                    {
+                        "convergence": 500,
+                        "smoothingSigmas": 3,
+                        "shrinkFactors": 8
+                    },
+                    {
+                        "convergence": 250,
+                        "smoothingSigmas": 2,
+                        "shrinkFactors": 4
+                    },
+                    {
+                        "convergence": 0,
+                        "smoothingSigmas": 1,
+                        "shrinkFactors": 2
+                    }
+                ],
+                "smoothingSigmasUnit": "vox",
+                "convergenceThreshold": 6,
+                "convergenceWindowSize": 10
+            },
+            "masks": {
+                "fixed": null,
+                "moving": null
+            }
+        },
+        {
+            "transformParameters": {
+                "transform": "Affine",
+                "settings": "0.1"
+            },
+            "metrics": [
+                {
+                    "type": "MI",
+                    "fixed": null,
+                    "moving": null,
+                    "settings": "1,32,Random,0.25"
+                }
+            ],
+            "levels": {
+                "steps": [
+                    {
+                        "convergence": 1000,
+                        "smoothingSigmas": 4,
+                        "shrinkFactors": 12
+                    },
+                    {
+                        "convergence": 500,
+                        "smoothingSigmas": 3,
+                        "shrinkFactors": 8
+                    },
+                    {
+                        "convergence": 250,
+                        "smoothingSigmas": 2,
+                        "shrinkFactors": 4
+                    },
+                    {
+                        "convergence": 100,
+                        "smoothingSigmas": 1,
+                        "shrinkFactors": 2
+                    },
+                    {
+                        "convergence": 0,
+                        "smoothingSigmas": 1,
+                        "shrinkFactors": 1
+                    }
+                ],
+                "smoothingSigmasUnit": "vox",
+                "convergenceThreshold": 6,
+                "convergenceWindowSize": 10
+            },
+            "masks": {
+                "fixed": null,
+                "moving": null
+            }
+        }
+    ],
+    "outputSettings": {
+        "transform": null,
+        "volume": null,
+        "interpolation": "Linear"
+    },
+    "initialTransformSettings": {
+        "initializationFeature": 1
+    },
+    "generalSettings": {
+        "dimensionality": 3,
+        "histogramMatching": 0,
+        "winsorizeImageIntensities": [
+            0.005,
+            0.995],
+        "computationPrecision": "float"
+    }
+}
