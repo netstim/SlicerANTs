@@ -130,7 +130,7 @@ class CustomTable(qt.QWidget):
       self.model.setData(index, val, qt.Qt.DisplayRole)
 
 class TableWithSettings(CustomTable):
-  def __init__(self, columnNames, antsType):
+  def __init__(self, columnNames, comboItems):
     layout = CustomTable.__init__(self, columnNames)
 
     self.settingsFormatText = ctk.ctkFittedTextBrowser()
@@ -146,15 +146,15 @@ class TableWithSettings(CustomTable):
 
     layout.addWidget(gb)
 
-    self.view.setItemDelegateForColumn(0, ComboDelegate(self.model, antsType.getSubClassesNames(), self.setSettingsFormatTextFromName))
+    self.view.setItemDelegateForColumn(0, ComboDelegate(self.model, comboItems, self.setSettingsFormatTextFromName))
     self.view.setItemDelegateForColumn(self.model.columnCount()-1, TextEditDelegate(self.model))
 
   def onSelectionChanged(self, selection):
     super().onSelectionChanged(selection)
     indexes = selection.indexes()
     if indexes:
-      key = self.model.data(indexes[0].siblingAtColumn(0))
-      self.setSettingsFormatTextFromName(key)
+      name = self.model.data(indexes[0].siblingAtColumn(0))
+      self.setSettingsFormatTextFromName(name)
       
   def setSettingsFormatTextFromName(self, name):
     text = antsBase().getSubClassByName(name).settingsFormat
@@ -164,7 +164,8 @@ class TableWithSettings(CustomTable):
 class StagesTable(TableWithSettings):
   def __init__(self):
     columnNames = ['Transform', 'Settings']
-    TableWithSettings.__init__(self, columnNames, antsTransform())
+    comboItems = antsTransform().getSubClassesNames()
+    TableWithSettings.__init__(self, columnNames, comboItems)
 
     self.settingsFormatText.setToolTip("The gradientStep or learningRate characterizes the gradient descent optimization and is scaled appropriately for each transform using the shift scales estimator. Subsequent parameters are transform-specific and can be determined from the usage. For the B-spline transforms one can also specify the smoothing in terms of spline distance (i.e. knot spacing).")
     self.linkStagesPushButton.delete()
@@ -184,7 +185,8 @@ class StagesTable(TableWithSettings):
 class MetricsTable(TableWithSettings):
   def __init__(self):
     columnNames = ['Type', 'Fixed', 'Moving', 'Settings']
-    TableWithSettings.__init__(self, columnNames, antsMetric())
+    comboItems = antsMetric().getSubClassesNames()
+    TableWithSettings.__init__(self, columnNames, comboItems)
 
     self.settingsFormatText.setToolTip(" The 'metricWeight' variable is used to modulate the per stage weighting of the metrics. The metrics can also employ a sampling strategy defined by a sampling percentage. The sampling strategy defaults to 'None' (aka a dense sampling of one sample per voxel), otherwise it defines a point set over which to optimize the metric. The point set can be on a regular lattice or a random lattice of points slightly perturbed to minimize aliasing artifacts. samplingPercentage defines the fraction of points to select from the domain.")
 
