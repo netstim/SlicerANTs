@@ -22,13 +22,13 @@ if(NOT DEFINED ${proj}_DIR AND NOT ${SUPERBUILD_TOPLEVEL_PROJECT}_USE_SYSTEM_${p
 
   ExternalProject_SetIfNotDefined(
    ${SUPERBUILD_TOPLEVEL_PROJECT}_${proj}_GIT_REPOSITORY
-   "${EP_GIT_PROTOCOL}://github.com/ANTsX/ANTs.git"
+   "${EP_GIT_PROTOCOL}://github.com/simonoxen/ANTs.git"
    QUIET
    )
 
   ExternalProject_SetIfNotDefined(
    ${SUPERBUILD_TOPLEVEL_PROJECT}_${proj}_GIT_TAG
-   "6f13702b0ab41b03a5653792a1e12afc2e661f1c"
+   "286bef8334720402c3729deee80c919490763c25"
    QUIET
    )
 
@@ -58,7 +58,12 @@ if(NOT DEFINED ${proj}_DIR AND NOT ${SUPERBUILD_TOPLEVEL_PROJECT}_USE_SYSTEM_${p
       -DZLIB_LIBRARY:PATH=${ZLIB_LIBRARY}
       -DZLIB_INCLUDE_DIR:PATH=${ZLIB_INCLUDE_DIR}
       # ITK
-      -DUSE_SYSTEM_ITK:BOOL=OFF
+      -DUSE_SYSTEM_ITK:BOOL=ON
+      -DITK_DIR:PATH=${ITK_DIR}
+      # VTK
+      -DUSE_VTK:BOOL=ON
+      -DUSE_SYSTEM_VTK:BOOL=ON
+      -DVTK_DIR:PATH=${VTK_DIR}
       # Options
       -DBUILD_TESTING:BOOL=OFF
       # Dependencies
