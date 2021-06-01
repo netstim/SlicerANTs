@@ -1,5 +1,5 @@
 
-set(proj ANTs)
+set(proj ants)
 
 # Set dependency list
 set(${proj}_DEPENDS
@@ -14,8 +14,8 @@ if(${SUPERBUILD_TOPLEVEL_PROJECT}_USE_SYSTEM_${proj})
 endif()
 
 # Sanity checks
-if(DEFINED ANTs_DIR AND NOT EXISTS ${ANTs_DIR})
-  message(FATAL_ERROR "ANTs_DIR [${ANTs_DIR}] variable is defined but corresponds to nonexistent directory")
+if(DEFINED ants_DIR AND NOT EXISTS ${ants_DIR})
+  message(FATAL_ERROR "ants_DIR [${ants_DIR}] variable is defined but corresponds to nonexistent directory")
 endif()
 
 if(NOT DEFINED ${proj}_DIR AND NOT ${SUPERBUILD_TOPLEVEL_PROJECT}_USE_SYSTEM_${proj})
@@ -39,6 +39,10 @@ if(NOT DEFINED ${proj}_DIR AND NOT ${SUPERBUILD_TOPLEVEL_PROJECT}_USE_SYSTEM_${p
     ${${proj}_EP_ARGS}
     GIT_REPOSITORY "${${SUPERBUILD_TOPLEVEL_PROJECT}_${proj}_GIT_REPOSITORY}"
     GIT_TAG "${${SUPERBUILD_TOPLEVEL_PROJECT}_${proj}_GIT_TAG}"
+    #--Patch step-------------
+    PATCH_COMMAND ${CMAKE_COMMAND} -Dants_SRC_DIR=${CMAKE_BINARY_DIR}/${proj}
+      -P ${CMAKE_CURRENT_LIST_DIR}/${proj}_patch.cmake
+    #--Configure step-------------
     SOURCE_DIR ${EP_SOURCE_DIR}
     BINARY_DIR ${EP_BINARY_DIR}
     CMAKE_CACHE_ARGS
