@@ -39,10 +39,6 @@ if(NOT DEFINED ${proj}_DIR AND NOT ${SUPERBUILD_TOPLEVEL_PROJECT}_USE_SYSTEM_${p
     ${${proj}_EP_ARGS}
     GIT_REPOSITORY "${${SUPERBUILD_TOPLEVEL_PROJECT}_${proj}_GIT_REPOSITORY}"
     GIT_TAG "${${SUPERBUILD_TOPLEVEL_PROJECT}_${proj}_GIT_TAG}"
-    #--Patch step-------------
-    PATCH_COMMAND ${CMAKE_COMMAND} -Dants_SRC_DIR=${CMAKE_BINARY_DIR}/${proj}
-      -P ${CMAKE_CURRENT_LIST_DIR}/${proj}_patch.cmake
-    #--Configure step-------------
     SOURCE_DIR ${EP_SOURCE_DIR}
     BINARY_DIR ${EP_BINARY_DIR}
     CMAKE_CACHE_ARGS
