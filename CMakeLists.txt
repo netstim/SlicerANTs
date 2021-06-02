@@ -40,7 +40,8 @@ add_subdirectory(antsRegistration)
 
 #-----------------------------------------------------------------------------
 set(EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS)
-list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${ants_DIR};ants;RUNTIME_antsRegistration;/")
+list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${ants_DIR}/ANTS-build;ANTs;RUNTIME_antsRegistration;/${Slicer_INSTALL_THIRDPARTY_LIB_DIR}")
+list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${ants_DIR}/ANTS-build;ANTs;RUNTIME_antsApplyTransforms;/${Slicer_INSTALL_THIRDPARTY_LIB_DIR}")
 set(${EXTENSION_NAME}_CPACK_INSTALL_CMAKE_PROJECTS "${EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS}" CACHE STRING "List of external projects to install" FORCE)
 
 #-----------------------------------------------------------------------------
