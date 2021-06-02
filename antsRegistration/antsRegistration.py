@@ -540,6 +540,8 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     scriptPath = os.path.dirname(os.path.abspath(__file__))
     antsBinDirCandidates = [
       os.path.join(scriptPath, '..'),
+      os.path.join(scriptPath, '../bin'),
+      os.path.join(scriptPath, '../../bin'),
       os.path.join(scriptPath, '../../../bin'),
       os.path.join(scriptPath, '../../../../bin'),
       os.path.join(scriptPath, '../../../../bin/Release'),
