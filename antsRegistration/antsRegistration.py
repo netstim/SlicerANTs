@@ -23,7 +23,7 @@ class antsRegistration(ScriptedLoadableModule):
 
   def __init__(self, parent):
     ScriptedLoadableModule.__init__(self, parent)
-    self.parent.title = "General Registraion (ANTs)"
+    self.parent.title = "General Registration (ANTs)"
     self.parent.categories = ["Registration"]
     self.parent.dependencies = []
     self.parent.contributors = ["Simon Oxenford (Netstim Berlin)"]
