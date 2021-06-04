@@ -4,9 +4,8 @@ This extension implements [ANTs](https://github.com/ANTsX/ANTs) Registration int
 
 ## Modules
 
-- antsRegistration: currently the only included module, which provides an interface for setting ANTs registration parameters. See the following image for an overview of the user interface.
-
-![SlicerANTs](Documentation/ModuleUI.png?raw=true)
+- [antsRegistration](antsRegistration/): provides an interface for doing registration with ANTs. Generates parameters passed to the antsCommand module.
+- antsCommand: cli module to run ANTs executables.
 
 ## (Basic) Tutorial
 
