@@ -1,11 +1,14 @@
 #-----------------------------------------------------------------------------
 set(MODULE_NAME antsRegistration)
 
-add_subdirectory(antsRegistrationLib)
-
 #-----------------------------------------------------------------------------
 set(MODULE_PYTHON_SCRIPTS
   ${MODULE_NAME}.py
+  antsRegistrationLib/Widgets/__init__.py
+  antsRegistrationLib/Widgets/delegates.py
+  antsRegistrationLib/Widgets/tables.py
+  antsRegistrationLib/__init__.py
+  antsRegistrationLib/util.py
   )
 
 set(MODULE_PYTHON_RESOURCES
