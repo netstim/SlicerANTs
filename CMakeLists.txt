@@ -36,6 +36,7 @@ endif()
 #-----------------------------------------------------------------------------
 # Extension modules
 add_subdirectory(antsRegistration)
+add_subdirectory(antsCommand)
 ## NEXT_MODULE
 
 #-----------------------------------------------------------------------------

@@ -83,6 +83,9 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     presetNames = [os.path.splitext(os.path.basename(g))[0] for g in G]
     self.ui.stagesTableWidget.loadPresetComboBox.addItems(['Load from preset'] + presetNames)
 
+    self.ui.cliWidget = slicer.modules.antscommand.createNewWidgetRepresentation()
+    self.layout.addWidget(self.ui.cliWidget.children()[3]) # progress bar
+
     # Set scene in MRML widgets. Make sure that in Qt designer the top-level qMRMLWidget's
     # "mrmlSceneChanged(vtkMRMLScene*)" signal in is connected to each MRML widget's.
     # "setMRMLScene(vtkMRMLScene*)" slot.
@@ -342,6 +345,12 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self._parameterNode.EndModify(wasModified)
 
   def onRunRegistrationButton(self):
+    if self.ui.runRegistrationButton.text == 'Cancel':
+      if self.logic.cliNode:
+        self.logic.cliNode.Cancel()
+      self.resetRunRegistrationButtonText()
+      return
+
     parameters = {}
 
     parameters['stages'] = json.loads(self._parameterNode.GetParameter("StagesJson"))
@@ -368,15 +377,20 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     parameters['generalSettings']['winsorizeImageIntensities'] = [self.ui.winsorizeRangeWidget.minimumValue, self.ui.winsorizeRangeWidget.maximumValue]
     parameters['generalSettings']['computationPrecision'] = self.ui.computationPrecisionComboBox.currentText
 
-    logLabelTimer = qt.QTimer()
-    logLabelTimer.timeout.connect(lambda: self.ui.antsLogFittedText.setText(self.logic.antsLogLine))
-    logLabelTimer.start(100)
-
     self.logic.process(**parameters)
 
-    logLabelTimer.stop()
-    self.ui.antsLogFittedText.setText(self.logic.antsLogLine)
+    self.ui.cliWidget.setCurrentCommandLineModuleNode(self.logic.cliNode)
+    self.logic.cliNode.AddObserver('ModifiedEvent', self.onProcessingStatusUpdate)
+    self.ui.runRegistrationButton.text = 'Cancel'
 
+  def onProcessingStatusUpdate(self, caller, event):
+    if (caller.GetStatus() & caller.Completed):
+      self.resetRunRegistrationButtonText()
+    else:
+      self.ui.runRegistrationButton.text = 'Cancel'
+
+  def resetRunRegistrationButtonText(self):
+    self.ui.runRegistrationButton.text = 'Run Registration'
 
 #
 # antsRegistrationLogic
@@ -412,14 +426,11 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
           module = getattr(module, modulePart)
         importlib.reload(module) # reload
 
-    self.antsLogLine = ''
+    self.antsApplyTransformsCommand = ''
     self.tempDirectory = ''
     self.outputVolumeFileName = 'outputVolume.nii'
     self.outputTransformPrefix = 'outputTransform'
-    executableExt = '.exe' if platform.system() == 'Windows' else ''
-    self.antsRegistrationFileName = 'antsRegistration' + executableExt
-    self.antsApplyTransformsFileName = 'antsApplyTransforms' + executableExt
-
+    self.cliNode = None
 
   def setDefaultParameters(self, parameterNode):
     """
@@ -473,26 +484,54 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     initialTransformSettings['movingImageNode'] = stages[0]['metrics'][0]['moving']
 
     antsRegistraionCommand = self.getAntsRegistrationCommand(stages, outputSettings, initialTransformSettings, generalSettings)
-    self.runAntsCommand(self.antsRegistrationFileName, antsRegistraionCommand)
+    self.cliNode = self.runAntsCommand('antsRegistration', antsRegistraionCommand)
+    self.cliNode.AddObserver('ModifiedEvent', lambda c,e,o=outputSettings: self.onProcessingStatusUpdate(c,e,o))
 
     if isinstance(outputSettings['transform'], slicer.vtkMRMLGridTransformNode):
       gridReferenceNode = stages[0]['metrics'][0]['fixed']
-      antsApplyTransformsCommand = self.getAntsApplyTransformsCommand(gridReferenceNode)
-      self.runAntsCommand(self.antsApplyTransformsFileName, antsApplyTransformsCommand)
+      self.antsApplyTransformsCommand = self.getAntsApplyTransformsCommand(gridReferenceNode)
+    else:
+      self.antsApplyTransformsCommand = ''
+
+  def onProcessingStatusUpdate(self, caller, event, outputSettings):
+    if (caller.GetStatus() & caller.Cancelled):
+        self.resetTempDirectoryAndCliNode()
+    elif (caller.GetStatus() & caller.Completed):
+      if (caller.GetStatus() & caller.ErrorsMask) and 'file NULL does not exist' not in caller.GetErrorText():
+        print("ANTs failed: " + caller.GetErrorText())
+        self.resetTempDirectoryAndCliNode()
+      else:
+        self.doPostProcessing(outputSettings)
+        
+  def doPostProcessing(self, outputSettings):
+    if self.antsApplyTransformsCommand is not '':
+      self.runAntsCommand('antsApplyTransforms', self.antsApplyTransformsCommand)
+      self.antsApplyTransformsCommand = ''
+      return
 
     if outputSettings['transform'] is not None:
       self.loadOutputTransformNode(outputSettings['transform'])
-
     if outputSettings['volume'] is not None:
       self.loadOutputVolumeNode(outputSettings['volume'])
 
-    self.resetTempDirectory()    
+    self.resetTempDirectoryAndCliNode()
+
+  def resetTempDirectoryAndCliNode(self):
+    self.resetTempDirectory()
+    self.resetCliNode()
+
+  def resetCliNode(self):
+    slicer.mrmlScene.RemoveNode(self.cliNode)
+    self.cliNode = None
 
   def loadOutputTransformNode(self, outputTransformNode):
     fileExt = '.nii.gz' if isinstance(outputTransformNode, slicer.vtkMRMLGridTransformNode) else '.h5'
     outputTransformPath = os.path.join(self.getTempDirectory(), self.outputTransformPrefix + 'Composite' + fileExt)
     loadedOutputTransformNode = slicer.util.loadTransform(outputTransformPath)
-    outputTransformNode.SetAndObserveTransformToParent(loadedOutputTransformNode.GetTransformToParent())
+    if not loadedOutputTransformNode.GetTransformToParent().GetInverseFlag():
+      outputTransformNode.SetAndObserveTransformToParent(loadedOutputTransformNode.GetTransformToParent())
+    else:
+      outputTransformNode.SetAndObserveTransformFromParent(loadedOutputTransformNode.GetTransformFromParent())
     slicer.mrmlScene.RemoveNode(loadedOutputTransformNode)
 
   def loadOutputVolumeNode(self, outputVolumeNode):
@@ -504,57 +543,16 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     outputVolumeNode.SetIJKToRASMatrix(ijkToRas)
     slicer.mrmlScene.RemoveNode(loadedOutputVolumeNode)
 
-  def runAntsCommand(self, executableFileName, command):
-    params = {}
-    params['env'] = self.getAntsEnv()
-    params['stdout'] = subprocess.PIPE
-    params['universal_newlines'] = True
-    if sys.platform == 'win32':
-      params['startupinfo'] = self.getStartupInfo()
-
-    executableFilePath = os.path.join(self.getAntsBinDir(), executableFileName)
-    logging.info("Running ANTs Command: " + executableFilePath + " " + command)
-    process = subprocess.Popen([executableFilePath] + command.split(" "), **params)
-
-    for stdout_line in iter(process.stdout.readline, ""):
-      self.antsLogLine = stdout_line.rstrip()
-      logging.info(self.antsLogLine)
-      slicer.app.processEvents()
-    process.stdout.close()
-    if process.wait():
-      raise RuntimeError(executableFileName + " failed")
-
-  def getStartupInfo(self):
-    info = subprocess.STARTUPINFO()
-    info.dwFlags = 1
-    info.wShowWindow = 0
-    return info
-
-  def getAntsEnv(self):
-    antsBinDir = self.getAntsBinDir()
-    antsEnv = os.environ.copy()
-    antsEnv["PATH"] = antsBinDir + os.pathsep + antsEnv["PATH"] if antsEnv.get("PATH") else antsBinDir
-    return antsEnv
-
-  def getAntsBinDir(self):
-    scriptPath = os.path.dirname(os.path.abspath(__file__))
-    antsBinDirCandidates = [
-      os.path.join(scriptPath, '..'),
-      os.path.join(scriptPath, '../bin'),
-      os.path.join(scriptPath, '../../bin'),
-      os.path.join(scriptPath, '../../../bin'),
-      os.path.join(scriptPath, '../../../../bin'),
-      os.path.join(scriptPath, '../../../../bin/Release'),
-      os.path.join(scriptPath, '../../../../bin/Debug'),
-      os.path.join(scriptPath, '../../../../bin/RelWithDebInfo'),
-      os.path.join(scriptPath, '../../../../bin/MinSizeRel') ]
-
-    for antsBinDirCandidate in antsBinDirCandidates:
-      antsExecutable = os.path.join(os.path.abspath(antsBinDirCandidate), self.antsRegistrationFileName)
-      if os.path.isfile(antsExecutable):
-        return os.path.abspath(antsBinDirCandidate)
-
-    raise ValueError('ANTs not found')
+  def runAntsCommand(self, executableName, command):
+    if self.cliNode is None:
+      params = {}
+      params['antsExecutable'] = executableName
+      params['antsCommand'] = command
+      return slicer.cli.run(slicer.modules.antscommand, None, params, wait_for_completion=False, update_display=False)
+    else:
+      self.cliNode.SetParameterAsString('antsExecutable', executableName)
+      self.cliNode.SetParameterAsString('antsCommand', command)
+      slicer.cli.run(slicer.modules.antscommand, node=self.cliNode, wait_for_completion=False, update_display=False)
 
   def getAntsApplyTransformsCommand(self, gridReferenceNode):
     antsCommand = "--transform %s" % os.path.join(self.getTempDirectory(), self.outputTransformPrefix + 'Composite.h5')
