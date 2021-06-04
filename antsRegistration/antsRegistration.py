@@ -526,7 +526,8 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     if (caller.GetStatus() & caller.Cancelled):
         self.resetTempDirectoryAndLocalVars()
     elif (caller.GetStatus() & caller.Completed):
-      if (caller.GetStatus() & caller.ErrorsMask) and 'file NULL does not exist' not in caller.GetErrorText():
+      errorText = caller.GetErrorText().replace('file NULL does not exist . ','').strip()
+      if (caller.GetStatus() & caller.ErrorsMask) and errorText is not 'antsCommand standard error:': 
         print("ANTs failed: " + caller.GetErrorText())
         self.resetTempDirectoryAndLocalVars()
       else:
