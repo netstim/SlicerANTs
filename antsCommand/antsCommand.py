@@ -48,8 +48,8 @@ def getAntsBinDir():
     os.path.join(scriptPath, '../../../../bin'),
     os.path.join(scriptPath, '../../../../bin/Release'),
     os.path.join(scriptPath, '../../../../bin/Debug'),
-    os.path.join(scriptPath, '../../../../bin/RelWithDebInfo'),
-    os.path.join(scriptPath, '../../../../bin/MinSizeRel') ]
+    os.path.join(scriptPath, '../../../../../bin/Release'),
+    os.path.join(scriptPath, '../../../../../bin/Debug') ]
 
   antsRegistrationFileName = getExecutableWithExtension('antsRegistration')
   for antsBinDirCandidate in antsBinDirCandidates:

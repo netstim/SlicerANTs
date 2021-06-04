@@ -172,8 +172,8 @@ class StagesTable(TableWithSettings):
     self.settingsFormatText.setToolTip("The gradientStep or learningRate characterizes the gradient descent optimization and is scaled appropriately for each transform using the shift scales estimator. Subsequent parameters are transform-specific and can be determined from the usage. For the B-spline transforms one can also specify the smoothing in terms of spline distance (i.e. knot spacing).")
     self.linkStagesPushButton.delete()
 
-    self.loadPresetComboBox = qt.QComboBox()
-    self.buttonsFrame.layout().addWidget(self.loadPresetComboBox)
+    self.savePresetPushButton = qt.QPushButton('Save as preset')
+    self.buttonsFrame.layout().addWidget(self.savePresetPushButton)
 
   def setDefaultNthRow(self, N):
     index = self.model.index(N, 0)
@@ -195,7 +195,7 @@ class MetricsTable(TableWithSettings):
     TableWithSettings.__init__(self, columnNames, comboItems)
 
     self.settingsFormatText.setToolTip(" The 'metricWeight' variable is used to modulate the per stage weighting of the metrics. The metrics can also employ a sampling strategy defined by a sampling percentage. The sampling strategy defaults to 'None' (aka a dense sampling of one sample per voxel), otherwise it defines a point set over which to optimize the metric. The point set can be on a regular lattice or a random lattice of points slightly perturbed to minimize aliasing artifacts. samplingPercentage defines the fraction of points to select from the domain.")
-
+    self.linkStagesPushButton.toolTip = self.linkStagesPushButton.toolTip + ' For Metrics enabled is the default. When disabled, only the first stage metric modifies the global selectors on the top of the GUI.'
     self.view.setItemDelegateForColumn(1, MRMLComboDelegate(self.model))
     self.view.setItemDelegateForColumn(2, MRMLComboDelegate(self.model))
 

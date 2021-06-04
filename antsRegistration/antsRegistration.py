@@ -11,6 +11,7 @@ import shutil
 import glob
 
 from antsRegistrationLib.Widgets.tables import StagesTable, MetricsTable, LevelsTable
+from antsRegistrationLib import presetHelper
 
 #
 # antsRegistration
@@ -79,10 +80,6 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     levelsTableLayout = qt.QVBoxLayout(self.ui.levelsFrame)
     levelsTableLayout.addWidget(self.ui.levelsTableWidget)
 
-    G = glob.glob(os.path.join(os.path.dirname(__file__),'Resources','Presets','*.json'))
-    presetNames = [os.path.splitext(os.path.basename(g))[0] for g in G]
-    self.ui.stagesTableWidget.loadPresetComboBox.addItems(['Load from preset'] + presetNames)
-
     self.ui.cliWidget = slicer.modules.antscommand.createNewWidgetRepresentation()
     self.layout.addWidget(self.ui.cliWidget.children()[3]) # progress bar
 
@@ -94,6 +91,8 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     # Create logic class. Logic implements all computations that should be possible to run
     # in batch mode, without a graphical user interface.
     self.logic = antsRegistrationLogic()
+
+    self.ui.stagesPresetsComboBox.addItems(['Select...'] + presetHelper.getPresetNames())
 
     # Connections
 
@@ -115,6 +114,9 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.winsorizeRangeWidget.connect("rangeChanged(double,double)", self.updateParameterNodeFromGUI)
     self.ui.computationPrecisionComboBox.connect("currentIndexChanged(int)", self.updateParameterNodeFromGUI)
 
+    self.ui.fixedImageNodeComboBox.connect("currentNodeChanged(vtkMRMLNode*)", self.updateStagesFromFixedMovingNodes)
+    self.ui.movingImageNodeComboBox.connect("currentNodeChanged(vtkMRMLNode*)", self.updateStagesFromFixedMovingNodes)
+
     # Stages Parameter
     self.ui.stagesTableWidget.removeButton.clicked.connect(self.onRemoveStageButtonClicked)
     self.ui.metricsTableWidget.removeButton.clicked.connect(self.updateStagesParameterFromGUI)
@@ -132,9 +134,10 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.linkMaskingStagesPushButton.toggled.connect(self.updateStagesParameterFromGUI)
 
     # Preset Stages
-    self.ui.stagesTableWidget.loadPresetComboBox.currentTextChanged.connect(self.onPresetSelected)
+    self.ui.stagesPresetsComboBox.currentTextChanged.connect(self.onPresetSelected)
 
     # Buttons
+    self.ui.stagesTableWidget.savePresetPushButton.connect('clicked(bool)', self.onSavePresetPushButton)
     self.ui.runRegistrationButton.connect('clicked(bool)', self.onRunRegistrationButton)
 
     # Make sure parameter node is initialized (needed for module reload)
@@ -246,6 +249,8 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
   def updateStagesGUIFromParameter(self):
     stagesList = json.loads(self._parameterNode.GetParameter("StagesJson"))
+    self.ui.fixedImageNodeComboBox.setCurrentNodeID(stagesList[0]['metrics'][0]['fixed'])
+    self.ui.movingImageNodeComboBox.setCurrentNodeID(stagesList[0]['metrics'][0]['moving'])
     self.setTransformsGUIFromList(stagesList)
     self.setCurrentStagePropertiesGUIFromList(stagesList)
 
@@ -290,6 +295,17 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self._parameterNode.EndModify(wasModified)
 
 
+  def updateStagesFromFixedMovingNodes(self, forceUpdate=False):
+    if forceUpdate:
+      pass
+    elif self._parameterNode is None or self._updatingGUIFromParameterNode:
+      return
+    stagesList = json.loads(self._parameterNode.GetParameter("StagesJson"))
+    for stage in stagesList:
+      stage['metrics'][0]['fixed'] = self.ui.fixedImageNodeComboBox.currentNodeID
+      stage['metrics'][0]['moving'] = self.ui.movingImageNodeComboBox.currentNodeID
+    self._parameterNode.SetParameter("StagesJson", json.dumps(stagesList))
+
   def updateStagesParameterFromGUI(self):
     if self._parameterNode is None or self._updatingGUIFromParameterNode:
       return
@@ -331,28 +347,37 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self._parameterNode.EndModify(wasModified)
 
   def onPresetSelected(self, presetName):
-    if presetName == 'Load from preset':
+    if presetName == 'Select...' or self._parameterNode is None or self._updatingGUIFromParameterNode:
       return
-    presetParameters = self.logic.getPresetParametersByName(presetName)
     self._updatingGUIFromParameterNode = True
-    self.ui.metricsTableWidget.linkStagesPushButton.checked = False
+    self.ui.metricsTableWidget.linkStagesPushButton.checked = True
     self.ui.levelsTableWidget.linkStagesPushButton.checked = False
     self.ui.linkMaskingStagesPushButton.checked = False
     wasModified = self._parameterNode.StartModify()  # Modify in a single batch
-    self._parameterNode.SetParameter("CurrentStage", "0")
+    presetParameters = presetHelper.getPresetParametersByName(presetName)
     self._parameterNode.SetParameter("StagesJson", json.dumps(presetParameters['stages']))
+    self._parameterNode.SetParameter("CurrentStage", "0")
+    self.updateStagesFromFixedMovingNodes(forceUpdate=True)
     self._updatingGUIFromParameterNode = False
     self._parameterNode.EndModify(wasModified)
 
+  def onSavePresetPushButton(self):
+    stages = json.loads(self._parameterNode.GetParameter("StagesJson"))
+    savedPresetName = presetHelper.saveStagesAsPreset(stages)
+    if savedPresetName:
+      self._updatingGUIFromParameterNode = True
+      self.ui.stagesPresetsComboBox.addItem(savedPresetName)
+      self.ui.stagesPresetsComboBox.setCurrentText(savedPresetName)
+      self._updatingGUIFromParameterNode = False
+
+
   def onRunRegistrationButton(self):
     if self.ui.runRegistrationButton.text == 'Cancel':
-      if self.logic.cliNode:
-        self.logic.cliNode.Cancel()
-      self.resetRunRegistrationButtonText()
+      self.logic.cancelRegistration()
+      self.ui.runRegistrationButton.text = 'Run Registration'
       return
 
     parameters = {}
-
     parameters['stages'] = json.loads(self._parameterNode.GetParameter("StagesJson"))
     # ID to Node
     for stage in parameters['stages']:
@@ -379,18 +404,16 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     self.logic.process(**parameters)
 
-    self.ui.cliWidget.setCurrentCommandLineModuleNode(self.logic.cliNode)
-    self.logic.cliNode.AddObserver('ModifiedEvent', self.onProcessingStatusUpdate)
+    self.ui.cliWidget.setCurrentCommandLineModuleNode(self.logic._cliNode)
+    self.logic._cliNode.AddObserver('ModifiedEvent', self.onProcessingStatusUpdate)
     self.ui.runRegistrationButton.text = 'Cancel'
 
   def onProcessingStatusUpdate(self, caller, event):
-    if (caller.GetStatus() & caller.Completed):
-      self.resetRunRegistrationButtonText()
+    if (caller.GetStatus() & caller.Completed) or (caller.GetStatus() & caller.Cancelled):
+      self.ui.runRegistrationButton.text = 'Run Registration'
     else:
       self.ui.runRegistrationButton.text = 'Cancel'
 
-  def resetRunRegistrationButtonText(self):
-    self.ui.runRegistrationButton.text = 'Run Registration'
 
 #
 # antsRegistrationLogic
@@ -430,13 +453,16 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     self.tempDirectory = ''
     self.outputVolumeFileName = 'outputVolume.nii'
     self.outputTransformPrefix = 'outputTransform'
-    self.cliNode = None
-
+    self._cliNode = None
+    self._cliObserver = None
+    self._outputVolume = None
+    self._outputTransform = None
+    
   def setDefaultParameters(self, parameterNode):
     """
     Initialize parameter node with default settings.
     """
-    presetParameters = self.getPresetParametersByName()
+    presetParameters = presetHelper.getPresetParametersByName()
     if not parameterNode.GetParameter("StagesJson"):
       parameterNode.SetParameter("StagesJson",  json.dumps(presetParameters["stages"]))
     if not parameterNode.GetParameter("CurrentStage"):
@@ -463,12 +489,9 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     if not parameterNode.GetParameter("ComputationPrecision"):
       parameterNode.SetParameter("ComputationPrecision", presetParameters["generalSettings"]["computationPrecision"])
 
-
-  def getPresetParametersByName(self, name='Rigid'):
-    presetFilePath = os.path.join(os.path.dirname(__file__),'Resources','Presets', name + '.json')
-    with open(presetFilePath) as presetFile:
-      return json.load(presetFile)
-
+  def cancelRegistration(self):
+    if self._cliNode:
+      self._cliNode.Cancel()
 
   def process(self, stages, outputSettings, initialTransformSettings={}, generalSettings={}):
     """
@@ -478,14 +501,13 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     :param generalSettings: dictionary defining general registration settings
     See presets examples to see how these are specified
     """
-    self.resetTempDirectory()
+    self.resetTempDirectoryAndLocalVars()
 
     initialTransformSettings['fixedImageNode'] = stages[0]['metrics'][0]['fixed']
     initialTransformSettings['movingImageNode'] = stages[0]['metrics'][0]['moving']
 
     antsRegistraionCommand = self.getAntsRegistrationCommand(stages, outputSettings, initialTransformSettings, generalSettings)
-    self.cliNode = self.runAntsCommand('antsRegistration', antsRegistraionCommand)
-    self.cliNode.AddObserver('ModifiedEvent', lambda c,e,o=outputSettings: self.onProcessingStatusUpdate(c,e,o))
+    self.runAntsCommandAndSetObserver('antsRegistration', antsRegistraionCommand)
 
     if isinstance(outputSettings['transform'], slicer.vtkMRMLGridTransformNode):
       gridReferenceNode = stages[0]['metrics'][0]['fixed']
@@ -493,36 +515,47 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     else:
       self.antsApplyTransformsCommand = ''
 
-  def onProcessingStatusUpdate(self, caller, event, outputSettings):
+    self._outputVolume = outputSettings['volume']
+    self._outputTransform = outputSettings['transform']
+
+  def runAntsCommandAndSetObserver(self, executableName, command):
+    self._cliNode = self.runAntsCommand(executableName, command)
+    self._cliObserver = self._cliNode.AddObserver('ModifiedEvent', self.onProcessingStatusUpdate)
+
+  def onProcessingStatusUpdate(self, caller, event):
     if (caller.GetStatus() & caller.Cancelled):
-        self.resetTempDirectoryAndCliNode()
+        self.resetTempDirectoryAndLocalVars()
     elif (caller.GetStatus() & caller.Completed):
       if (caller.GetStatus() & caller.ErrorsMask) and 'file NULL does not exist' not in caller.GetErrorText():
         print("ANTs failed: " + caller.GetErrorText())
-        self.resetTempDirectoryAndCliNode()
+        self.resetTempDirectoryAndLocalVars()
       else:
-        self.doPostProcessing(outputSettings)
+        self._cliNode.RemoveObserver(self._cliObserver)
+        self.doPostProcessing()
         
-  def doPostProcessing(self, outputSettings):
+  def doPostProcessing(self):
     if self.antsApplyTransformsCommand is not '':
-      self.runAntsCommand('antsApplyTransforms', self.antsApplyTransformsCommand)
+      self.runAntsCommandAndSetObserver('antsApplyTransforms', self.antsApplyTransformsCommand)
       self.antsApplyTransformsCommand = ''
       return
 
-    if outputSettings['transform'] is not None:
-      self.loadOutputTransformNode(outputSettings['transform'])
-    if outputSettings['volume'] is not None:
-      self.loadOutputVolumeNode(outputSettings['volume'])
+    if self._outputTransform is not None:
+      self.loadOutputTransformNode(self._outputTransform)
+    if self._outputVolume is not None:
+      self.loadOutputVolumeNode(self._outputVolume)
 
-    self.resetTempDirectoryAndCliNode()
+    self.resetTempDirectoryAndLocalVars()
 
-  def resetTempDirectoryAndCliNode(self):
+  def resetTempDirectoryAndLocalVars(self):
     self.resetTempDirectory()
     self.resetCliNode()
+    self._outputVolume = None
+    self._outputTransform = None
 
   def resetCliNode(self):
-    slicer.mrmlScene.RemoveNode(self.cliNode)
-    self.cliNode = None
+    slicer.mrmlScene.RemoveNode(self._cliNode)
+    self._cliNode = None
+    self._cliObserver = None
 
   def loadOutputTransformNode(self, outputTransformNode):
     fileExt = '.nii.gz' if isinstance(outputTransformNode, slicer.vtkMRMLGridTransformNode) else '.h5'
@@ -544,15 +577,11 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     slicer.mrmlScene.RemoveNode(loadedOutputVolumeNode)
 
   def runAntsCommand(self, executableName, command):
-    if self.cliNode is None:
-      params = {}
-      params['antsExecutable'] = executableName
-      params['antsCommand'] = command
-      return slicer.cli.run(slicer.modules.antscommand, None, params, wait_for_completion=False, update_display=False)
-    else:
-      self.cliNode.SetParameterAsString('antsExecutable', executableName)
-      self.cliNode.SetParameterAsString('antsCommand', command)
-      slicer.cli.run(slicer.modules.antscommand, node=self.cliNode, wait_for_completion=False, update_display=False)
+    logging.info("Running ANTs Command: " + executableName + " " + command)
+    params = {}
+    params['antsExecutable'] = executableName
+    params['antsCommand'] = command
+    return slicer.cli.run(slicer.modules.antscommand, self._cliNode, params, wait_for_completion=False, update_display=False)
 
   def getAntsApplyTransformsCommand(self, gridReferenceNode):
     antsCommand = "--transform %s" % os.path.join(self.getTempDirectory(), self.outputTransformPrefix + 'Composite.h5')
@@ -725,7 +754,7 @@ class antsRegistrationTest(ScriptedLoadableModuleTest):
     outputTransform = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLGridTransformNode') # test antsApplyTransforms
 
     logic = antsRegistrationLogic()
-    presetParameters = logic.getPresetParametersByName('QuickSyN')
+    presetParameters = presetHelper.getPresetParametersByName('QuickSyN')
     for stage in presetParameters['stages']:
       for metric in stage['metrics']:
         metric['fixed'] = tumor1
