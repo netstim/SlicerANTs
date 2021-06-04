@@ -295,10 +295,8 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self._parameterNode.EndModify(wasModified)
 
 
-  def updateStagesFromFixedMovingNodes(self, forceUpdate=False):
-    if forceUpdate:
-      pass
-    elif self._parameterNode is None or self._updatingGUIFromParameterNode:
+  def updateStagesFromFixedMovingNodes(self):
+    if self._parameterNode is None or self._updatingGUIFromParameterNode:
       return
     stagesList = json.loads(self._parameterNode.GetParameter("StagesJson"))
     for stage in stagesList:
@@ -321,17 +319,17 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       stagesList[stageNumber]['transformParameters'] = transformParameters
 
   def setCurrentStagePropertiesToStagesList(self, stagesList):
-    stageNumber = int(self._parameterNode.GetParameter("CurrentStage"))
+    currentStage = int(self._parameterNode.GetParameter("CurrentStage"))
 
-    stagesIterator = range(len(stagesList)) if self.ui.metricsTableWidget.linkStagesPushButton.checked else [stageNumber]
+    stagesIterator = range(len(stagesList)) if self.ui.metricsTableWidget.linkStagesPushButton.checked else [currentStage]
     for stageNumber in stagesIterator:
       stagesList[stageNumber]['metrics'] = self.ui.metricsTableWidget.getParametersFromGUI()
 
-    stagesIterator = range(len(stagesList)) if self.ui.levelsTableWidget.linkStagesPushButton.checked else [stageNumber]
+    stagesIterator = range(len(stagesList)) if self.ui.levelsTableWidget.linkStagesPushButton.checked else [currentStage]
     for stageNumber in stagesIterator:
       stagesList[stageNumber]['levels'] = self.ui.levelsTableWidget.getParametersFromGUI()
 
-    stagesIterator = range(len(stagesList)) if self.ui.linkMaskingStagesPushButton.checked else [stageNumber]
+    stagesIterator = range(len(stagesList)) if self.ui.linkMaskingStagesPushButton.checked else [currentStage]
     for stageNumber in stagesIterator:
       stagesList[stageNumber]['masks'] = {'fixed': self.ui.fixedMaskComboBox.currentNodeID, 'moving': self.ui.movingMaskComboBox.currentNodeID}
 
@@ -349,16 +347,13 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
   def onPresetSelected(self, presetName):
     if presetName == 'Select...' or self._parameterNode is None or self._updatingGUIFromParameterNode:
       return
-    self._updatingGUIFromParameterNode = True
-    self.ui.metricsTableWidget.linkStagesPushButton.checked = True
-    self.ui.levelsTableWidget.linkStagesPushButton.checked = False
-    self.ui.linkMaskingStagesPushButton.checked = False
     wasModified = self._parameterNode.StartModify()  # Modify in a single batch
     presetParameters = presetHelper.getPresetParametersByName(presetName)
+    for stage in presetParameters['stages']:
+      stage['metrics'][0]['fixed'] = self.ui.fixedImageNodeComboBox.currentNodeID
+      stage['metrics'][0]['moving'] = self.ui.movingImageNodeComboBox.currentNodeID
     self._parameterNode.SetParameter("StagesJson", json.dumps(presetParameters['stages']))
     self._parameterNode.SetParameter("CurrentStage", "0")
-    self.updateStagesFromFixedMovingNodes(forceUpdate=True)
-    self._updatingGUIFromParameterNode = False
     self._parameterNode.EndModify(wasModified)
 
   def onSavePresetPushButton(self):

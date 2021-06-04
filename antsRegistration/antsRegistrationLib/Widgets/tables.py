@@ -20,7 +20,6 @@ class CustomTable(qt.QWidget):
     self.linkStagesPushButton = qt.QPushButton('Link Across Stages')
     self.linkStagesPushButton.toolTip = 'When checked, settings will be the same for all stages.'
     self.linkStagesPushButton.checkable = True
-    self.linkStagesPushButton.checked = True
 
     self.buttonsFrame = qt.QFrame()
     self.buttonsFrame.setSizePolicy(qt.QSizePolicy.Preferred, qt.QSizePolicy.Minimum)
@@ -196,6 +195,8 @@ class MetricsTable(TableWithSettings):
 
     self.settingsFormatText.setToolTip(" The 'metricWeight' variable is used to modulate the per stage weighting of the metrics. The metrics can also employ a sampling strategy defined by a sampling percentage. The sampling strategy defaults to 'None' (aka a dense sampling of one sample per voxel), otherwise it defines a point set over which to optimize the metric. The point set can be on a regular lattice or a random lattice of points slightly perturbed to minimize aliasing artifacts. samplingPercentage defines the fraction of points to select from the domain.")
     self.linkStagesPushButton.toolTip = self.linkStagesPushButton.toolTip + ' For Metrics enabled is the default. When disabled, only the first stage metric modifies the global selectors on the top of the GUI.'
+    self.linkStagesPushButton.checked = True
+    
     self.view.setItemDelegateForColumn(1, MRMLComboDelegate(self.model))
     self.view.setItemDelegateForColumn(2, MRMLComboDelegate(self.model))
 
