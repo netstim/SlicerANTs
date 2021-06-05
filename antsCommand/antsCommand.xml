@@ -25,5 +25,12 @@
       <index>1</index>
       <description><![CDATA[Command to execute]]></description>
     </string>
+    <string>
+      <name>antsOutputLog</name>
+      <label>ANTs Output Log</label>
+      <channel>input</channel>
+      <index>2</index>
+      <description><![CDATA[Path to log file]]></description>
+    </string>    
   </parameters>
 </executable>

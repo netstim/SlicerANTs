@@ -9,7 +9,6 @@ set(MODULE_PYTHON_SCRIPTS
   antsRegistrationLib/Widgets/tables.py
   antsRegistrationLib/__init__.py
   antsRegistrationLib/util.py
-  antsRegistrationLib/presetHelper.py
   )
 
 set(MODULE_PYTHON_RESOURCES

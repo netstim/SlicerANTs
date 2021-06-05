@@ -58,7 +58,7 @@
    <item row="7" column="0" colspan="2">
     <widget class="QPushButton" name="runRegistrationButton">
      <property name="enabled">
-      <bool>true</bool>
+      <bool>false</bool>
      </property>
      <property name="toolTip">
       <string/>
@@ -303,6 +303,31 @@
         </item>
        </widget>
       </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_16">
+        <property name="text">
+         <string>Log: </string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="qMRMLNodeComboBox" name="outputLogTextComboBox">
+        <property name="nodeTypes">
+         <stringlist>
+          <string>vtkMRMLTextNode</string>
+         </stringlist>
+        </property>
+        <property name="noneEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="editEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="renameEnabled">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
@@ -339,17 +364,17 @@
         </item>
         <item>
          <property name="text">
-          <string>Geometric Center of Images</string>
+          <string>Images Geometric Center</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>Image Intensities</string>
+          <string>Images Center of Mass</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>Origin of Images</string>
+          <string>Images Origin</string>
          </property>
         </item>
        </widget>
@@ -736,6 +761,22 @@
     <hint type="destinationlabel">
      <x>259</x>
      <y>44</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>antsRegistration</sender>
+   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
+   <receiver>outputLogTextComboBox</receiver>
+   <slot>setMRMLScene(vtkMRMLScene*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>218</x>
+     <y>477</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>274</x>
+     <y>295</y>
     </hint>
    </hints>
   </connection>

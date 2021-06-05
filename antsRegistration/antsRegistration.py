@@ -4,14 +4,11 @@ import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
 from slicer.util import VTKObservationMixin
 
-import platform
 import json
-import subprocess
 import shutil
 import glob
 
 from antsRegistrationLib.Widgets.tables import StagesTable, MetricsTable, LevelsTable
-from antsRegistrationLib import presetHelper
 
 #
 # antsRegistration
@@ -83,6 +80,9 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.cliWidget = slicer.modules.antscommand.createNewWidgetRepresentation()
     self.layout.addWidget(self.ui.cliWidget.children()[3]) # progress bar
 
+    self.ui.outputLogText = ctk.ctkFittedTextBrowser()
+    self.layout.addWidget(self.ui.outputLogText)
+
     # Set scene in MRML widgets. Make sure that in Qt designer the top-level qMRMLWidget's
     # "mrmlSceneChanged(vtkMRMLScene*)" signal in is connected to each MRML widget's.
     # "setMRMLScene(vtkMRMLScene*)" slot.
@@ -92,7 +92,7 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     # in batch mode, without a graphical user interface.
     self.logic = antsRegistrationLogic()
 
-    self.ui.stagesPresetsComboBox.addItems(['Select...'] + presetHelper.getPresetNames())
+    self.ui.stagesPresetsComboBox.addItems(['Select...'] + PresetManager().getPresetNames())
 
     # Connections
 
@@ -107,6 +107,7 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.outputInterpolationComboBox.connect("currentIndexChanged(int)", self.updateParameterNodeFromGUI)
     self.ui.outputTransformComboBox.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
     self.ui.outputVolumeComboBox.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
+    self.ui.outputLogTextComboBox.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
     self.ui.initialTransformTypeComboBox.connect("currentIndexChanged(int)", self.updateParameterNodeFromGUI)
     self.ui.initialTransformNodeComboBox.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
     self.ui.dimensionalitySpinBox.connect("valueChanged(int)", self.updateParameterNodeFromGUI)
@@ -231,6 +232,7 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     self.ui.outputTransformComboBox.setCurrentNode(self._parameterNode.GetNodeReference("OutputTransform"))
     self.ui.outputVolumeComboBox.setCurrentNode(self._parameterNode.GetNodeReference("OutputVolume"))
+    self.ui.outputLogTextComboBox.setCurrentNode(self._parameterNode.GetNodeReference("OutputLog"))
     self.ui.outputInterpolationComboBox.currentText = self._parameterNode.GetParameter("OutputInterpolation")
     self.ui.outputInterpolationComboBox.enabled = self._parameterNode.GetNodeReference("OutputVolume") is not None
 
@@ -243,6 +245,8 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.winsorizeRangeWidget.setMinimumValue(float(self._parameterNode.GetParameter("WinsorizeImageIntensities").split(",")[0]))
     self.ui.winsorizeRangeWidget.setMaximumValue(float(self._parameterNode.GetParameter("WinsorizeImageIntensities").split(",")[1]))
     self.ui.computationPrecisionComboBox.currentText = self._parameterNode.GetParameter("ComputationPrecision")
+
+    self.ui.runRegistrationButton.enabled = self.ui.fixedImageNodeComboBox.currentNodeID and self.ui.movingImageNodeComboBox.currentNodeID
 
     # All the GUI updates are done
     self._updatingGUIFromParameterNode = False
@@ -282,6 +286,7 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     
     self._parameterNode.SetNodeReferenceID("OutputTransform", self.ui.outputTransformComboBox.currentNodeID)
     self._parameterNode.SetNodeReferenceID("OutputVolume", self.ui.outputVolumeComboBox.currentNodeID)
+    self._parameterNode.SetNodeReferenceID("OutputLog", self.ui.outputLogTextComboBox.currentNodeID)
     self._parameterNode.SetParameter("OutputInterpolation", self.ui.outputInterpolationComboBox.currentText)
 
     self._parameterNode.SetParameter("initializationFeature", str(self.ui.initialTransformTypeComboBox.currentIndex-2))
@@ -348,7 +353,7 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     if presetName == 'Select...' or self._parameterNode is None or self._updatingGUIFromParameterNode:
       return
     wasModified = self._parameterNode.StartModify()  # Modify in a single batch
-    presetParameters = presetHelper.getPresetParametersByName(presetName)
+    presetParameters = PresetManager().getPresetParametersByName(presetName)
     for stage in presetParameters['stages']:
       stage['metrics'][0]['fixed'] = self.ui.fixedImageNodeComboBox.currentNodeID
       stage['metrics'][0]['moving'] = self.ui.movingImageNodeComboBox.currentNodeID
@@ -358,7 +363,13 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
   def onSavePresetPushButton(self):
     stages = json.loads(self._parameterNode.GetParameter("StagesJson"))
-    savedPresetName = presetHelper.saveStagesAsPreset(stages)
+    for stage in stages:
+      for metric in stage['metrics']:
+        metric['fixed'] = None
+        metric['moving'] = None
+      stage['masks']['fixed'] = None
+      stage['masks']['moving'] = None
+    savedPresetName = PresetManager().saveStagesAsPreset(stages)
     if savedPresetName:
       self._updatingGUIFromParameterNode = True
       self.ui.stagesPresetsComboBox.addItem(savedPresetName)
@@ -369,7 +380,6 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
   def onRunRegistrationButton(self):
     if self.ui.runRegistrationButton.text == 'Cancel':
       self.logic.cancelRegistration()
-      self.ui.runRegistrationButton.text = 'Run Registration'
       return
 
     parameters = {}
@@ -386,6 +396,7 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     parameters['outputSettings']['transform'] = self.ui.outputTransformComboBox.currentNode()
     parameters['outputSettings']['volume'] = self.ui.outputVolumeComboBox.currentNode()
     parameters['outputSettings']['interpolation'] = self.ui.outputInterpolationComboBox.currentText
+    parameters['outputSettings']['log'] = self.ui.outputLogTextComboBox.currentNode()
 
     parameters['initialTransformSettings'] = {}
     parameters['initialTransformSettings']['initializationFeature'] = int(self._parameterNode.GetParameter("initializationFeature"))
@@ -397,17 +408,41 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     parameters['generalSettings']['winsorizeImageIntensities'] = [self.ui.winsorizeRangeWidget.minimumValue, self.ui.winsorizeRangeWidget.maximumValue]
     parameters['generalSettings']['computationPrecision'] = self.ui.computationPrecisionComboBox.currentText
 
+    self.ui.outputLogText.setText("")
+
     self.logic.process(**parameters)
+
+    updateLogTimer = qt.QTimer()
+    updateLogTimer.timeout.connect(self.updateLog)
+    updateLogTimer.start(500)
 
     self.ui.cliWidget.setCurrentCommandLineModuleNode(self.logic._cliNode)
     self.logic._cliNode.AddObserver('ModifiedEvent', self.onProcessingStatusUpdate)
+    self.logic._cliNode.AddObserver('ModifiedEvent', lambda c,e,t=updateLogTimer: self.deleteTimerIfFinished(c,e,t))
     self.ui.runRegistrationButton.text = 'Cancel'
 
+
   def onProcessingStatusUpdate(self, caller, event):
-    if (caller.GetStatus() & caller.Completed) or (caller.GetStatus() & caller.Cancelled):
-      self.ui.runRegistrationButton.text = 'Run Registration'
+    if (caller.GetStatus() & caller.Cancelled):
+      self.ui.runRegistrationButton.text = "Run Registration"
+      self.ui.outputLogText.setText("Canceled")
+    elif (caller.GetStatus() & caller.Completed):
+      self.ui.runRegistrationButton.text = "Run Registration"
+      if (caller.GetStatus() & caller.ErrorsMask):
+        self.ui.outputLogText.setText("Error: see output window")
+      else:
+        self.ui.outputLogText.setText("Finished Registration")
     else:
-      self.ui.runRegistrationButton.text = 'Cancel'
+      self.ui.runRegistrationButton.text = "Cancel"
+
+  def updateLog(self):
+    self.ui.outputLogText.setText(self.logic.getLastNLogLines(1))
+
+  def deleteTimerIfFinished(self, caller, event, updateLogTimer):
+    if (caller.GetStatus() & caller.Cancelled) or (caller.GetStatus() & caller.Completed):
+      if updateLogTimer:
+        updateLogTimer.stop()
+        updateLogTimer.delete()
 
 
 #
@@ -448,16 +483,18 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     self.tempDirectory = ''
     self.outputVolumeFileName = 'outputVolume.nii'
     self.outputTransformPrefix = 'outputTransform'
+    self.outputLog = 'out.txt'
     self._cliNode = None
     self._cliObserver = None
     self._outputVolume = None
     self._outputTransform = None
+    self._outputLog = None
     
   def setDefaultParameters(self, parameterNode):
     """
     Initialize parameter node with default settings.
     """
-    presetParameters = presetHelper.getPresetParametersByName()
+    presetParameters = PresetManager().getPresetParametersByName()
     if not parameterNode.GetParameter("StagesJson"):
       parameterNode.SetParameter("StagesJson",  json.dumps(presetParameters["stages"]))
     if not parameterNode.GetParameter("CurrentStage"):
@@ -467,6 +504,8 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
       parameterNode.SetParameter("OutputTransform", "")
     if not parameterNode.GetParameter("OutputVolume"):
       parameterNode.SetParameter("OutputVolume", "")
+    if not parameterNode.GetParameter("OutputLog"):
+      parameterNode.SetParameter("OutputLog", "")
     if not parameterNode.GetParameter("OutputInterpolation"):
       parameterNode.SetParameter("OutputInterpolation", str(presetParameters["outputSettings"]["interpolation"]))
 
@@ -512,19 +551,26 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
 
     self._outputVolume = outputSettings['volume']
     self._outputTransform = outputSettings['transform']
+    self._outputLog = outputSettings['log']
 
   def runAntsCommandAndSetObserver(self, executableName, command):
     self._cliNode = self.runAntsCommand(executableName, command)
     self._cliObserver = self._cliNode.AddObserver('ModifiedEvent', self.onProcessingStatusUpdate)
 
+  def runAntsCommand(self, executableName, command):
+    logging.info("Running ANTs Command: " + executableName + " " + command)
+    params = {}
+    params['antsExecutable'] = executableName
+    params['antsCommand'] = command
+    params['antsOutputLog'] = os.path.join(self.tempDirectory, self.outputLog)
+    return slicer.cli.run(slicer.modules.antscommand, self._cliNode, params, wait_for_completion=False, update_display=False)
+
   def onProcessingStatusUpdate(self, caller, event):
     if (caller.GetStatus() & caller.Cancelled):
-        self.resetTempDirectoryAndLocalVars()
+        self.onProcessFinished()
     elif (caller.GetStatus() & caller.Completed):
-      errorText = caller.GetErrorText().replace('file NULL does not exist . ','').strip()
-      if (caller.GetStatus() & caller.ErrorsMask) and errorText is not 'antsCommand standard error:': 
-        print("ANTs failed: " + caller.GetErrorText())
-        self.resetTempDirectoryAndLocalVars()
+      if (caller.GetStatus() & caller.ErrorsMask):
+        self.onProcessFinished()
       else:
         self._cliNode.RemoveObserver(self._cliObserver)
         self.doPostProcessing()
@@ -539,19 +585,10 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
       self.loadOutputTransformNode(self._outputTransform)
     if self._outputVolume is not None:
       self.loadOutputVolumeNode(self._outputVolume)
+    if self._outputLog is not None:
+      self.loadOutputLog(self._outputLog)
 
-    self.resetTempDirectoryAndLocalVars()
-
-  def resetTempDirectoryAndLocalVars(self):
-    self.resetTempDirectory()
-    self.resetCliNode()
-    self._outputVolume = None
-    self._outputTransform = None
-
-  def resetCliNode(self):
-    slicer.mrmlScene.RemoveNode(self._cliNode)
-    self._cliNode = None
-    self._cliObserver = None
+    self.onProcessFinished()
 
   def loadOutputTransformNode(self, outputTransformNode):
     fileExt = '.nii.gz' if isinstance(outputTransformNode, slicer.vtkMRMLGridTransformNode) else '.h5'
@@ -572,12 +609,37 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     outputVolumeNode.SetIJKToRASMatrix(ijkToRas)
     slicer.mrmlScene.RemoveNode(loadedOutputVolumeNode)
 
-  def runAntsCommand(self, executableName, command):
-    logging.info("Running ANTs Command: " + executableName + " " + command)
-    params = {}
-    params['antsExecutable'] = executableName
-    params['antsCommand'] = command
-    return slicer.cli.run(slicer.modules.antscommand, self._cliNode, params, wait_for_completion=False, update_display=False)
+  def loadOutputLog(self, outputLogNode):
+    logFile = os.path.join(self.tempDirectory, self.outputLog)
+    with open(logFile) as f:
+      outputLogNode.SetText(''.join(f.readlines()))
+
+  def onProcessFinished(self):
+    self.printLastNLogLines()
+    self.resetTempDirectoryAndLocalVars()
+
+  def printLastNLogLines(self, N=20):
+    print(self.getLastNLogLines(N))
+
+  def getLastNLogLines(self, N=20):
+    logFile = os.path.join(self.tempDirectory, self.outputLog)
+    with open(logFile) as f:
+      lines = f.readlines()
+      linesNumber = len(lines)
+      if linesNumber:
+        return ''.join(lines[-min(N,linesNumber-1):])
+    return ''
+
+  def resetTempDirectoryAndLocalVars(self):
+    self.resetTempDirectory()
+    self.resetCliNode()
+    self._outputVolume = None
+    self._outputTransform = None
+
+  def resetCliNode(self):
+    slicer.mrmlScene.RemoveNode(self._cliNode)
+    self._cliNode = None
+    self._cliObserver = None
 
   def getAntsApplyTransformsCommand(self, gridReferenceNode):
     antsCommand = "--transform %s" % os.path.join(self.getTempDirectory(), self.outputTransformPrefix + 'Composite.h5')
@@ -703,6 +765,47 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     qt.QDir().mkpath(dirPath)
     return dirPath
 
+
+#
+# Preset Manager
+#
+
+class PresetManager():
+  def __init__(self):
+      self.presetPath = os.path.join(os.path.dirname(__file__),'Resources','Presets')
+
+  def saveStagesAsPreset(self, stages):
+    from PythonQt import BoolResult
+    ok = BoolResult()
+    presetName = qt.QInputDialog().getText(qt.QWidget(), 'Save Preset', 'Preset name: ', qt.QLineEdit.Normal, 'my_preset', ok)
+    if not ok:
+      return
+    if presetName in self.getPresetNames():
+      qt.QMessageBox().warning(qt.QWidget(),'Warning', presetName + ' already exists. Set another name.')
+      self.saveStagesAsPreset(stages)
+      return
+    outFilePath = os.path.join(gself.presetPath, presetName + '.json')
+    saveSettings = self.getPresetParametersByName()
+    saveSettings['stages'] = self.removeNodesFromStages(stages)
+    try:
+      with open(outFilePath, 'w') as outfile:
+        json.dump(saveSettings, outfile)
+    except:
+      qt.QMessageBox().warning(qt.QWidget(),'Warning', 'Unable to write into ' + outFilePath)
+      return
+    print('Saved preset to ' + outFilePath)
+    return presetName
+
+  def getPresetParametersByName(self, name='Rigid'):
+    presetFilePath = os.path.join(self.presetPath, name + '.json')
+    with open(presetFilePath) as presetFile:
+      return json.load(presetFile)
+
+  def getPresetNames(self):
+    G = glob.glob(os.path.join(self.presetPath, '*.json'))
+    return [os.path.splitext(os.path.basename(g))[0] for g in G]
+
+
 #
 # antsRegistrationTest
 #
@@ -750,7 +853,7 @@ class antsRegistrationTest(ScriptedLoadableModuleTest):
     outputTransform = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLGridTransformNode') # test antsApplyTransforms
 
     logic = antsRegistrationLogic()
-    presetParameters = presetHelper.getPresetParametersByName('QuickSyN')
+    presetParameters = PresetManager().getPresetParametersByName('QuickSyN')
     for stage in presetParameters['stages']:
       for metric in stage['metrics']:
         metric['fixed'] = tumor1

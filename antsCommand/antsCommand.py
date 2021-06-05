@@ -2,29 +2,27 @@
 
 import os
 import sys
-import logging
 import subprocess
 import platform
 
 
-def runAntsCommand(executableFileName, command):
+def runAntsCommand(executableFileName, command, outputLogPath):
+  executableFilePath = os.path.join(getAntsBinDir(), executableFileName)
+
   params = {}
   params['env'] = getAntsEnv()
-  params['stdout'] = subprocess.PIPE
   params['universal_newlines'] = True
+  try:
+    f = open(outputLogPath, "a")
+    f.write(executableFilePath + ' ' + command + '\n\n')
+    params['stdout'] = f
+    params['stderr'] = subprocess.STDOUT
+  except:
+    params['stdout'] = subprocess.PIPE
   if sys.platform == 'win32':
     params['startupinfo'] = getStartupInfo()
-
-  executableFilePath = os.path.join(getAntsBinDir(), executableFileName)
+  
   return subprocess.Popen([executableFilePath] + command.split(" "), **params)
-
-def logProcess(process):
-  for stdout_line in iter(process.stdout.readline, ""):
-    logging.info(stdout_line.rstrip())
-  process.stdout.close()
-  returnCode = process.wait()
-  if returnCode:
-    raise subprocess.CalledProcessError(returnCode, "ANTs")
 
 def getStartupInfo():
   info = subprocess.STARTUPINFO()
@@ -64,7 +62,11 @@ def getExecutableWithExtension(executableFileName):
   return executableFileName + executableExt
 
 if __name__ == "__main__":
-  antsExecutable = getExecutableWithExtension(sys.argv[-2])
-  antsCommand = sys.argv[-1]
-  process = runAntsCommand(antsExecutable, antsCommand)
-  logProcess(process)
+  antsExecutable = getExecutableWithExtension(sys.argv[-3])
+  antsCommand = sys.argv[-2]
+  outputLogPath = sys.argv[-1]
+  process = runAntsCommand(antsExecutable, antsCommand, outputLogPath)
+  process.wait()
+  if process.returncode:
+    raise subprocess.CalledProcessError(process.returncode, "ANTs")
+    
