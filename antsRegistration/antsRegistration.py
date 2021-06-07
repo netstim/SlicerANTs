@@ -585,10 +585,14 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
       self.loadOutputTransformNode(self._outputTransform)
     if self._outputVolume is not None:
       self.loadOutputVolumeNode(self._outputVolume)
-    if self._outputLog is not None:
-      self.loadOutputLog(self._outputLog)
 
     self.onProcessFinished()
+
+  def onProcessFinished(self):
+    if self._outputLog is not None:
+      self.loadOutputLog(self._outputLog)
+    self.printLastNLogLines()
+    self.resetTempDirectoryAndLocalVars()
 
   def loadOutputTransformNode(self, outputTransformNode):
     fileExt = '.nii.gz' if isinstance(outputTransformNode, slicer.vtkMRMLGridTransformNode) else '.h5'
@@ -613,10 +617,6 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     logFile = os.path.join(self.tempDirectory, self.outputLog)
     with open(logFile) as f:
       outputLogNode.SetText(''.join(f.readlines()))
-
-  def onProcessFinished(self):
-    self.printLastNLogLines()
-    self.resetTempDirectoryAndLocalVars()
 
   def printLastNLogLines(self, N=20):
     print(self.getLastNLogLines(N))
