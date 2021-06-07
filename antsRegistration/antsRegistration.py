@@ -7,6 +7,7 @@ from slicer.util import VTKObservationMixin
 import json
 import shutil
 import glob
+import re
 
 from antsRegistrationLib.Widgets.tables import StagesTable, MetricsTable, LevelsTable
 
@@ -81,7 +82,11 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.layout.addWidget(self.ui.cliWidget.children()[3]) # progress bar
 
     self.ui.outputLogText = ctk.ctkFittedTextBrowser()
-    self.layout.addWidget(self.ui.outputLogText)
+    infoBox = ctk.ctkCollapsibleGroupBox()
+    infoBox.title = 'Information'
+    infoBoxLayout = qt.QVBoxLayout(infoBox)
+    infoBoxLayout.addWidget(self.ui.outputLogText)
+    self.layout.addWidget(infoBox)
 
     # Set scene in MRML widgets. Make sure that in Qt designer the top-level qMRMLWidget's
     # "mrmlSceneChanged(vtkMRMLScene*)" signal in is connected to each MRML widget's.
@@ -435,7 +440,14 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.runRegistrationButton.text = "Cancel"
 
   def updateLog(self):
-    self.ui.outputLogText.setText(self.logic.getLastNLogLines(1))
+    outText = self.logic.getCurrentRunningStage()
+    lastLine = self.logic.getLastNLogLines(1)
+    if re.search("\d+DIAGNOSTIC.*", lastLine):
+      info = ['XXDIAGNOSTIC', 'Iteration', 'metricValue', 'convergenceValue', 'ITERATION_TIME_INDEX', 'SINCE_LAST']
+      infoMap = list(map(lambda x,y: "%s: %s"% (x,y), info, lastLine[:-1].split(',')))
+      lastLine = '\n'.join(infoMap[1:4])
+    outText = outText + '\n' + lastLine
+    self.ui.outputLogText.setText(outText)
 
   def deleteTimerIfFinished(self, caller, event, updateLogTimer):
     if (caller.GetStatus() & caller.Cancelled) or (caller.GetStatus() & caller.Completed):
@@ -613,13 +625,18 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     slicer.mrmlScene.RemoveNode(loadedOutputVolumeNode)
 
   def loadOutputLog(self, outputLogNode):
-    logFile = os.path.join(self.tempDirectory, self.outputLog)
-    with open(logFile) as f:
-      outputLogNode.SetText(''.join(f.readlines()))
+    outputLogNode.SetText(self.getLastNLogLines(float('Inf')))
 
   def printLastNLogLines(self, N=20):
     print(self.getLastNLogLines(N))
 
+  def getCurrentRunningStage(self):
+    text = self.getLastNLogLines(float('Inf'))
+    stageNumberMatch = [0] + [int(s)+1 for s in re.findall("(?<=Stage )\d+(?=\n)", text)]
+    stageDescriptionMatch = [''] + re.findall("(?<=[*]{3} ).*(?= [*]{3})", text)
+    levelsMatch = re.findall("DIAGNOSTIC,Iteration,metricValue,convergenceValue,ITERATION_TIME_INDEX,SINCE_LAST", text[text.index(stageDescriptionMatch[-1]):])
+    return "Stage: %i\nLevel: %i\n%s" % (stageNumberMatch[-1], len(levelsMatch), stageDescriptionMatch[-1])
+    
   def getLastNLogLines(self, N=20):
     logFile = os.path.join(self.tempDirectory, self.outputLog)
     with open(logFile) as f:
