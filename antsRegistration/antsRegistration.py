@@ -234,7 +234,6 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.outputVolumeComboBox.setCurrentNode(self._parameterNode.GetNodeReference("OutputVolume"))
     self.ui.outputLogTextComboBox.setCurrentNode(self._parameterNode.GetNodeReference("OutputLog"))
     self.ui.outputInterpolationComboBox.currentText = self._parameterNode.GetParameter("OutputInterpolation")
-    self.ui.outputInterpolationComboBox.enabled = self._parameterNode.GetNodeReference("OutputVolume") is not None
 
     self.ui.initialTransformTypeComboBox.currentIndex = int(self._parameterNode.GetParameter("initializationFeature")) + 2
     self.ui.initialTransformNodeComboBox.setCurrentNode(self._parameterNode.GetNodeReference("InitialTransform") if self.ui.initialTransformTypeComboBox.currentIndex == 1 else None)
@@ -264,7 +263,7 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
   def setCurrentStagePropertiesGUIFromList(self, stagesList):
     currentStage = int(self._parameterNode.GetParameter("CurrentStage"))
-    if 'metrics' in stagesList[currentStage].keys():
+    if {'metrics','levels','masks'} <= set(stagesList[currentStage].keys()):
       self.ui.metricsTableWidget.setGUIFromParameters(stagesList[currentStage]['metrics'])
       self.ui.levelsTableWidget.setGUIFromParameters(stagesList[currentStage]['levels'])
       self.ui.fixedMaskComboBox.setCurrentNodeID(stagesList[currentStage]['masks']['fixed'])
