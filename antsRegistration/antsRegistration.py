@@ -1,3 +1,4 @@
+from genericpath import isfile
 import os, sys
 import logging
 import vtk, qt, ctk, slicer
@@ -7,7 +8,6 @@ from slicer.util import VTKObservationMixin
 import json
 import shutil
 import glob
-import re
 
 from antsRegistrationLib.Widgets.tables import StagesTable, MetricsTable, LevelsTable
 
@@ -80,13 +80,6 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     self.ui.cliWidget = slicer.modules.antscommand.createNewWidgetRepresentation()
     self.layout.addWidget(self.ui.cliWidget.children()[3]) # progress bar
-
-    self.ui.outputLogText = ctk.ctkFittedTextBrowser()
-    infoBox = ctk.ctkCollapsibleGroupBox()
-    infoBox.title = 'Information'
-    infoBoxLayout = qt.QVBoxLayout(infoBox)
-    infoBoxLayout.addWidget(self.ui.outputLogText)
-    self.layout.addWidget(infoBox)
 
     # Set scene in MRML widgets. Make sure that in Qt designer the top-level qMRMLWidget's
     # "mrmlSceneChanged(vtkMRMLScene*)" signal in is connected to each MRML widget's.
@@ -412,48 +405,22 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     parameters['generalSettings']['winsorizeImageIntensities'] = [self.ui.winsorizeRangeWidget.minimumValue, self.ui.winsorizeRangeWidget.maximumValue]
     parameters['generalSettings']['computationPrecision'] = self.ui.computationPrecisionComboBox.currentText
 
-    self.ui.outputLogText.setText("")
-
     self.logic.process(**parameters)
-
-    updateLogTimer = qt.QTimer()
-    updateLogTimer.timeout.connect(self.updateLog)
-    updateLogTimer.start(500)
 
     self.ui.cliWidget.setCurrentCommandLineModuleNode(self.logic._cliNode)
     self.logic._cliNode.AddObserver('ModifiedEvent', self.onProcessingStatusUpdate)
-    self.logic._cliNode.AddObserver('ModifiedEvent', lambda c,e,t=updateLogTimer: self.deleteTimerIfFinished(c,e,t))
     self.ui.runRegistrationButton.text = 'Cancel'
-
 
   def onProcessingStatusUpdate(self, caller, event):
     if (caller.GetStatus() & caller.Cancelled):
       self.ui.runRegistrationButton.text = "Run Registration"
-      self.ui.outputLogText.setText("Canceled")
     elif (caller.GetStatus() & caller.Completed):
-      self.ui.runRegistrationButton.text = "Run Registration"
       if (caller.GetStatus() & caller.ErrorsMask):
-        self.ui.outputLogText.setText("Error: see output window")
-      else:
-        self.ui.outputLogText.setText("Finished Registration")
+        qt.QMessageBox().warning(qt.QWidget(),'Error', 'ANTs Failed. See console or output log.')
+      self.ui.runRegistrationButton.text = "Run Registration"
     else:
       self.ui.runRegistrationButton.text = "Cancel"
 
-  def updateLog(self):
-    outText = self.logic.getCurrentRunningStage()
-    lastLine = self.logic.getLastNLogLines(1)
-    if re.search("\d+DIAGNOSTIC.*", lastLine):
-      info = ['XXDIAGNOSTIC', 'Iteration', 'metricValue', 'convergenceValue', 'ITERATION_TIME_INDEX', 'SINCE_LAST']
-      infoMap = list(map(lambda x,y: "%s: %s"% (x,y), info, lastLine[:-1].split(',')))
-      lastLine = '\n'.join(infoMap[1:4])
-    outText = outText + '\n' + lastLine
-    self.ui.outputLogText.setText(outText)
-
-  def deleteTimerIfFinished(self, caller, event, updateLogTimer):
-    if (caller.GetStatus() & caller.Cancelled) or (caller.GetStatus() & caller.Completed):
-      if updateLogTimer:
-        updateLogTimer.stop()
-        updateLogTimer.delete()
 
 
 #
@@ -602,7 +569,7 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
   def onProcessFinished(self):
     if self._outputLog is not None:
       self.loadOutputLog(self._outputLog)
-    self.printLastNLogLines()
+    self.printLastNLogLines(20)
     self.resetTempDirectoryAndLocalVars()
 
   def loadOutputTransformNode(self, outputTransformNode):
@@ -627,17 +594,10 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
   def loadOutputLog(self, outputLogNode):
     outputLogNode.SetText(self.getLastNLogLines(float('Inf')))
 
-  def printLastNLogLines(self, N=20):
+  def printLastNLogLines(self, N):
     print(self.getLastNLogLines(N))
 
-  def getCurrentRunningStage(self):
-    text = self.getLastNLogLines(float('Inf'))
-    stageNumberMatch = [0] + [int(s)+1 for s in re.findall("(?<=Stage )\d+(?=\n)", text)]
-    stageDescriptionMatch = [''] + re.findall("(?<=[*]{3} ).*(?= [*]{3})", text)
-    levelsMatch = re.findall("DIAGNOSTIC,Iteration,metricValue,convergenceValue,ITERATION_TIME_INDEX,SINCE_LAST", text[text.index(stageDescriptionMatch[-1]):])
-    return "Stage: %i\nLevel: %i\n%s" % (stageNumberMatch[-1], len(levelsMatch), stageDescriptionMatch[-1])
-    
-  def getLastNLogLines(self, N=20):
+  def getLastNLogLines(self, N):
     logFile = os.path.join(self.tempDirectory, self.outputLog)
     with open(logFile) as f:
       lines = f.readlines()
@@ -862,18 +822,17 @@ class antsRegistrationTest(ScriptedLoadableModuleTest):
 
     import SampleData
     sampleDataLogic = SampleData.SampleDataLogic()
-    tumor1 = sampleDataLogic.downloadMRBrainTumor1()
-    tumor2 = sampleDataLogic.downloadMRBrainTumor2()
+    fixed = sampleDataLogic.downloadMRBrainTumor1()
+    moving = sampleDataLogic.downloadMRBrainTumor2()
 
     outputVolume = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLScalarVolumeNode')
-    outputTransform = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLGridTransformNode') # test antsApplyTransforms
 
     logic = antsRegistrationLogic()
     presetParameters = PresetManager().getPresetParametersByName('QuickSyN')
     for stage in presetParameters['stages']:
       for metric in stage['metrics']:
-        metric['fixed'] = tumor1
-        metric['moving'] = tumor2
+        metric['fixed'] = fixed
+        metric['moving'] = moving
       # let's make it quick
       for step in stage['levels']['steps']:
         step['shrinkFactors'] = 10
@@ -881,9 +840,16 @@ class antsRegistrationTest(ScriptedLoadableModuleTest):
       stage['levels']['convergenceWindowSize'] = 5
 
     presetParameters['outputSettings']['volume'] = outputVolume
-    presetParameters['outputSettings']['transform'] = outputTransform
+    presetParameters['outputSettings']['transform'] = None
+    presetParameters['outputSettings']['log'] = None
 
     logic.process(**presetParameters)
 
-    self.delayDisplay('Test passed!')
+    logic._cliNode.AddObserver('ModifiedEvent', self.onProcessingStatusUpdate)
+
+  def onProcessingStatusUpdate(self, caller, event):
+    if (caller.GetStatus() & caller.Completed):
+      self.delayDisplay('Test passed!')
+
+   
 
