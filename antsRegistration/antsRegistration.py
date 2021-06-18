@@ -24,7 +24,7 @@ class antsRegistration(ScriptedLoadableModule):
     ScriptedLoadableModule.__init__(self, parent)
     self.parent.title = "General Registration (ANTs)"
     self.parent.categories = ["Registration"]
-    self.parent.dependencies = []
+    self.parent.dependencies = ["antsCommand"]
     self.parent.contributors = ["Simon Oxenford (Netstim Berlin)"]
     self.parent.helpText = """
 See more information in <a href="https://github.com/simonoxen/SlicerANTs">module documentation</a>.
