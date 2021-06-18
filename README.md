@@ -2,6 +2,10 @@
 
 This extension implements [ANTs](https://github.com/ANTsX/ANTs) Registration into [Slicer](https://github.com/Slicer/Slicer)
 
+## Instalation
+
+Install from the Slicer Extension Manager from nightly build.
+
 ## Modules
 
 - antsRegistration: provides an interface for doing registration with ANTs. Generates parameters passed to the antsCommand module.
