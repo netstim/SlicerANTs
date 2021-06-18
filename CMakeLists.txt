@@ -6,7 +6,7 @@ project(SlicerANTs)
 # Extension meta-information
 set(EXTENSION_HOMEPAGE "https://github.com/simonoxen/SlicerANTs")
 set(EXTENSION_CATEGORY "Registration")
-set(EXTENSION_CONTRIBUTORS "Simon Oxenford (Neststim Berlin)")
+set(EXTENSION_CONTRIBUTORS "Simon Oxenford (Netstim Berlin)")
 set(EXTENSION_DESCRIPTION "This extension implements ANTs Registration into Slicer")
 set(EXTENSION_ICONURL "https://raw.githubusercontent.com/simonoxen/SlicerANTs/master/logo.png")
 set(EXTENSION_SCREENSHOTURLS "https://raw.githubusercontent.com/simonoxen/SlicerANTs/master/Documentation/ModuleUI.png")
