@@ -760,7 +760,7 @@ class PresetManager():
       qt.QMessageBox().warning(qt.QWidget(),'Warning', presetName + ' already exists. Set another name.')
       self.saveStagesAsPreset(stages)
       return
-    outFilePath = os.path.join(gself.presetPath, presetName + '.json')
+    outFilePath = os.path.join(self.presetPath, presetName + '.json')
     saveSettings = self.getPresetParametersByName()
     saveSettings['stages'] = self.removeNodesFromStages(stages)
     try:
