@@ -374,7 +374,6 @@
         <property name="nodeTypes">
          <stringlist>
           <string>vtkMRMLTransformNode</string>
-          <string>vtkMRMLGridTransformNode</string>
          </stringlist>
         </property>
         <property name="noneEnabled">
