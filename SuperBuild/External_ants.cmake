@@ -22,13 +22,13 @@ if(NOT DEFINED ${proj}_DIR AND NOT ${SUPERBUILD_TOPLEVEL_PROJECT}_USE_SYSTEM_${p
 
   ExternalProject_SetIfNotDefined(
    ${SUPERBUILD_TOPLEVEL_PROJECT}_${proj}_GIT_REPOSITORY
-   "${EP_GIT_PROTOCOL}://github.com/simonoxen/ANTs.git"
+   "${EP_GIT_PROTOCOL}://github.com/ANTsX/ANTs.git"
    QUIET
    )
 
   ExternalProject_SetIfNotDefined(
    ${SUPERBUILD_TOPLEVEL_PROJECT}_${proj}_GIT_TAG
-   "SlicerANTs"
+   "210aa67499c512cf280e32854a3b2d8a2b0ce98b" # 2021.10.25
    QUIET
    )
 
@@ -41,6 +41,8 @@ if(NOT DEFINED ${proj}_DIR AND NOT ${SUPERBUILD_TOPLEVEL_PROJECT}_USE_SYSTEM_${p
     GIT_TAG "${${SUPERBUILD_TOPLEVEL_PROJECT}_${proj}_GIT_TAG}"
     SOURCE_DIR ${EP_SOURCE_DIR}
     BINARY_DIR ${EP_BINARY_DIR}
+    PATCH_COMMAND ${CMAKE_COMMAND} -Dants_SRC_DIR=${CMAKE_BINARY_DIR}/${proj}
+      -P ${CMAKE_CURRENT_LIST_DIR}/${proj}_patch.cmake
     CMAKE_CACHE_ARGS
       # Compiler settings
       -DCMAKE_C_COMPILER:FILEPATH=${CMAKE_C_COMPILER}
