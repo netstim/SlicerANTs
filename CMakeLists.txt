@@ -37,12 +37,23 @@ endif()
 # Extension modules
 add_subdirectory(antsRegistration)
 add_subdirectory(antsCommand)
+add_subdirectory(antsApplyTransformsCLI)
 ## NEXT_MODULE
 
 #-----------------------------------------------------------------------------
+set(SlicerANTs_CUSTOM_CONFIG "
+include(\"${ants_DIR}/antsConfig.cmake\")
+")
+include(${Slicer_EXTENSION_GENERATE_CONFIG})
+
+#-----------------------------------------------------------------------------
 set(EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS)
-list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${ants_DIR}/ANTS-build;ANTs;RUNTIME_antsRegistration;/${Slicer_INSTALL_THIRDPARTY_LIB_DIR}")
-list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${ants_DIR}/ANTS-build;ANTs;RUNTIME_antsApplyTransforms;/${Slicer_INSTALL_THIRDPARTY_LIB_DIR}")
+list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${ants_DIR};ANTs;RUNTIME_antsRegistration;/${Slicer_INSTALL_THIRDPARTY_LIB_DIR}")
+list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${ants_DIR};ANTs;RUNTIME_antsApplyTransforms;/${Slicer_INSTALL_THIRDPARTY_LIB_DIR}")
+list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${ants_DIR};ANTs;RUNTIME_antsUtilities;/${Slicer_INSTALL_THIRDPARTY_LIB_DIR}")
+list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${ants_DIR};ANTs;DEVELOPMENT_antsRegistration;/${Slicer_INSTALL_THIRDPARTY_LIB_DIR}")
+list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${ants_DIR};ANTs;DEVELOPMENT_antsApplyTransforms;/${Slicer_INSTALL_THIRDPARTY_LIB_DIR}")
+list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${ants_DIR};ANTs;DEVELOPMENT_antsUtilities;/${Slicer_INSTALL_THIRDPARTY_LIB_DIR}")
 set(${EXTENSION_NAME}_CPACK_INSTALL_CMAKE_PROJECTS "${EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS}" CACHE STRING "List of external projects to install" FORCE)
 
 #-----------------------------------------------------------------------------
