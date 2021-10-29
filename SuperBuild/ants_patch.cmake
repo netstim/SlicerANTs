@@ -23,6 +23,8 @@ string(REPLACE "install(TARGETS antsUtilities" "install(TARGETS antsUtilities EX
     cmakefile_src "${cmakefile_src}")
 string(REPLACE "install(TARGETS l_\${ANTS_FUNCTION_NAME} \${ANTS_FUNCTION_NAME}" "install(TARGETS l_\${ANTS_FUNCTION_NAME} \${ANTS_FUNCTION_NAME} EXPORT antsTargets"
     cmakefile_src "${cmakefile_src}")
+string(REPLACE "\${\${PROJECT_NAME}_VERSION}" "\${\${PROJECT_NAME}_VERSION_MAJOR}"
+    cmakefile_src "${cmakefile_src}")
 string(APPEND cmakefile_src
 "
 include(CMakePackageConfigHelpers)
@@ -39,25 +41,6 @@ export(EXPORT antsTargets
 configure_file(antsConfig.cmake
   \"\${CMAKE_CURRENT_BINARY_DIR}/../antsConfig.cmake\"
   COPYONLY
-)
-
-set(ConfigPackageLocation \${CMAKE_CURRENT_BINARY_DIR}/../ants)
-install(EXPORT antsTargets
-  FILE
-    antsTargets.cmake
-  NAMESPACE
-    Upstream::
-  DESTINATION
-    \${ConfigPackageLocation}
-)
-install(
-  FILES
-    antsConfig.cmake
-    \"\${CMAKE_CURRENT_BINARY_DIR}/../antsConfigVersion.cmake\"
-  DESTINATION
-    \${ConfigPackageLocation}
-  COMPONENT
-    Devel
 )
 "
 )

@@ -38,6 +38,7 @@ endif()
 add_subdirectory(antsRegistration)
 add_subdirectory(antsCommand)
 add_subdirectory(antsApplyTransformsCLI)
+# add_subdirectory(antsRegistrationCLI)
 ## NEXT_MODULE
 
 #-----------------------------------------------------------------------------
@@ -61,3 +62,20 @@ list(APPEND CPACK_INSTALL_CMAKE_PROJECTS "${CMAKE_BINARY_DIR};${EXTENSION_NAME};
 list(APPEND CPACK_INSTALL_CMAKE_PROJECTS "${${EXTENSION_NAME}_CPACK_INSTALL_CMAKE_PROJECTS}")
 include(${Slicer_EXTENSION_GENERATE_CONFIG})
 include(${Slicer_EXTENSION_CPACK})
+
+#-----------------------------------------------------------------------------
+# Fix packaging include dirs
+set(cmakefile
+  ${CMAKE_BINARY_DIR}/SlicerExtensionBundle/SlicerExtensionCPackBundleFixup.cmake
+)
+
+file(READ ${cmakefile} cmakefile_src)
+string(FIND "${cmakefile_src}" "${Slicer_THIRDPARTY_LIB_DIR}/lib\")" found_patched)
+if ("${found_patched}" LESS 0)
+message(STATUS "SlicerANTs package: Patching ${cmakefile}")
+string(REPLACE "${Slicer_THIRDPARTY_LIB_DIR}\")" "${Slicer_THIRDPARTY_LIB_DIR}/lib\")"
+    cmakefile_src "${cmakefile_src}")
+file(WRITE ${cmakefile} "${cmakefile_src}")
+else()
+message(STATUS "SlicerANTs package: Already patched ${cmakefile}")
+endif()

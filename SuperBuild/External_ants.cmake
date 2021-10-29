@@ -68,7 +68,7 @@ if(NOT DEFINED ${proj}_DIR AND NOT ${SUPERBUILD_TOPLEVEL_PROJECT}_USE_SYSTEM_${p
       # Options
       -DBUILD_ALL_ANTS_APPS:BOOL=OFF
       -DBUILD_TESTING:BOOL=OFF
-      -DBUILD_SHARED_LIBS:BOOL=ON
+      -DBUILD_SHARED_LIBS:BOOL=OFF
       # Dependencies
     INSTALL_COMMAND ""
     DEPENDS
@@ -78,36 +78,6 @@ if(NOT DEFINED ${proj}_DIR AND NOT ${SUPERBUILD_TOPLEVEL_PROJECT}_USE_SYSTEM_${p
   ExternalProject_GenerateProjectDescription_Step(${proj})
 
   set(${proj}_DIR ${EP_BINARY_DIR}/ANTS-build)
-
-  #-----------------------------------------------------------------------------
-  # Launcher setting specific to build tree
-
-  # library paths
-  set(${proj}_LIBRARY_PATHS_LAUNCHER_BUILD
-    ${proj}_DIR
-    ${proj}_DIR/bin/<CMAKE_CFG_INTDIR>
-    ${CMAKE_BINARY_DIR}/${Slicer_THIRDPARTY_BIN_DIR}
-    ${CMAKE_BINARY_DIR}/${Slicer_THIRDPARTY_BIN_DIR}/<CMAKE_CFG_INTDIR>
-    )
-  mark_as_superbuild(
-    VARS ${proj}_LIBRARY_PATHS_LAUNCHER_BUILD
-    LABELS "LIBRARY_PATHS_LAUNCHER_BUILD"
-    )
-
-  #-----------------------------------------------------------------------------
-  # Launcher setting specific to install tree
-
-  # library paths
-  set(${proj}_LIBRARY_PATHS_LAUNCHER_INSTALLED ) # TODO
-  # if(UNIX AND NOT APPLE)
-  #   list(APPEND ${proj}_LIBRARY_PATHS_LAUNCHER_INSTALLED
-  #     <APPLAUNCHER_DIR>/lib/igtl
-  #     )
-  # endif()
-  mark_as_superbuild(
-    VARS ${proj}_LIBRARY_PATHS_LAUNCHER_INSTALLED
-    LABELS "LIBRARY_PATHS_LAUNCHER_INSTALLED"
-    )
 
 else()
   ExternalProject_Add_Empty(${proj} DEPENDS ${${proj}_DEPENDS})
