@@ -38,7 +38,7 @@ endif()
 add_subdirectory(antsRegistration)
 add_subdirectory(antsCommand)
 add_subdirectory(antsApplyTransformsCLI)
-# add_subdirectory(antsRegistrationCLI)
+add_subdirectory(antsRegistrationCLI)
 ## NEXT_MODULE
 
 #-----------------------------------------------------------------------------

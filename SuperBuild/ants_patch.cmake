@@ -48,3 +48,66 @@ file(WRITE ${cmakefile} "${cmakefile_src}")
 else()
 message(STATUS "ants: Already patched ${cmakefile}")
 endif()
+
+#-----------------------------------
+# Filter Update
+
+set(cmakefile ${ants_SRC_DIR}/Examples/antsDisplacementAndVelocityFieldRegistrationCommandIterationUpdate.h)
+file(READ ${cmakefile} cmakefile_src)
+string(FIND "${cmakefile_src}" "std::cout << \"<filter-stage-progress>\"" found_patched)
+if ("${found_patched}" LESS 0)
+message(STATUS "ants: Patching filter log ${cmakefile}")
+string(REPLACE 
+    "this->Logger() << \"1DIAGNOSTIC, \""
+    "std::cout << \"<filter-stage-progress>\" << (float)lCurrentIteration/(float)this->m_NumberOfIterations[filter->GetCurrentLevel()] << \"</filter-stage-progress>\" << std::endl << std::flush;\nthis->Logger() << \"1DIAGNOSTIC, \""
+    cmakefile_src "${cmakefile_src}")
+file(WRITE ${cmakefile} "${cmakefile_src}")
+else()
+message(STATUS "ants: Filter log already patched ${cmakefile}")
+endif()
+
+set(cmakefile ${ants_SRC_DIR}/Examples/antsRegistrationOptimizerCommandIterationUpdate.h)
+file(READ ${cmakefile} cmakefile_src)
+string(FIND "${cmakefile_src}" "std::cout << \"<filter-stage-progress>\"" found_patched)
+if ("${found_patched}" LESS 0)
+message(STATUS "ants: Patching filter log ${cmakefile}")
+string(REPLACE 
+    "this->Logger() << \"2DIAGNOSTIC, \""
+    "std::cout << \"<filter-stage-progress>\" << (float)currentIteration/(float)lastIteration << \"</filter-stage-progress>\" << std::endl << std::flush;\nthis->Logger() << \"2DIAGNOSTIC, \""
+    cmakefile_src "${cmakefile_src}")
+file(WRITE ${cmakefile} "${cmakefile_src}")
+else()
+message(STATUS "ants: Filter log already patched ${cmakefile}")
+endif()
+
+set(cmakefile ${ants_SRC_DIR}/Examples/itkantsRegistrationHelper.h)
+file(READ ${cmakefile} cmakefile_src)
+string(FIND "${cmakefile_src}" "std::cout << \"<filter-comment>\"" found_patched)
+if ("${found_patched}" LESS 0)
+message(STATUS "ants: Patching filter log ${cmakefile}")
+string(REPLACE 
+    "this->Logger() << std::endl << \"*** Running \"" 
+    "std::cout << \"<filter-comment>\" << currentTransform->GetNameOfClass() << \"</filter-comment>\" << std::endl << std::flush;\nthis->Logger() << std::endl << \"*** Running \""
+    cmakefile_src "${cmakefile_src}")
+file(WRITE ${cmakefile} "${cmakefile_src}")
+else()
+message(STATUS "ants: Filter log already patched ${cmakefile}")
+endif()
+
+set(cmakefile ${ants_SRC_DIR}/Examples/itkantsRegistrationHelper.hxx)
+file(READ ${cmakefile} cmakefile_src)
+string(FIND "${cmakefile_src}" "std::cout << \"<filter-comment>\"" found_patched)
+if ("${found_patched}" LESS 0)
+message(STATUS "ants: Patching filter log ${cmakefile}")
+string(REGEX REPLACE 
+    "this->Logger([^\\;]+Running )([^\\*\\;]+)" 
+    "std::cout << \"<filter-comment>\" << \"\\2\" << \"</filter-comment>\" << std::endl << std::flush;\nthis->Logger\\1\\2"
+    cmakefile_src "${cmakefile_src}")
+string(REPLACE 
+    "this->Logger() << std::endl << \"Stage \"" 
+    "std::cout << \"<filter-progress>\" << (float)(currentStageNumber+1)/(float)(this->m_NumberOfStages+1) << \"</filter-progress>\" << std::endl << std::flush;\nthis->Logger() << std::endl << \"Stage \""
+    cmakefile_src "${cmakefile_src}")
+file(WRITE ${cmakefile} "${cmakefile_src}")
+else()
+message(STATUS "ants: Filter log already patched ${cmakefile}")
+endif()

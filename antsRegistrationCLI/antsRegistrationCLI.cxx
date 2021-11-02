@@ -17,9 +17,14 @@ int main( int argc, char * argv[] )
 
   const char * const * const ptr = &argv[1] ;
   // std::vector< std::string > command_line_args( ptr , ptr+argc-1 );
+
   std::vector< std::string > command_line_args;
 
-  command_line_args.push_back("--help");
+  std::stringstream ss(antsCommand);
+  std::string tmp;
+  while(std::getline(ss, tmp, ' ')){
+      command_line_args.push_back(tmp);
+  }
 
   std::ostream * command_stream = &std::cout;
 

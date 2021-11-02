@@ -11,6 +11,12 @@
   <parameters>
     <label>IO</label>
     <description><![CDATA[Input/output parameters]]></description>
-
+    <string>
+      <name>antsCommand</name>
+      <label>ANTs Registration Command</label>
+      <channel>input</channel>
+      <longflag>--antsCommand</longflag>
+      <description><![CDATA[antsRegistration command]]></description>
+    </string>
   </parameters>
 </executable>
