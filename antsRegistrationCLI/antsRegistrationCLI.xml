@@ -8,15 +8,42 @@
   <license>Slicer</license>
   <contributor>FirstName LastName (Institution), FirstName LastName (Institution)</contributor>
   <acknowledgements>This work was partially funded by NIH grant NXNNXXNNNNNN-NNXN</acknowledgements>
+  
   <parameters>
-    <label>IO</label>
-    <description><![CDATA[Input/output parameters]]></description>
+    <label>Command</label>
+    <description><![CDATA[ANTs Registration Command]]></description>
     <string>
       <name>antsCommand</name>
       <label>ANTs Registration Command</label>
       <channel>input</channel>
       <longflag>--antsCommand</longflag>
-      <description><![CDATA[antsRegistration command]]></description>
+      <description><![CDATA[specify the antsRegistration command without the output argument]]></description>
     </string>
   </parameters>
+
+  <parameters>
+    <label>Output</label>
+    <image>
+      <name>outputVolume</name>
+      <label>Output Volume</label>
+      <channel>output</channel>
+      <longflag>--outputVolume</longflag>
+      <description><![CDATA[Output Volume.]]></description>
+    </image>
+    <transform fileExtensions="Composite.h5">
+      <name>outputCompositeTransform</name>
+      <label>Output Composite Transform</label>
+      <channel>output</channel>
+      <longflag>--outputCompositeTransform</longflag>
+      <description><![CDATA[Output composite transform. If using composite transform don't specify a displacement field]]></description>
+    </transform>
+    <transform fileExtensions=".nii.gz">
+      <name>outputDisplacementField</name>
+      <label>Output Displacement Field</label>
+      <channel>output</channel>
+      <longflag>--outputDisplacementField</longflag>
+      <description><![CDATA[Output displacement field. If using displacement field don't specify a composite transform]]></description>
+    </transform>
+  </parameters>
+
 </executable>

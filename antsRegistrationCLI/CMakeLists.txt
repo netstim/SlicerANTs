@@ -26,6 +26,7 @@ set(MODULE_SRCS
 set(MODULE_TARGET_LIBRARIES
   Upstream::antsUtilities  
   Upstream::l_antsRegistration
+  Upstream::l_antsApplyTransforms
   ${ITK_LIBRARIES}
   )
 
