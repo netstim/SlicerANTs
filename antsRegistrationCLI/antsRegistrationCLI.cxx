@@ -28,28 +28,31 @@ int main( int argc, char * argv[] )
 {
   PARSE_ARGS;
 
-  if ((outputCompositeTransform.empty() && outputDisplacementField.empty()) ||
-      (!outputCompositeTransform.empty() && !outputDisplacementField.empty())) {
-    std::cout << "ERROR: specify either a composite or displacement transform." << std::endl;
-    return EXIT_FAILURE;
+  bool useCompositeTransform = !outputCompositeTransform.empty();
+  bool useDisplacementField = !outputDisplacementField.empty();
+  bool useOutputVolume = !outputVolume.empty();
+
+  if (!useCompositeTransform && !useDisplacementField && !useOutputVolume){
+    std::cout << "ERROR: specify an output." << std::endl;
+  } else if (!useCompositeTransform && !useDisplacementField){
+    outputCompositeTransform = outputVolume;
+    outputCompositeTransform.replace(outputCompositeTransform.end()-5, outputCompositeTransform.end(), "Composite.h5");
+  } else if (!useCompositeTransform && useDisplacementField){
+    outputCompositeTransform = outputDisplacementField; 
+    outputCompositeTransform.replace(outputCompositeTransform.end()-7, outputCompositeTransform.end(), "Composite.h5");
   }
 
-  // Setup output parameters
-  if (outputCompositeTransform.empty()){
-    outputCompositeTransform = outputDisplacementField;
-    outputCompositeTransform.replace(outputCompositeTransform.end()-7, outputCompositeTransform.end(), "Composite.h5");  
-  }
   std::string outputBase = outputCompositeTransform.substr(0, outputCompositeTransform.length()-12);
 
   // Init command line args
   std::string referenceVolume;
   std::vector<std::string> commandArguments;
   commandArguments.push_back("--output");
-  if (outputVolume.empty()){
-    commandArguments.push_back(outputBase);
-  }else{
+  if (useOutputVolume){
     commandArguments.push_back("[" + outputBase + "," + outputVolume + "]");
     referenceVolume = outputVolume;
+  }else{
+    commandArguments.push_back(outputBase);
   }
 
   // Put rest of command line args
@@ -66,7 +69,7 @@ int main( int argc, char * argv[] )
   printAntsCommand("antsRegistration", &commandArguments);
   int antsFailed = ants::antsRegistration(commandArguments, commandStream);
 
-  if (antsFailed==0 && !outputDisplacementField.empty()){
+  if (antsFailed==0 && useDisplacementField){
     std::cout << "<filter-comment>" << "ANTs Apply Transforms " << "</filter-comment>" << std::endl << std::flush;
     std::cout << "<filter-progress>" << 0.99 << "</filter-progress>" << std::endl << std::flush;
     std::cout << "<filter-stage-progress>" << 1.0 << "</filter-stage-progress>" << std::endl << std::flush;
@@ -83,6 +86,9 @@ int main( int argc, char * argv[] )
     commandArguments.push_back("1");
     printAntsCommand("antsApplyTransforms", &commandArguments);
     antsFailed = ants::antsApplyTransforms(commandArguments, commandStream);
+  }
+
+  if (!useCompositeTransform){
     std::remove(outputCompositeTransform.c_str());
   }
 
