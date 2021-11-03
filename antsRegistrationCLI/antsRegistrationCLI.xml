@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <executable>
-  <category>Examples</category>
+  <category>Utilities</category>
   <title>antsRegistrationCLI</title>
   <description><![CDATA[This is a CLI module that can be bundled in an extension]]></description>
   <version>0.0.1</version>
-  <documentation-url>http://www.example.com/Slicer/Modules/antsRegistrationCLI</documentation-url>
+  <documentation-url>https://github.com/simonoxen/SlicerANTs</documentation-url>
   <license>Slicer</license>
-  <contributor>FirstName LastName (Institution), FirstName LastName (Institution)</contributor>
+  <contributor>Simon Oxenford (Netstim Berlin)</contributor>
   <acknowledgements>This work was partially funded by NIH grant NXNNXXNNNNNN-NNXN</acknowledgements>
   
   <parameters>
