@@ -29,7 +29,7 @@ class antsRegistration(ScriptedLoadableModule):
     self.parent.helpText = """
 See more information in <a href="https://github.com/simonoxen/SlicerANTs">module documentation</a>.
 """
-    self.parent.acknowledgementText = ""
+    self.parent.acknowledgementText = "TODO"
 
 
 
