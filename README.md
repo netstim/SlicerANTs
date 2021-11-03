@@ -8,8 +8,8 @@ Install from the Slicer Extension Manager from nightly build.
 
 ## Modules
 
-- antsRegistration: provides an interface for doing registration with ANTs. Generates parameters passed to the antsCommand module.
-- antsCommand: cli module to run ANTs executables (currently antsRegistration and antsApplyTransforms).
+- antsRegistration: provides an interface for doing registration with ANTs. Generates parameters passed to the antsRegistrationCLI module.
+- antsRegistrationCLI: cli module that run the command generated from antsRegistration module.
 
 ## (Basic) Tutorial
 
