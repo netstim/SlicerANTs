@@ -36,13 +36,23 @@ endif()
 #-----------------------------------------------------------------------------
 # Extension modules
 add_subdirectory(antsRegistration)
-add_subdirectory(antsCommand)
+add_subdirectory(antsRegistrationCLI)
 ## NEXT_MODULE
 
 #-----------------------------------------------------------------------------
+set(SlicerANTs_CUSTOM_CONFIG "
+include(\"${ants_DIR}/antsConfig.cmake\")
+")
+include(${Slicer_EXTENSION_GENERATE_CONFIG})
+
+#-----------------------------------------------------------------------------
 set(EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS)
-list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${ants_DIR}/ANTS-build;ANTs;RUNTIME_antsRegistration;/${Slicer_INSTALL_THIRDPARTY_LIB_DIR}")
-list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${ants_DIR}/ANTS-build;ANTs;RUNTIME_antsApplyTransforms;/${Slicer_INSTALL_THIRDPARTY_LIB_DIR}")
+list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${ants_DIR};ANTs;RUNTIME_antsRegistration;/${Slicer_INSTALL_THIRDPARTY_LIB_DIR}")
+list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${ants_DIR};ANTs;RUNTIME_antsApplyTransforms;/${Slicer_INSTALL_THIRDPARTY_LIB_DIR}")
+list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${ants_DIR};ANTs;RUNTIME_antsUtilities;/${Slicer_INSTALL_THIRDPARTY_LIB_DIR}")
+list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${ants_DIR};ANTs;DEVELOPMENT_antsRegistration;/${Slicer_INSTALL_THIRDPARTY_LIB_DIR}")
+list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${ants_DIR};ANTs;DEVELOPMENT_antsApplyTransforms;/${Slicer_INSTALL_THIRDPARTY_LIB_DIR}")
+list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${ants_DIR};ANTs;DEVELOPMENT_antsUtilities;/${Slicer_INSTALL_THIRDPARTY_LIB_DIR}")
 set(${EXTENSION_NAME}_CPACK_INSTALL_CMAKE_PROJECTS "${EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS}" CACHE STRING "List of external projects to install" FORCE)
 
 #-----------------------------------------------------------------------------
@@ -50,3 +60,20 @@ list(APPEND CPACK_INSTALL_CMAKE_PROJECTS "${CMAKE_BINARY_DIR};${EXTENSION_NAME};
 list(APPEND CPACK_INSTALL_CMAKE_PROJECTS "${${EXTENSION_NAME}_CPACK_INSTALL_CMAKE_PROJECTS}")
 include(${Slicer_EXTENSION_GENERATE_CONFIG})
 include(${Slicer_EXTENSION_CPACK})
+
+#-----------------------------------------------------------------------------
+# Fix packaging include dirs
+set(cmakefile
+  ${CMAKE_BINARY_DIR}/SlicerExtensionBundle/SlicerExtensionCPackBundleFixup.cmake
+)
+
+file(READ ${cmakefile} cmakefile_src)
+string(FIND "${cmakefile_src}" "${Slicer_THIRDPARTY_LIB_DIR}/lib\")" found_patched)
+if ("${found_patched}" LESS 0)
+message(STATUS "SlicerANTs package: Patching ${cmakefile}")
+string(REPLACE "${Slicer_THIRDPARTY_LIB_DIR}\")" "${Slicer_THIRDPARTY_LIB_DIR}/lib\")"
+    cmakefile_src "${cmakefile_src}")
+file(WRITE ${cmakefile} "${cmakefile_src}")
+else()
+message(STATUS "SlicerANTs package: Already patched ${cmakefile}")
+endif()

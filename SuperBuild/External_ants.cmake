@@ -68,12 +68,17 @@ if(NOT DEFINED ${proj}_DIR AND NOT ${SUPERBUILD_TOPLEVEL_PROJECT}_USE_SYSTEM_${p
       # Options
       -DBUILD_ALL_ANTS_APPS:BOOL=OFF
       -DBUILD_TESTING:BOOL=OFF
+      -DBUILD_SHARED_LIBS:BOOL=ON
+      -DANTS_INSTALL_LIBS_ONLY:BOOL=OFF
       # Dependencies
     INSTALL_COMMAND ""
     DEPENDS
       ${${proj}_DEPENDS}
     )
-  set(${proj}_DIR ${EP_BINARY_DIR})
+
+  ExternalProject_GenerateProjectDescription_Step(${proj})
+
+  set(${proj}_DIR ${EP_BINARY_DIR}/ANTS-build)
 
 else()
   ExternalProject_Add_Empty(${proj} DEPENDS ${${proj}_DEPENDS})

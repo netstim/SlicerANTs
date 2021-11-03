@@ -24,12 +24,12 @@ class antsRegistration(ScriptedLoadableModule):
     ScriptedLoadableModule.__init__(self, parent)
     self.parent.title = "General Registration (ANTs)"
     self.parent.categories = ["Registration"]
-    self.parent.dependencies = ["antsCommand"]
+    self.parent.dependencies = ["antsRegistrationCLI"]
     self.parent.contributors = ["Simon Oxenford (Netstim Berlin)"]
     self.parent.helpText = """
 See more information in <a href="https://github.com/simonoxen/SlicerANTs">module documentation</a>.
 """
-    self.parent.acknowledgementText = ""
+    self.parent.acknowledgementText = "TODO"
 
 
 
@@ -78,8 +78,9 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     levelsTableLayout = qt.QVBoxLayout(self.ui.levelsFrame)
     levelsTableLayout.addWidget(self.ui.levelsTableWidget)
 
-    self.ui.cliWidget = slicer.modules.antscommand.createNewWidgetRepresentation()
+    self.ui.cliWidget = slicer.modules.antsregistrationcli.createNewWidgetRepresentation()
     self.layout.addWidget(self.ui.cliWidget.children()[3]) # progress bar
+    self._cliObserver = None
 
     # Set scene in MRML widgets. Make sure that in Qt designer the top-level qMRMLWidget's
     # "mrmlSceneChanged(vtkMRMLScene*)" signal in is connected to each MRML widget's.
@@ -105,11 +106,11 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.outputInterpolationComboBox.connect("currentIndexChanged(int)", self.updateParameterNodeFromGUI)
     self.ui.outputTransformComboBox.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
     self.ui.outputVolumeComboBox.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
-    self.ui.outputLogTextComboBox.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
     self.ui.initialTransformTypeComboBox.connect("currentIndexChanged(int)", self.updateParameterNodeFromGUI)
     self.ui.initialTransformNodeComboBox.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
     self.ui.dimensionalitySpinBox.connect("valueChanged(int)", self.updateParameterNodeFromGUI)
     self.ui.histogramMatchingCheckBox.connect("toggled(bool)", self.updateParameterNodeFromGUI)
+    self.ui.outputDisplacementFieldCheckBox.connect("toggled(bool)", self.updateParameterNodeFromGUI)
     self.ui.winsorizeRangeWidget.connect("rangeChanged(double,double)", self.updateParameterNodeFromGUI)
     self.ui.computationPrecisionComboBox.connect("currentIndexChanged(int)", self.updateParameterNodeFromGUI)
 
@@ -230,8 +231,8 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     self.ui.outputTransformComboBox.setCurrentNode(self._parameterNode.GetNodeReference("OutputTransform"))
     self.ui.outputVolumeComboBox.setCurrentNode(self._parameterNode.GetNodeReference("OutputVolume"))
-    self.ui.outputLogTextComboBox.setCurrentNode(self._parameterNode.GetNodeReference("OutputLog"))
     self.ui.outputInterpolationComboBox.currentText = self._parameterNode.GetParameter("OutputInterpolation")
+    self.ui.outputDisplacementFieldCheckBox.checked = int(self._parameterNode.GetParameter("OutputDisplacementField"))
 
     self.ui.initialTransformTypeComboBox.currentIndex = int(self._parameterNode.GetParameter("initializationFeature")) + 2
     self.ui.initialTransformNodeComboBox.setCurrentNode(self._parameterNode.GetNodeReference("InitialTransform") if self.ui.initialTransformTypeComboBox.currentIndex == 1 else None)
@@ -283,8 +284,8 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     
     self._parameterNode.SetNodeReferenceID("OutputTransform", self.ui.outputTransformComboBox.currentNodeID)
     self._parameterNode.SetNodeReferenceID("OutputVolume", self.ui.outputVolumeComboBox.currentNodeID)
-    self._parameterNode.SetNodeReferenceID("OutputLog", self.ui.outputLogTextComboBox.currentNodeID)
     self._parameterNode.SetParameter("OutputInterpolation", self.ui.outputInterpolationComboBox.currentText)
+    self._parameterNode.SetParameter("OutputDisplacementField", str(int(self.ui.outputDisplacementFieldCheckBox.checked)))
 
     self._parameterNode.SetParameter("initializationFeature", str(self.ui.initialTransformTypeComboBox.currentIndex-2))
     self._parameterNode.SetNodeReferenceID("InitialTransform", self.ui.initialTransformNodeComboBox.currentNodeID)
@@ -393,7 +394,7 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     parameters['outputSettings']['transform'] = self.ui.outputTransformComboBox.currentNode()
     parameters['outputSettings']['volume'] = self.ui.outputVolumeComboBox.currentNode()
     parameters['outputSettings']['interpolation'] = self.ui.outputInterpolationComboBox.currentText
-    parameters['outputSettings']['log'] = self.ui.outputLogTextComboBox.currentNode()
+    parameters['outputSettings']['useDisplacementField'] = int(self.ui.outputDisplacementFieldCheckBox.checked)
 
     parameters['initialTransformSettings'] = {}
     parameters['initialTransformSettings']['initializationFeature'] = int(self._parameterNode.GetParameter("initializationFeature"))
@@ -408,16 +409,18 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.logic.process(**parameters)
 
     self.ui.cliWidget.setCurrentCommandLineModuleNode(self.logic._cliNode)
-    self.logic._cliNode.AddObserver('ModifiedEvent', self.onProcessingStatusUpdate)
+    self._cliObserver = self.logic._cliNode.AddObserver('ModifiedEvent', self.onProcessingStatusUpdate)
     self.ui.runRegistrationButton.text = 'Cancel'
 
   def onProcessingStatusUpdate(self, caller, event):
     if (caller.GetStatus() & caller.Cancelled):
       self.ui.runRegistrationButton.text = "Run Registration"
+      self.logic._cliNode.RemoveObserver(self._cliObserver)
     elif (caller.GetStatus() & caller.Completed):
       if (caller.GetStatus() & caller.ErrorsMask):
-        qt.QMessageBox().warning(qt.QWidget(),'Error', 'ANTs Failed. See console or output log.')
+        qt.QMessageBox().warning(qt.QWidget(),'Error', 'ANTs Failed. See CLI output.')
       self.ui.runRegistrationButton.text = "Run Registration"
+      self.logic._cliNode.RemoveObserver(self._cliObserver)
     else:
       self.ui.runRegistrationButton.text = "Cancel"
 
@@ -457,16 +460,9 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
           module = getattr(module, modulePart)
         importlib.reload(module) # reload
 
-    self.antsApplyTransformsCommand = ''
-    self.tempDirectory = ''
-    self.outputVolumeFileName = 'outputVolume.nii'
-    self.outputTransformPrefix = 'outputTransform'
-    self.outputLog = 'out.txt'
+    self._tempDirectory = ''
     self._cliNode = None
     self._cliObserver = None
-    self._outputVolume = None
-    self._outputTransform = None
-    self._outputLog = None
     
   def setDefaultParameters(self, parameterNode):
     """
@@ -482,10 +478,10 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
       parameterNode.SetParameter("OutputTransform", "")
     if not parameterNode.GetParameter("OutputVolume"):
       parameterNode.SetParameter("OutputVolume", "")
-    if not parameterNode.GetParameter("OutputLog"):
-      parameterNode.SetParameter("OutputLog", "")
     if not parameterNode.GetParameter("OutputInterpolation"):
       parameterNode.SetParameter("OutputInterpolation", str(presetParameters["outputSettings"]["interpolation"]))
+    if not parameterNode.GetParameter("OutputDisplacementField"):
+      parameterNode.SetParameter("OutputDisplacementField", "0")
 
     if not parameterNode.GetParameter("initializationFeature"):
       parameterNode.SetParameter("initializationFeature", str(presetParameters["initialTransformSettings"]["initializationFeature"]))
@@ -513,109 +509,28 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     :param generalSettings: dictionary defining general registration settings
     See presets examples to see how these are specified
     """
-    self.resetTempDirectoryAndLocalVars()
+    self.resetTempDirectory()
 
     initialTransformSettings['fixedImageNode'] = stages[0]['metrics'][0]['fixed']
     initialTransformSettings['movingImageNode'] = stages[0]['metrics'][0]['moving']
 
-    antsRegistraionCommand = self.getAntsRegistrationCommand(stages, outputSettings, initialTransformSettings, generalSettings)
-    self.runAntsCommandAndSetObserver('antsRegistration', antsRegistraionCommand)
+    params = {}
+    params["antsCommand"] = self.getAntsRegistrationCommand(stages, outputSettings, initialTransformSettings, generalSettings)
+    if outputSettings["volume"] is not None:
+      params["outputVolume"] = outputSettings["volume"]
+    if outputSettings["transform"] is not None:
+      if ("useDisplacementField" in outputSettings) and outputSettings["useDisplacementField"]:
+        params["outputDisplacementField"] = outputSettings["transform"]
+      else:
+        params["outputCompositeTransform"] = outputSettings["transform"]
 
-    if isinstance(outputSettings['transform'], slicer.vtkMRMLGridTransformNode):
-      gridReferenceNode = stages[0]['metrics'][0]['fixed']
-      self.antsApplyTransformsCommand = self.getAntsApplyTransformsCommand(gridReferenceNode)
-    else:
-      self.antsApplyTransformsCommand = ''
-
-    self._outputVolume = outputSettings['volume']
-    self._outputTransform = outputSettings['transform']
-    self._outputLog = outputSettings['log']
-
-  def runAntsCommandAndSetObserver(self, executableName, command):
-    self._cliNode = self.runAntsCommand(executableName, command)
+    self._cliNode = slicer.cli.run(slicer.modules.antsregistrationcli, None, params, wait_for_completion=False, update_display=False)
     self._cliObserver = self._cliNode.AddObserver('ModifiedEvent', self.onProcessingStatusUpdate)
 
-  def runAntsCommand(self, executableName, command):
-    logging.info("Running ANTs Command: " + executableName + " " + command)
-    params = {}
-    params['antsExecutable'] = executableName
-    params['antsCommand'] = command
-    params['antsOutputLog'] = os.path.join(self.tempDirectory, self.outputLog)
-    return slicer.cli.run(slicer.modules.antscommand, self._cliNode, params, wait_for_completion=False, update_display=False)
-
   def onProcessingStatusUpdate(self, caller, event):
-    if (caller.GetStatus() & caller.Cancelled):
-        self.onProcessFinished()
-    elif (caller.GetStatus() & caller.Completed):
-      if (caller.GetStatus() & caller.ErrorsMask):
-        self.onProcessFinished()
-      else:
-        self._cliNode.RemoveObserver(self._cliObserver)
-        self.doPostProcessing()
-        
-  def doPostProcessing(self):
-    if self.antsApplyTransformsCommand is not '':
-      self.runAntsCommandAndSetObserver('antsApplyTransforms', self.antsApplyTransformsCommand)
-      self.antsApplyTransformsCommand = ''
-      return
-
-    if self._outputTransform is not None:
-      self.loadOutputTransformNode(self._outputTransform)
-    if self._outputVolume is not None:
-      self.loadOutputVolumeNode(self._outputVolume)
-
-    self.onProcessFinished()
-
-  def onProcessFinished(self):
-    if self._outputLog is not None:
-      self.loadOutputLog(self._outputLog)
-    self.printLastNLogLines(20)
-    self.resetTempDirectoryAndLocalVars()
-
-  def loadOutputTransformNode(self, outputTransformNode):
-    fileExt = '.nii.gz' if isinstance(outputTransformNode, slicer.vtkMRMLGridTransformNode) else '.h5'
-    outputTransformPath = os.path.join(self.getTempDirectory(), self.outputTransformPrefix + 'Composite' + fileExt)
-    loadedOutputTransformNode = slicer.util.loadTransform(outputTransformPath)
-    if not loadedOutputTransformNode.GetTransformToParent().GetInverseFlag():
-      outputTransformNode.SetAndObserveTransformToParent(loadedOutputTransformNode.GetTransformToParent())
-    else:
-      outputTransformNode.SetAndObserveTransformFromParent(loadedOutputTransformNode.GetTransformFromParent())
-    slicer.mrmlScene.RemoveNode(loadedOutputTransformNode)
-
-  def loadOutputVolumeNode(self, outputVolumeNode):
-    outputVolumePath = os.path.join(self.getTempDirectory(), self.outputVolumeFileName)
-    loadedOutputVolumeNode = slicer.util.loadVolume(outputVolumePath)
-    outputVolumeNode.SetAndObserveImageData(loadedOutputVolumeNode.GetImageData())
-    ijkToRas = vtk.vtkMatrix4x4()
-    loadedOutputVolumeNode.GetIJKToRASMatrix(ijkToRas)
-    outputVolumeNode.SetIJKToRASMatrix(ijkToRas)
-    slicer.mrmlScene.RemoveNode(loadedOutputVolumeNode)
-
-  def loadOutputLog(self, outputLogNode):
-    outputLogNode.SetText(self.getLastNLogLines(float('Inf')))
-
-  def printLastNLogLines(self, N):
-    print(self.getLastNLogLines(N))
-
-  def getLastNLogLines(self, N):
-    logFile = os.path.join(self.tempDirectory, self.outputLog)
-    with open(logFile) as f:
-      lines = f.readlines()
-      linesNumber = len(lines)
-      if linesNumber:
-        return ''.join(lines[-min(N,linesNumber-1):])
-    return ''
-
-  def resetTempDirectoryAndLocalVars(self):
-    self.resetTempDirectory()
-    self.resetCliNode()
-    self._outputVolume = None
-    self._outputTransform = None
-
-  def resetCliNode(self):
-    slicer.mrmlScene.RemoveNode(self._cliNode)
-    self._cliNode = None
-    self._cliObserver = None
+    if (caller.GetStatus() & caller.Cancelled) or (caller.GetStatus() & caller.Completed):
+      self.resetTempDirectory()
+      self._cliNode.RemoveObserver(self._cliObserver)
 
   def getAntsApplyTransformsCommand(self, gridReferenceNode):
     antsCommand = "--transform %s" % os.path.join(self.getTempDirectory(), self.outputTransformPrefix + 'Composite.h5')
@@ -642,7 +557,8 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
 
   def getOutputCommand(self, interpolation='Linear'):
     command = " --interpolation %s" % interpolation
-    command = command + " --output [%s,%s]" % (os.path.join(self.getTempDirectory(), self.outputTransformPrefix), os.path.join(self.getTempDirectory(), self.outputVolumeFileName))
+    # output flag is set by antsRegistrationCLI
+    # command = command + " --output [%s,%s]" % (os.path.join(self.getTempDirectory(), self.outputTransformPrefix), os.path.join(self.getTempDirectory(), self.outputVolumeFileName))
     command = command + " --write-composite-transform 1"
     command = command + " --collapse-output-transforms 1"
     return command
@@ -720,19 +636,19 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     return filePath
 
   def resetTempDirectory(self):
-    if os.path.isdir(self.tempDirectory):
-      shutil.rmtree(self.tempDirectory)
-    self.tempDirectory = ''
+    if os.path.isdir(self._tempDirectory):
+      shutil.rmtree(self._tempDirectory)
+    self._tempDirectory = ''
 
   def getTempDirectory(self):
-    if not self.tempDirectory:
+    if not self._tempDirectory:
       tempDir = qt.QDir(self.getTempDirectoryBase())
       tempDirName = qt.QDateTime().currentDateTime().toString("yyyyMMdd_hhmmss_zzz")
       fileInfo = qt.QFileInfo(qt.QDir(tempDir), tempDirName)
       dirPath = fileInfo.absoluteFilePath()
       qt.QDir().mkpath(dirPath)
-      self.tempDirectory = dirPath
-    return self.tempDirectory
+      self._tempDirectory = dirPath
+    return self._tempDirectory
 
   def getTempDirectoryBase(self):
     tempDir = qt.QDir(slicer.app.temporaryPath)
