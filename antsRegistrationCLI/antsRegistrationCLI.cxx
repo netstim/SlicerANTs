@@ -9,18 +9,14 @@
 
 namespace
 {
-  std::string getReferenceVolumeFromMetric(std::string metric)
-  {
-  int start = metric.find("[",0) + 1;
-  return metric.substr(start, metric.find(",",0)-start);
-  }
-  void printAntsCommand(const char * antsExecutable, std::vector< std::string > * commandArguments)
-  {
-    std::cout << antsExecutable << " ";
-    for(const auto& cla: *commandArguments) {
-      std::cout << cla << " ";
+  void replaceAll(std::string& str, const std::string& from, const std::string& to) {
+    if(from.empty())
+        return;
+    size_t start_pos = 0;
+    while((start_pos = str.find(from, start_pos)) != std::string::npos) {
+        str.replace(start_pos, from.length(), to);
+        start_pos += to.length();
     }
-    std::cout << std::endl;
   }
 }
 
@@ -41,33 +37,33 @@ int main( int argc, char * argv[] )
     outputCompositeTransform = outputDisplacementField; 
     outputCompositeTransform.replace(outputCompositeTransform.end()-7, outputCompositeTransform.end(), "Composite.h5");
   }
-
   std::string outputBase = outputCompositeTransform.substr(0, outputCompositeTransform.length()-12);
 
-  // Init command line args
-  std::string referenceVolume;
-  std::vector<std::string> commandArguments;
-  commandArguments.push_back("--output");
-  if (useOutputVolume){
-    commandArguments.push_back("[" + outputBase + "," + outputVolume + "]");
-    referenceVolume = outputVolume;
-  }else{
-    commandArguments.push_back(outputBase);
-  }
+  replaceAll(antsCommand, "$outputBase", outputBase);
+  replaceAll(antsCommand, "$inputTransform", inputTransform);
+  replaceAll(antsCommand, "$outputVolume", outputVolume);
 
-  // Put rest of command line args
+  if (!inputVolume01.empty()){replaceAll(antsCommand, "$inputVolume01", inputVolume01);}
+  if (!inputVolume02.empty()){replaceAll(antsCommand, "$inputVolume02", inputVolume02);}
+  if (!inputVolume03.empty()){replaceAll(antsCommand, "$inputVolume03", inputVolume03);}
+  if (!inputVolume04.empty()){replaceAll(antsCommand, "$inputVolume04", inputVolume04);}
+  if (!inputVolume05.empty()){replaceAll(antsCommand, "$inputVolume05", inputVolume05);}
+  if (!inputVolume06.empty()){replaceAll(antsCommand, "$inputVolume06", inputVolume06);}
+  if (!inputVolume06.empty()){replaceAll(antsCommand, "$inputVolume06", inputVolume06);}
+  if (!inputVolume07.empty()){replaceAll(antsCommand, "$inputVolume07", inputVolume07);}
+  if (!inputVolume08.empty()){replaceAll(antsCommand, "$inputVolume08", inputVolume08);}
+  if (!inputVolume09.empty()){replaceAll(antsCommand, "$inputVolume09", inputVolume09);}
+  if (!inputVolume10.empty()){replaceAll(antsCommand, "$inputVolume10", inputVolume10);}
+  if (!inputVolume11.empty()){replaceAll(antsCommand, "$inputVolume11", inputVolume11);}
+
+  std::vector<std::string> commandArguments;
   std::stringstream ss(antsCommand);
   std::string tmp;
   while(std::getline(ss, tmp, ' ')){
-    if (referenceVolume.empty() && commandArguments.back().compare("--metric") == 0){
-      referenceVolume = getReferenceVolumeFromMetric(tmp);
-    }
     commandArguments.push_back(tmp);
   }
 
-  std::ostream * commandStream = &std::cout;
-  printAntsCommand("antsRegistration", &commandArguments);
-  int antsFailed = ants::antsRegistration(commandArguments, commandStream);
+  int antsFailed = ants::antsRegistration(commandArguments, &std::cout);
 
   if (antsFailed==0 && useDisplacementField){
     std::cout << "<filter-comment>" << "ANTs Apply Transforms " << "</filter-comment>" << std::endl << std::flush;
@@ -77,15 +73,14 @@ int main( int argc, char * argv[] )
     commandArguments.push_back("--transform");
     commandArguments.push_back(outputCompositeTransform);
     commandArguments.push_back("--reference-image");
-    commandArguments.push_back(referenceVolume);
+    commandArguments.push_back(inputVolume01);
     commandArguments.push_back("--output");
     commandArguments.push_back("[" + outputDisplacementField + ",1]");
     commandArguments.push_back("--float");
     commandArguments.push_back("1");
     commandArguments.push_back("--verbose");
     commandArguments.push_back("1");
-    printAntsCommand("antsApplyTransforms", &commandArguments);
-    antsFailed = ants::antsApplyTransforms(commandArguments, commandStream);
+    antsFailed = ants::antsApplyTransforms(commandArguments, &std::cout);
   }
 
   if (!useCompositeTransform){

@@ -460,9 +460,8 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
           module = getattr(module, modulePart)
         importlib.reload(module) # reload
 
-    self._tempDirectory = ''
     self._cliNode = None
-    self._cliObserver = None
+    self._cliParams = {}
     
   def setDefaultParameters(self, parameterNode):
     """
@@ -509,39 +508,25 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     :param generalSettings: dictionary defining general registration settings
     See presets examples to see how these are specified
     """
-    self.resetTempDirectory()
 
     initialTransformSettings['fixedImageNode'] = stages[0]['metrics'][0]['fixed']
     initialTransformSettings['movingImageNode'] = stages[0]['metrics'][0]['moving']
 
-    params = {}
-    params["antsCommand"] = self.getAntsRegistrationCommand(stages, outputSettings, initialTransformSettings, generalSettings)
-    if outputSettings["volume"] is not None:
-      params["outputVolume"] = outputSettings["volume"]
+    self._cliParams = {}
+    self._cliParams["inputVolume01"] = stages[0]['metrics'][0]['fixed'] # will be used as reference in cli
+    self._cliParams["antsCommand"] = self.getAntsRegistrationCommand(stages, outputSettings, initialTransformSettings, generalSettings)
+
     if outputSettings["transform"] is not None:
       if ("useDisplacementField" in outputSettings) and outputSettings["useDisplacementField"]:
-        params["outputDisplacementField"] = outputSettings["transform"]
+        self._cliParams["outputDisplacementField"] = outputSettings["transform"]
       else:
-        params["outputCompositeTransform"] = outputSettings["transform"]
+        self._cliParams["outputCompositeTransform"] = outputSettings["transform"]
 
-    self._cliNode = slicer.cli.run(slicer.modules.antsregistrationcli, None, params, wait_for_completion=False, update_display=False)
-    self._cliObserver = self._cliNode.AddObserver('ModifiedEvent', self.onProcessingStatusUpdate)
-
-  def onProcessingStatusUpdate(self, caller, event):
-    if (caller.GetStatus() & caller.Cancelled) or (caller.GetStatus() & caller.Completed):
-      self.resetTempDirectory()
-      self._cliNode.RemoveObserver(self._cliObserver)
-
-  def getAntsApplyTransformsCommand(self, gridReferenceNode):
-    antsCommand = "--transform %s" % os.path.join(self.getTempDirectory(), self.outputTransformPrefix + 'Composite.h5')
-    antsCommand = antsCommand + " --reference-image %s" % self.saveNodeAndGetPath(gridReferenceNode)
-    antsCommand = antsCommand + " --output [%s,1]" % os.path.join(self.getTempDirectory(), self.outputTransformPrefix + 'Composite.nii.gz')
-    antsCommand = antsCommand + " --verbose 1"
-    return antsCommand
+    self._cliNode = slicer.cli.run(slicer.modules.antsregistrationcli, None, self._cliParams, wait_for_completion=False, update_display=False)
 
   def getAntsRegistrationCommand(self, stages, outputSettings, initialTransformSettings={}, generalSettings={}):
     antsCommand = self.getGeneralSettingsCommand(**generalSettings)
-    antsCommand = antsCommand + self.getOutputCommand(interpolation=outputSettings['interpolation'])
+    antsCommand = antsCommand + self.getOutputCommand(interpolation=outputSettings['interpolation'], volume=outputSettings['volume'])
     antsCommand = antsCommand + self.getInitialMovingTransformCommand(**initialTransformSettings)
     for stage in stages:
       antsCommand = antsCommand + self.getStageCommand(**stage)
@@ -555,19 +540,21 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     command = command + " --verbose 1"
     return command
 
-  def getOutputCommand(self, interpolation='Linear'):
+  def getOutputCommand(self, interpolation='Linear', volume=None):
     command = " --interpolation %s" % interpolation
-    # output flag is set by antsRegistrationCLI
-    # command = command + " --output [%s,%s]" % (os.path.join(self.getTempDirectory(), self.outputTransformPrefix), os.path.join(self.getTempDirectory(), self.outputVolumeFileName))
+    if volume is not None:
+      command = command + " --output [%s,%s]" % ("$outputBase", self.getOrSetCLIParam(volume, "outputVolume"))
+    else:
+      command = command + " --output $outputBase"
     command = command + " --write-composite-transform 1"
     command = command + " --collapse-output-transforms 1"
     return command
 
   def getInitialMovingTransformCommand(self, initialTransformNode=None, initializationFeature=-1, fixedImageNode=None, movingImageNode=None):
     if initialTransformNode is not None:
-      return " --initial-moving-transform %s" % self.saveNodeAndGetPath(initialTransformNode)
+      return " --initial-moving-transform %s" % self.getOrSetCLIParam(initialTransformNode, "inputTransform")
     elif initializationFeature >= 0:
-      return " --initial-moving-transform [%s,%s,%i]" % (self.saveNodeAndGetPath(fixedImageNode), self.saveNodeAndGetPath(movingImageNode), initializationFeature)
+      return " --initial-moving-transform [%s,%s,%i]" % (self.getOrSetCLIParam(fixedImageNode), self.getOrSetCLIParam(movingImageNode), initializationFeature)
     else:
       return ""
 
@@ -583,11 +570,11 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     return " --transform %s[%s]" % (transform, settings)
 
   def getMetricCommand(self, type, fixed, moving, settings):
-    return " --metric %s[%s,%s,%s]" % (type, self.saveNodeAndGetPath(fixed), self.saveNodeAndGetPath(moving), settings)
+    return " --metric %s[%s,%s,%s]" % (type, self.getOrSetCLIParam(fixed), self.getOrSetCLIParam(moving), settings)
 
   def getMasksCommand(self, fixed=None, moving=None):
-    fixedMask = self.saveNodeAndGetPath(fixed) if fixed else 'NULL'
-    movingMask = self.saveNodeAndGetPath(moving) if moving else 'NULL'
+    fixedMask = self.getOrSetCLIParam(fixed) if fixed else 'NULL'
+    movingMask = self.getOrSetCLIParam(moving) if moving else 'NULL'
     return " --masks [%s,%s]" % (fixedMask, movingMask)
 
   def getLevelsCommand(self, steps, convergenceThreshold, convergenceWindowSize, smoothingSigmasUnit):
@@ -604,58 +591,20 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     out = [str(step[key]) for step in steps]
     return "x".join(out)
 
-  def saveNodeAndGetPath(self, node):
-    # New location definition
-    if isinstance(node, slicer.vtkMRMLVolumeNode):
-      fileExtension = '.nii'
-    elif isinstance(node, slicer.vtkMRMLTransformNode):
-      fileExtension =  '.h5'
-    filePath = os.path.join(self.getTempDirectory(), node.GetID() + fileExtension)
-    if os.path.isfile(filePath):
-      return filePath # same node used in different metrics
-    # Save original file paths
-    originalFilePath = ""
-    originalFilePaths = []
-    storageNode = node.GetStorageNode()
-    if storageNode:
-      originalFilePath = storageNode.GetFileName()
-      for fileIndex in range(storageNode.GetNumberOfFileNames()):
-        originalFilePaths.append(storageNode.GetNthFileName(fileIndex))
-    # Save to new location
-    slicer.util.saveNode(node, filePath, {"useCompression": False})
-    # Restore original file paths
-    if storageNode:
-      storageNode.ResetFileNameList()
-      storageNode.SetFileName(originalFilePath)
-      for fileIndex in range(storageNode.GetNumberOfFileNames()):
-        storageNode.AddFileName(originalFilePaths[fileIndex])
-    else:
-      # temporary storage node was created, remove it to restore original state
-      storageNode = node.GetStorageNode()
-      slicer.mrmlScene.RemoveNode(storageNode)
-    return filePath
-
-  def resetTempDirectory(self):
-    if os.path.isdir(self._tempDirectory):
-      shutil.rmtree(self._tempDirectory)
-    self._tempDirectory = ''
-
-  def getTempDirectory(self):
-    if not self._tempDirectory:
-      tempDir = qt.QDir(self.getTempDirectoryBase())
-      tempDirName = qt.QDateTime().currentDateTime().toString("yyyyMMdd_hhmmss_zzz")
-      fileInfo = qt.QFileInfo(qt.QDir(tempDir), tempDirName)
-      dirPath = fileInfo.absoluteFilePath()
-      qt.QDir().mkpath(dirPath)
-      self._tempDirectory = dirPath
-    return self._tempDirectory
-
-  def getTempDirectoryBase(self):
-    tempDir = qt.QDir(slicer.app.temporaryPath)
-    fileInfo = qt.QFileInfo(qt.QDir(tempDir), "antsRegistration")
-    dirPath = fileInfo.absoluteFilePath()
-    qt.QDir().mkpath(dirPath)
-    return dirPath
+  def getOrSetCLIParam(self, mrmlNode, cliparam="inputVolume"):
+    greatestInputVolume = 0
+    nodeID = mrmlNode.GetID()
+    # get part
+    for key,val in self._cliParams.items():
+      if key.startswith(cliparam) and nodeID == val:
+        return "$" + key
+      elif key.startswith("inputVolume"):
+        greatestInputVolume = int(key[-2:])
+    # set part
+    if cliparam == "inputVolume":
+      cliparam = "inputVolume%02i" % (greatestInputVolume+1)
+    self._cliParams[cliparam] = nodeID
+    return "$" + cliparam
 
 
 #
