@@ -43,6 +43,7 @@ int main( int argc, char * argv[] )
   replaceAll(antsCommand, "$outputBase", outputBase);
   replaceAll(antsCommand, "$inputTransform", inputTransform);
   replaceAll(antsCommand, "$outputVolume", outputVolume);
+  replaceAll(antsCommand, "$useFloat", std::to_string((int)useFloat));
 
   if (!inputVolume01.empty()){replaceAll(antsCommand, "$inputVolume01", inputVolume01);}
   if (!inputVolume02.empty()){replaceAll(antsCommand, "$inputVolume02", inputVolume02);}
@@ -78,7 +79,7 @@ int main( int argc, char * argv[] )
     commandArguments.push_back("--output");
     commandArguments.push_back("[" + outputDisplacementField + ",1]");
     commandArguments.push_back("--float");
-    commandArguments.push_back("1");
+    commandArguments.push_back(std::to_string((int)useFloat));
     commandArguments.push_back("--verbose");
     commandArguments.push_back("1");
     antsFailed = ants::antsApplyTransforms(commandArguments, &std::cout);

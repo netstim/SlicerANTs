@@ -521,6 +521,8 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
         self._cliParams["outputDisplacementField"] = outputSettings["transform"]
       else:
         self._cliParams["outputCompositeTransform"] = outputSettings["transform"]
+    
+    self._cliParams["useFloat"] = (generalSettings["computationPrecision"]  == "float")
 
     self._cliNode = slicer.cli.run(slicer.modules.antsregistrationcli, None, self._cliParams, wait_for_completion=False, update_display=False)
 
@@ -536,7 +538,7 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     command = "--dimensionality %i" % dimensionality
     command = command + " --use-histogram-matching %i" % histogramMatching
     command = command + " --winsorize-image-intensities [%.3f,%.3f]" % tuple(winsorizeImageIntensities)
-    command = command + " --float %i" % (computationPrecision == "float")
+    command = command + " --float $useFloat"
     command = command + " --verbose 1"
     return command
 

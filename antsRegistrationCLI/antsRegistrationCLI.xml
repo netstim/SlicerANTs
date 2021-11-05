@@ -138,4 +138,13 @@
     </transform>
   </parameters>
 
+  <parameters>
+    <label>Settings</label>
+    <boolean>
+      <name>useFloat</name>
+      <longflag>--useFloat</longflag> 
+      <default>true</default>
+    </boolean>
+  </parameters>
+
 </executable>
