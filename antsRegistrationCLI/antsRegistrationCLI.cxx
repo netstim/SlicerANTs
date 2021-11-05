@@ -32,12 +32,13 @@ int main( int argc, char * argv[] )
     std::cout << "ERROR: specify an output." << std::endl;
   } else if (!useCompositeTransform && !useDisplacementField){
     outputCompositeTransform = outputVolume;
-    outputCompositeTransform.replace(outputCompositeTransform.end()-5, outputCompositeTransform.end(), "Composite.h5");
+    replaceAll(outputCompositeTransform, ".nrrd", "Composite.h5");
   } else if (!useCompositeTransform && useDisplacementField){
-    outputCompositeTransform = outputDisplacementField; 
-    outputCompositeTransform.replace(outputCompositeTransform.end()-7, outputCompositeTransform.end(), "Composite.h5");
+    outputCompositeTransform = outputDisplacementField;
+    replaceAll(outputCompositeTransform, ".nii.gz", "Composite.h5");
   }
-  std::string outputBase = outputCompositeTransform.substr(0, outputCompositeTransform.length()-12);
+  std::string outputBase = outputCompositeTransform;
+  replaceAll(outputBase, "Composite.h5", "");
 
   replaceAll(antsCommand, "$outputBase", outputBase);
   replaceAll(antsCommand, "$inputTransform", inputTransform);
