@@ -63,17 +63,16 @@ include(${Slicer_EXTENSION_CPACK})
 
 #-----------------------------------------------------------------------------
 # Fix packaging include dirs
-set(cmakefile
-  ${CMAKE_BINARY_DIR}/SlicerExtensionBundle/SlicerExtensionCPackBundleFixup.cmake
-)
-
-file(READ ${cmakefile} cmakefile_src)
-string(FIND "${cmakefile_src}" "${Slicer_THIRDPARTY_LIB_DIR}/lib\")" found_patched)
-if ("${found_patched}" LESS 0)
-message(STATUS "SlicerANTs package: Patching ${cmakefile}")
-string(REPLACE "${Slicer_THIRDPARTY_LIB_DIR}\")" "${Slicer_THIRDPARTY_LIB_DIR}/lib\")"
-    cmakefile_src "${cmakefile_src}")
-file(WRITE ${cmakefile} "${cmakefile_src}")
-else()
-message(STATUS "SlicerANTs package: Already patched ${cmakefile}")
+if(APPLE)
+  set(cmakefile ${CMAKE_BINARY_DIR}/SlicerExtensionBundle/SlicerExtensionCPackBundleFixup.cmake)
+  file(READ ${cmakefile} cmakefile_src)
+  string(FIND "${cmakefile_src}" "${Slicer_THIRDPARTY_LIB_DIR}/lib\")" found_patched)
+  if ("${found_patched}" LESS 0)
+  message(STATUS "SlicerANTs package: Patching ${cmakefile}")
+  string(REPLACE "${Slicer_THIRDPARTY_LIB_DIR}\")" "${Slicer_THIRDPARTY_LIB_DIR}/lib\")"
+      cmakefile_src "${cmakefile_src}")
+  file(WRITE ${cmakefile} "${cmakefile_src}")
+  else()
+  message(STATUS "SlicerANTs package: Already patched ${cmakefile}")
+  endif()
 endif()
