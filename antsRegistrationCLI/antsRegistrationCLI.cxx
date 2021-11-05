@@ -57,6 +57,15 @@ int main( int argc, char * argv[] )
   if (!inputVolume09.empty()){replaceAll(antsCommand, "$inputVolume09", inputVolume09);}
   if (!inputVolume10.empty()){replaceAll(antsCommand, "$inputVolume10", inputVolume10);}
   if (!inputVolume11.empty()){replaceAll(antsCommand, "$inputVolume11", inputVolume11);}
+  if (!inputVolume12.empty()){replaceAll(antsCommand, "$inputVolume12", inputVolume12);}
+  if (!inputVolume13.empty()){replaceAll(antsCommand, "$inputVolume13", inputVolume13);}
+  if (!inputVolume14.empty()){replaceAll(antsCommand, "$inputVolume14", inputVolume14);}
+  if (!inputVolume15.empty()){replaceAll(antsCommand, "$inputVolume15", inputVolume15);}
+  if (!inputVolume16.empty()){replaceAll(antsCommand, "$inputVolume16", inputVolume16);}
+  if (!inputVolume17.empty()){replaceAll(antsCommand, "$inputVolume17", inputVolume17);}
+  if (!inputVolume18.empty()){replaceAll(antsCommand, "$inputVolume18", inputVolume18);}
+  if (!inputVolume19.empty()){replaceAll(antsCommand, "$inputVolume19", inputVolume19);}
+  if (!inputVolume20.empty()){replaceAll(antsCommand, "$inputVolume20", inputVolume20);}
 
   std::vector<std::string> commandArguments;
   std::stringstream ss(antsCommand);

@@ -100,6 +100,69 @@
       <longflag>--inputVolume11</longflag>
       <description><![CDATA[Input Volume.]]></description>
     </image>
+    <image>
+      <name>inputVolume12</name>
+      <label>Input Volume #12</label>
+      <channel>input</channel>
+      <longflag>--inputVolume12</longflag>
+      <description><![CDATA[Input Volume.]]></description>
+    </image>
+    <image>
+      <name>inputVolume13</name>
+      <label>Input Volume #13</label>
+      <channel>input</channel>
+      <longflag>--inputVolume13</longflag>
+      <description><![CDATA[Input Volume.]]></description>
+    </image>
+    <image>
+      <name>inputVolume14</name>
+      <label>Input Volume #14</label>
+      <channel>input</channel>
+      <longflag>--inputVolume14</longflag>
+      <description><![CDATA[Input Volume.]]></description>
+    </image>
+    <image>
+      <name>inputVolume15</name>
+      <label>Input Volume #15</label>
+      <channel>input</channel>
+      <longflag>--inputVolume15</longflag>
+      <description><![CDATA[Input Volume.]]></description>
+    </image>
+    <image>
+      <name>inputVolume16</name>
+      <label>Input Volume #16</label>
+      <channel>input</channel>
+      <longflag>--inputVolume16</longflag>
+      <description><![CDATA[Input Volume.]]></description>
+    </image>
+    <image>
+      <name>inputVolume17</name>
+      <label>Input Volume #17</label>
+      <channel>input</channel>
+      <longflag>--inputVolume17</longflag>
+      <description><![CDATA[Input Volume.]]></description>
+    </image>
+    <image>
+      <name>inputVolume18</name>
+      <label>Input Volume #18</label>
+      <channel>input</channel>
+      <longflag>--inputVolume18</longflag>
+      <description><![CDATA[Input Volume.]]></description>
+    </image>
+    <image>
+      <name>inputVolume19</name>
+      <label>Input Volume #19</label>
+      <channel>input</channel>
+      <longflag>--inputVolume19</longflag>
+      <description><![CDATA[Input Volume.]]></description>
+    </image>
+    <image>
+      <name>inputVolume20</name>
+      <label>Input Volume #20</label>
+      <channel>input</channel>
+      <longflag>--inputVolume20</longflag>
+      <description><![CDATA[Input Volume.]]></description>
+    </image>
   </parameters>
 
   <parameters>
@@ -142,6 +205,7 @@
     <label>Settings</label>
     <boolean>
       <name>useFloat</name>
+      <label>Use float</label>
       <longflag>--useFloat</longflag> 
       <default>true</default>
     </boolean>
