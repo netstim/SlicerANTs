@@ -513,7 +513,7 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     initialTransformSettings['movingImageNode'] = stages[0]['metrics'][0]['moving']
 
     self._cliParams = {}
-    self._cliParams["inputVolume01"] = stages[0]['metrics'][0]['fixed'] # will be used as reference in cli
+    self.getOrSetCLIParam(stages[0]['metrics'][0]['fixed']) # put in first position. will be used as reference in cli
     self._cliParams["antsCommand"] = self.getAntsRegistrationCommand(stages, outputSettings, initialTransformSettings, generalSettings)
 
     if outputSettings["transform"] is not None:
