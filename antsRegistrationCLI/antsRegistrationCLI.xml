@@ -129,7 +129,7 @@
       <longflag>--outputCompositeTransform</longflag>
       <description><![CDATA[Output composite transform. If using composite transform don't specify a displacement field]]></description>
     </transform>
-    <transform fileExtensions=".nii.gz">
+    <transform fileExtensions=".nrrd">
       <name>outputDisplacementField</name>
       <label>Output Displacement Field</label>
       <channel>output</channel>

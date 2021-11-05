@@ -35,7 +35,7 @@ int main( int argc, char * argv[] )
     replaceAll(outputCompositeTransform, ".nrrd", "Composite.h5");
   } else if (!useCompositeTransform && useDisplacementField){
     outputCompositeTransform = outputDisplacementField;
-    replaceAll(outputCompositeTransform, ".nii.gz", "Composite.h5");
+    replaceAll(outputCompositeTransform, ".nrrd", "Composite.h5");
   }
   std::string outputBase = outputCompositeTransform;
   replaceAll(outputBase, "Composite.h5", "");
