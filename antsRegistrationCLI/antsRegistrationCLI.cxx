@@ -30,6 +30,7 @@ int main( int argc, char * argv[] )
 
   if (!useCompositeTransform && !useDisplacementField && !useOutputVolume){
     std::cout << "ERROR: specify an output." << std::endl;
+    return EXIT_FAILURE;
   } else if (!useCompositeTransform && !useDisplacementField){
     outputCompositeTransform = outputVolume;
     replaceAll(outputCompositeTransform, ".nrrd", "Composite.h5");
