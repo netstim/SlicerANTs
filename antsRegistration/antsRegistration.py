@@ -244,7 +244,8 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.winsorizeRangeWidget.setMaximumValue(float(self._parameterNode.GetParameter("WinsorizeImageIntensities").split(",")[1]))
     self.ui.computationPrecisionComboBox.currentText = self._parameterNode.GetParameter("ComputationPrecision")
 
-    self.ui.runRegistrationButton.enabled = self.ui.fixedImageNodeComboBox.currentNodeID and self.ui.movingImageNodeComboBox.currentNodeID
+    self.ui.runRegistrationButton.enabled = self.ui.fixedImageNodeComboBox.currentNodeID and self.ui.movingImageNodeComboBox.currentNodeID and\
+                                            (self.ui.outputTransformComboBox.currentNodeID or self.ui.outputVolumeComboBox.currentNodeID)
 
     # All the GUI updates are done
     self._updatingGUIFromParameterNode = False
