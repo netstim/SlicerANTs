@@ -47,12 +47,8 @@ include(${Slicer_EXTENSION_GENERATE_CONFIG})
 
 #-----------------------------------------------------------------------------
 set(EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS)
-list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${ants_DIR};ANTs;RUNTIME_antsRegistration;/")
-list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${ants_DIR};ANTs;RUNTIME_antsApplyTransforms;/")
-list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${ants_DIR};ANTs;RUNTIME_antsUtilities;/")
-list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${ants_DIR};ANTs;DEVELOPMENT_antsRegistration;/")
-list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${ants_DIR};ANTs;DEVELOPMENT_antsApplyTransforms;/")
-list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${ants_DIR};ANTs;DEVELOPMENT_antsUtilities;/")
+list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${ants_DIR};ANTs;RuntimeLibraries;/")
+list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${ants_DIR};ANTs;DevelopmentLibraries;/")
 set(${EXTENSION_NAME}_CPACK_INSTALL_CMAKE_PROJECTS "${EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS}" CACHE STRING "List of external projects to install" FORCE)
 
 #-----------------------------------------------------------------------------

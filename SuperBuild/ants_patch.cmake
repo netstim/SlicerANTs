@@ -23,6 +23,14 @@ string(REPLACE "install(TARGETS antsUtilities" "install(TARGETS antsUtilities EX
     cmakefile_src "${cmakefile_src}")
 string(REPLACE "install(TARGETS l_\${ANTS_FUNCTION_NAME} \${ANTS_FUNCTION_NAME}" "install(TARGETS l_\${ANTS_FUNCTION_NAME} \${ANTS_FUNCTION_NAME} EXPORT antsTargets"
     cmakefile_src "${cmakefile_src}")
+string(REPLACE "RUNTIME_\${ANTS_FUNCTION_NAME}" "RuntimeLibraries"
+    cmakefile_src "${cmakefile_src}")
+string(REPLACE "RUNTIME_antsUtilities" "RuntimeLibraries"
+    cmakefile_src "${cmakefile_src}")
+string(REPLACE "DEVELOPMENT_\${ANTS_FUNCTION_NAME}" "DevelopmentLibraries"
+    cmakefile_src "${cmakefile_src}")
+string(REPLACE "DEVELOPMENT_antsUtilities" "DevelopmentLibraries"
+    cmakefile_src "${cmakefile_src}")
 string(REPLACE "\${\${PROJECT_NAME}_VERSION}" "\${\${PROJECT_NAME}_VERSION_MAJOR}"
     cmakefile_src "${cmakefile_src}")
 string(APPEND cmakefile_src
