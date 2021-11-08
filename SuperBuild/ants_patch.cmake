@@ -67,7 +67,7 @@ if ("${found_patched}" LESS 0)
 message(STATUS "ants: Patching filter log ${cmakefile}")
 string(REPLACE 
     "this->Logger() << \"1DIAGNOSTIC, \""
-    "std::cout << \"<filter-stage-progress>\" << (float)lCurrentIteration/(float)this->m_NumberOfIterations[filter->GetCurrentLevel()] << \"</filter-stage-progress>\" << std::endl << std::flush;\nthis->Logger() << \"1DIAGNOSTIC, \""
+    "if (this->m_NumberOfIterations[filter->GetCurrentLevel()]>0){std::cout << \"<filter-stage-progress>\" << (float)lCurrentIteration/this->m_NumberOfIterations[filter->GetCurrentLevel()] << \"</filter-stage-progress>\" << std::endl << std::flush;}\nthis->Logger() << \"1DIAGNOSTIC, \""
     cmakefile_src "${cmakefile_src}")
 file(WRITE ${cmakefile} "${cmakefile_src}")
 else()
@@ -81,7 +81,7 @@ if ("${found_patched}" LESS 0)
 message(STATUS "ants: Patching filter log ${cmakefile}")
 string(REPLACE 
     "this->Logger() << \"2DIAGNOSTIC, \""
-    "std::cout << \"<filter-stage-progress>\" << (float)currentIteration/(float)lastIteration << \"</filter-stage-progress>\" << std::endl << std::flush;\nthis->Logger() << \"2DIAGNOSTIC, \""
+    "if (lastIteration>0){std::cout << \"<filter-stage-progress>\" << (float)currentIteration/(float)lastIteration << \"</filter-stage-progress>\" << std::endl << std::flush;}\nthis->Logger() << \"2DIAGNOSTIC, \""
     cmakefile_src "${cmakefile_src}")
 file(WRITE ${cmakefile} "${cmakefile_src}")
 else()
