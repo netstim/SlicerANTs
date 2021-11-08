@@ -10,6 +10,9 @@
     <height>956</height>
    </rect>
   </property>
+  <property name="toolTip">
+   <string>When checked, the output transform will be returned as a displacement field.</string>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="ctkCollapsibleButton" name="InputsCollapsibleButton">
@@ -593,6 +596,9 @@
       </item>
       <item row="4" column="1">
        <widget class="QCheckBox" name="outputDisplacementFieldCheckBox">
+        <property name="toolTip">
+         <string>W</string>
+        </property>
         <property name="text">
          <string/>
         </property>
@@ -631,17 +637,6 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ctkCollapsibleButton</class>
-   <extends>QWidget</extends>
-   <header>ctkCollapsibleButton.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>ctkRangeWidget</class>
-   <extends>QWidget</extends>
-   <header>ctkRangeWidget.h</header>
-  </customwidget>
-  <customwidget>
    <class>qMRMLNodeComboBox</class>
    <extends>QWidget</extends>
    <header>qMRMLNodeComboBox.h</header>
@@ -651,6 +646,17 @@
    <extends>QWidget</extends>
    <header>qMRMLWidget.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ctkCollapsibleButton</class>
+   <extends>QWidget</extends>
+   <header>ctkCollapsibleButton.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ctkRangeWidget</class>
+   <extends>QWidget</extends>
+   <header>ctkRangeWidget.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
