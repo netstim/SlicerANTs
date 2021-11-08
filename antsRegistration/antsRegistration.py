@@ -27,7 +27,7 @@ class antsRegistration(ScriptedLoadableModule):
     self.parent.dependencies = ["antsRegistrationCLI"]
     self.parent.contributors = ["Simon Oxenford (Netstim Berlin)"]
     self.parent.helpText = """
-See more information in <a href="https://github.com/simonoxen/SlicerANTs">module documentation</a>.
+See more information in <a href="https://github.com/netstim/SlicerANTs">module documentation</a>.
 """
     self.parent.acknowledgementText = "TODO"
 
