@@ -197,7 +197,7 @@
               </property>
               <property name="nodeTypes">
                <stringlist>
-                <string>vtkMRMLLabelMapNode</string>
+                <string>vtkMRMLLabelMapVolumeNode</string>
                </stringlist>
               </property>
               <property name="noneEnabled">
@@ -218,7 +218,7 @@
               </property>
               <property name="nodeTypes">
                <stringlist>
-                <string>vtkMRMLLabelMapNode</string>
+                <string>vtkMRMLLabelMapVolumeNode</string>
                </stringlist>
               </property>
               <property name="noneEnabled">
