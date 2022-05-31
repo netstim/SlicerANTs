@@ -9,7 +9,7 @@ This extension implements [ANTs](https://github.com/ANTsX/ANTs) Registration int
 CDash: [SlicerPreview](https://slicer.cdash.org/index.php?project=SlicerPreview&filtercount=1&showfilters=1&field1=buildname&compare1=63&value1=SlicerANTs)
 ## Instalation
 
-Install from the Slicer Extension Manager from nightly build.
+Install from the Slicer Extension Manager.
 
 ## Modules
 
