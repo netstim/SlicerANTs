@@ -1,12 +1,10 @@
 from genericpath import isfile
-import os, sys
-import logging
+import os
 import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
 from slicer.util import VTKObservationMixin
 
 import json
-import shutil
 import glob
 
 from antsRegistrationLib.Widgets.tables import StagesTable, MetricsTable, LevelsTable
@@ -414,11 +412,11 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.runRegistrationButton.text = 'Cancel'
 
   def onProcessingStatusUpdate(self, caller, event):
-    if (caller.GetStatus() & caller.Cancelled):
+    if caller.GetStatus() & caller.Cancelled:
       self.ui.runRegistrationButton.text = "Run Registration"
       self.logic._cliNode.RemoveObserver(self._cliObserver)
-    elif (caller.GetStatus() & caller.Completed):
-      if (caller.GetStatus() & caller.ErrorsMask):
+    elif caller.GetStatus() & caller.Completed:
+      if caller.GetStatus() & caller.ErrorsMask:
         qt.QMessageBox().warning(qt.QWidget(),'Error', 'ANTs Failed. See CLI output.')
       self.ui.runRegistrationButton.text = "Run Registration"
       self.logic._cliNode.RemoveObserver(self._cliObserver)
@@ -501,7 +499,7 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     if self._cliNode:
       self._cliNode.Cancel()
 
-  def process(self, stages, outputSettings, initialTransformSettings={}, generalSettings={}):
+  def process(self, stages, outputSettings, initialTransformSettings=None, generalSettings=None):
     """
     :param stages: list defining registration stages
     :param outputSettings: dictionary defining output settings
@@ -510,6 +508,10 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     See presets examples to see how these are specified
     """
 
+    if generalSettings is None:
+      generalSettings = {}
+    if initialTransformSettings is None:
+      initialTransformSettings = {}
     initialTransformSettings['fixedImageNode'] = stages[0]['metrics'][0]['fixed']
     initialTransformSettings['movingImageNode'] = stages[0]['metrics'][0]['moving']
 
@@ -527,7 +529,11 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
 
     self._cliNode = slicer.cli.run(slicer.modules.antsregistrationcli, None, self._cliParams, wait_for_completion=False, update_display=False)
 
-  def getAntsRegistrationCommand(self, stages, outputSettings, initialTransformSettings={}, generalSettings={}):
+  def getAntsRegistrationCommand(self, stages, outputSettings, initialTransformSettings=None, generalSettings=None):
+    if generalSettings is None:
+      generalSettings = {}
+    if initialTransformSettings is None:
+      initialTransformSettings = {}
     antsCommand = self.getGeneralSettingsCommand(**generalSettings)
     antsCommand = antsCommand + self.getOutputCommand(interpolation=outputSettings['interpolation'], volume=outputSettings['volume'])
     antsCommand = antsCommand + self.getInitialMovingTransformCommand(**initialTransformSettings)
@@ -535,7 +541,9 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
       antsCommand = antsCommand + self.getStageCommand(**stage)
     return antsCommand
 
-  def getGeneralSettingsCommand(self, dimensionality=3, histogramMatching=False, winsorizeImageIntensities=[0,1], computationPrecision="float"):
+  def getGeneralSettingsCommand(self, dimensionality=3, histogramMatching=False, winsorizeImageIntensities=None, computationPrecision="float"):
+    if winsorizeImageIntensities is None:
+      winsorizeImageIntensities = [0, 1]
     command = "--dimensionality %i" % dimensionality
     command = command + " --use-histogram-matching %i" % histogramMatching
     command = command + " --winsorize-image-intensities [%.3f,%.3f]" % tuple(winsorizeImageIntensities)
@@ -614,7 +622,7 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
 # Preset Manager
 #
 
-class PresetManager():
+class PresetManager:
   def __init__(self):
       self.presetPath = os.path.join(os.path.dirname(__file__),'Resources','Presets')
 
@@ -716,7 +724,7 @@ class antsRegistrationTest(ScriptedLoadableModuleTest):
     logic._cliNode.AddObserver('ModifiedEvent', self.onProcessingStatusUpdate)
 
   def onProcessingStatusUpdate(self, caller, event):
-    if (caller.GetStatus() & caller.Completed):
+    if caller.GetStatus() & caller.Completed:
       self.delayDisplay('Test passed!')
 
    
