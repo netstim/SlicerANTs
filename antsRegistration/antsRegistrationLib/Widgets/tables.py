@@ -9,7 +9,7 @@ class CustomTable(qt.QWidget):
   RowHeight = 25
 
   def __init__(self, columnNames):
-    super().__init__()
+    qt.QWidget.__init__(self)
 
     self.addButton = qt.QPushButton('+')
     self.addButton.clicked.connect(self.onAddButton)
@@ -47,12 +47,10 @@ class CustomTable(qt.QWidget):
 
     self.view.selectionModel().selectionChanged.connect(self.onSelectionChanged)
 
-    layout = qt.QVBoxLayout(self)
-    layout.addWidget(self.buttonsFrame)
-    layout.addWidget(self.view)
+    self._layout = qt.QVBoxLayout(self)
+    self._layout.addWidget(self.buttonsFrame)
+    self._layout.addWidget(self.view)
 
-    return layout
-  
   def onAddButton(self):
     self.addRowAndSetHeight()
     newRowN = self.model.rowCount()-1
@@ -130,9 +128,10 @@ class CustomTable(qt.QWidget):
         pass
       self.model.setData(index, val, qt.Qt.DisplayRole)
 
+
 class TableWithSettings(CustomTable):
   def __init__(self, columnNames, comboItems):
-    layout = CustomTable.__init__(self, columnNames)
+    CustomTable.__init__(self, columnNames)
 
     self.settingsFormatText = ctk.ctkFittedTextBrowser()
     self.settingsFormatText.setFrameShape(qt.QFrame.NoFrame)
@@ -145,13 +144,13 @@ class TableWithSettings(CustomTable):
     gblayout = qt.QVBoxLayout(gb)
     gblayout.addWidget(self.settingsFormatText)
 
-    layout.addWidget(gb)
+    self._layout.addWidget(gb)
 
     self.view.setItemDelegateForColumn(0, ComboDelegate(self.model, comboItems, self.setSettingsFormatTextFromName))
     self.view.setItemDelegateForColumn(self.model.columnCount()-1, TextEditDelegate(self.model))
 
   def onSelectionChanged(self, selection):
-    super().onSelectionChanged(selection)
+    CustomTable.onSelectionChanged(self, selection)
     indexes = selection.indexes()
     if indexes:
       name = self.model.data(indexes[0].siblingAtColumn(0))
@@ -204,11 +203,11 @@ class MetricsTable(TableWithSettings):
     index = self.model.index(N, 0)
     self.model.setData(index, 'MI')
 
-class LevelsTable(CustomTable):
 
+class LevelsTable(CustomTable):
   def __init__(self):
     columnNames = ['Convergence', 'Smoothing Sigmas', 'Shrink Factors']
-    layout = CustomTable.__init__(self, columnNames)
+    CustomTable.__init__(self, columnNames)
 
     self.view.setItemDelegateForColumn(0, SpinBoxDelegate(self.model))
     self.view.setItemDelegateForColumn(1, SpinBoxDelegate(self.model))
@@ -227,7 +226,7 @@ class LevelsTable(CustomTable):
     levelsSettingsFrame.layout().addRow('Convergence Threshold (1e-N): ', self.convergenceThresholdSpinBox)
     levelsSettingsFrame.layout().addRow('Convergence Window Size: ', self.convergenceWindowSizeSpinBox)
 
-    layout.addWidget(levelsSettingsFrame)
+    self._layout.addWidget(levelsSettingsFrame)
 
   def setDefaultNthRow(self, N):
     for column in range(3):
