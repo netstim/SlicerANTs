@@ -90,6 +90,7 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.logic = antsRegistrationLogic()
 
     self.ui.stagesPresetsComboBox.addItems(['Select...'] + PresetManager().getPresetNames())
+    self.ui.openPresetsDirectoryButton.clicked.connect(self.onOpenPresetsDirectoryButtonClicked)
 
     # Connections
 
@@ -423,6 +424,15 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     else:
       self.ui.runRegistrationButton.text = "Cancel"
 
+  def onOpenPresetsDirectoryButtonClicked(self):
+    import platform, subprocess
+    presetPath = PresetManager().presetPath
+    if platform.system() == "Windows":
+      os.startfile(presetPath)
+    elif platform.system() == "Darwin":
+      subprocess.Popen(["open", presetPath])
+    else:
+      subprocess.Popen(["xdg-open", presetPath])
 
 
 #
@@ -624,28 +634,28 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
 
 class PresetManager:
   def __init__(self):
-      self.presetPath = os.path.join(os.path.dirname(__file__),'Resources','Presets')
+      self.presetPath = os.path.join(os.path.dirname(__file__), 'Resources', 'Presets')
 
   def saveStagesAsPreset(self, stages):
     from PythonQt import BoolResult
     ok = BoolResult()
-    presetName = qt.QInputDialog().getText(qt.QWidget(), 'Save Preset', 'Preset name: ', qt.QLineEdit.Normal, 'my_preset', ok)
+    presetName = \
+      qt.QInputDialog().getText(qt.QWidget(), 'Save Preset', 'Preset name: ', qt.QLineEdit.Normal, 'my_preset', ok)
     if not ok:
       return
     if presetName in self.getPresetNames():
-      qt.QMessageBox().warning(qt.QWidget(),'Warning', presetName + ' already exists. Set another name.')
-      self.saveStagesAsPreset(stages)
-      return
-    outFilePath = os.path.join(self.presetPath, presetName + '.json')
+      slicer.util.warningDisplay(f'{presetName} already exists. Set another name.')
+      return self.saveStagesAsPreset(stages)
+    outFilePath = os.path.join(self.presetPath, f'{presetName}.json')
     saveSettings = self.getPresetParametersByName()
-    saveSettings['stages'] = self.removeNodesFromStages(stages)
+    saveSettings['stages'] = stages
     try:
       with open(outFilePath, 'w') as outfile:
         json.dump(saveSettings, outfile)
     except:
-      qt.QMessageBox().warning(qt.QWidget(),'Warning', 'Unable to write into ' + outFilePath)
+      slicer.util.warningDisplay(f'Unable to write into {outFilePath}')
       return
-    print('Saved preset to ' + outFilePath)
+    slicer.util.infoDisplay(f'Saved preset to {outFilePath}.')
     return presetName
 
   def getPresetParametersByName(self, name='Rigid'):
