@@ -19,46 +19,61 @@
      <property name="collapsed">
       <bool>false</bool>
      </property>
-     <layout class="QFormLayout" name="formLayout_2">
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_11">
-        <property name="text">
-         <string>Fixed Image: </string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="qMRMLNodeComboBox" name="fixedImageNodeComboBox">
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="2" column="1">
+       <widget class="QComboBox" name="stagesPresetsComboBox">
         <property name="toolTip">
-         <string>This will set the selected Image as fixed for the first metric of all stages.</string>
-        </property>
-        <property name="nodeTypes">
-         <stringlist>
-          <string>vtkMRMLScalarVolumeNode</string>
-         </stringlist>
-        </property>
-        <property name="noneEnabled">
-         <bool>true</bool>
-        </property>
-        <property name="addEnabled">
-         <bool>false</bool>
-        </property>
-        <property name="editEnabled">
-         <bool>false</bool>
-        </property>
-        <property name="renameEnabled">
-         <bool>true</bool>
+         <string>Set registration stages from preset. Settings can be modified under the Stages (Advanced) tab.</string>
         </property>
        </widget>
       </item>
       <item row="1" column="0">
        <widget class="QLabel" name="label_12">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="text">
          <string>Moving Image: </string>
         </property>
        </widget>
       </item>
-      <item row="1" column="1">
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_15">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Stages (Presets): </string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_11">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Fixed Image: </string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2">
+       <widget class="QPushButton" name="openPresetsDirectoryButton">
+        <property name="text">
+         <string>Open Presets Folder</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1" colspan="2">
        <widget class="qMRMLNodeComboBox" name="movingImageNodeComboBox">
         <property name="toolTip">
          <string>This will set the selected Image as moving for the first metric of all stages.</string>
@@ -79,17 +94,27 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="label_15">
-        <property name="text">
-         <string>Stages (Presets): </string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QComboBox" name="stagesPresetsComboBox">
+      <item row="0" column="1" colspan="2">
+       <widget class="qMRMLNodeComboBox" name="fixedImageNodeComboBox">
         <property name="toolTip">
-         <string>Set registration stages from preset. Settings can be modified under the Stages (Advanced) tab.</string>
+         <string>This will set the selected Image as fixed for the first metric of all stages.</string>
+        </property>
+        <property name="nodeTypes">
+         <stringlist>
+          <string>vtkMRMLScalarVolumeNode</string>
+         </stringlist>
+        </property>
+        <property name="noneEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="addEnabled">
+         <bool>false</bool>
+        </property>
+        <property name="editEnabled">
+         <bool>false</bool>
+        </property>
+        <property name="renameEnabled">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
@@ -643,17 +668,6 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>qMRMLNodeComboBox</class>
-   <extends>QWidget</extends>
-   <header>qMRMLNodeComboBox.h</header>
-  </customwidget>
-  <customwidget>
-   <class>qMRMLWidget</class>
-   <extends>QWidget</extends>
-   <header>qMRMLWidget.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
    <class>ctkCollapsibleButton</class>
    <extends>QWidget</extends>
    <header>ctkCollapsibleButton.h</header>
@@ -663,6 +677,17 @@
    <class>ctkRangeWidget</class>
    <extends>QWidget</extends>
    <header>ctkRangeWidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>qMRMLNodeComboBox</class>
+   <extends>QWidget</extends>
+   <header>qMRMLNodeComboBox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>qMRMLWidget</class>
+   <extends>QWidget</extends>
+   <header>qMRMLWidget.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>
