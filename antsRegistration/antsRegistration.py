@@ -1,4 +1,3 @@
-from genericpath import isfile
 import os
 import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
@@ -22,6 +21,7 @@ class antsRegistration(ScriptedLoadableModule):
     ScriptedLoadableModule.__init__(self, parent)
     self.parent.title = "General Registration (ANTs)"
     self.parent.categories = ["Registration"]
+    self.parent.associatedNodeTypes = ["vtkMRMLScriptedModuleNode"]
     self.parent.dependencies = ["antsRegistrationCLI"]
     self.parent.contributors = ["Simon Oxenford (Netstim Berlin)"]
     self.parent.helpText = """
@@ -50,6 +50,13 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self._parameterNode = None
     self._updatingGUIFromParameterNode = False
 
+  def setEditedNode(self, node, role='', context=''):
+    self.setParameterNode(node)
+    return node is not None
+
+  def nodeEditable(self, node):
+    return 0.7 if node is not None and node.GetAttribute('ModuleName') == self.moduleName else 0.0
+
   def setup(self):
     """
     Called when the user opens the module the first time and the widget is initialized.
@@ -61,6 +68,9 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     uiWidget = slicer.util.loadUI(self.resourcePath('UI/antsRegistration.ui'))
     self.layout.addWidget(uiWidget)
     self.ui = slicer.util.childWidgetVariables(uiWidget)
+
+    self.ui.parameterNodeSelector.addAttribute("vtkMRMLScriptedModuleNode", "ModuleName", self.moduleName)
+    self.ui.parameterNodeSelector.setNodeTypeLabel("antsRegistrationParameters", "vtkMRMLScriptedModuleNode")
 
     # Set custom UI components
 
@@ -101,6 +111,7 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     # These connections ensure that whenever user changes some settings on the GUI, that is saved in the MRML scene
     # (in the selected parameter node).
+    self.ui.parameterNodeSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.setParameterNode)
     self.ui.stagesTableWidget.view.selectionModel().selectionChanged.connect(self.updateParameterNodeFromGUI)
     self.ui.outputInterpolationComboBox.connect("currentIndexChanged(int)", self.updateParameterNodeFromGUI)
     self.ui.outputTransformComboBox.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
@@ -188,7 +199,7 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     # Parameter node stores all user choices in parameter values, node selections, etc.
     # so that when the scene is saved and reloaded, these settings are restored.
 
-    self.setParameterNode(self.logic.getParameterNode())
+    self.setParameterNode(self.logic.getParameterNode() if not self._parameterNode else self._parameterNode)
 
   def setParameterNode(self, inputParameterNode):
     """
@@ -207,6 +218,14 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self._parameterNode = inputParameterNode
     if self._parameterNode is not None:
       self.addObserver(self._parameterNode, vtk.vtkCommand.ModifiedEvent, self.updateGUIFromParameterNode)
+
+    wasBlocked = self.ui.parameterNodeSelector.blockSignals(True)
+    self.ui.parameterNodeSelector.setCurrentNode(self._parameterNode)
+    self.ui.parameterNodeSelector.blockSignals(wasBlocked)
+
+    wasBlocked = self.ui.stagesPresetsComboBox.blockSignals(True)
+    self.ui.stagesPresetsComboBox.setCurrentIndex(0)
+    self.ui.stagesPresetsComboBox.blockSignals(wasBlocked)
 
     # Initial GUI update
     self.updateGUIFromParameterNode()
@@ -267,7 +286,6 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.levelsTableWidget.setGUIFromParameters(stagesList[currentStage]['levels'])
       self.ui.fixedMaskComboBox.setCurrentNodeID(stagesList[currentStage]['masks']['fixed'])
       self.ui.movingMaskComboBox.setCurrentNodeID(stagesList[currentStage]['masks']['moving'])
-
 
   def updateParameterNodeFromGUI(self, caller=None, event=None):
     """
@@ -373,7 +391,6 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.ui.stagesPresetsComboBox.addItem(savedPresetName)
       self.ui.stagesPresetsComboBox.setCurrentText(savedPresetName)
       self._updatingGUIFromParameterNode = False
-
 
   def onRunRegistrationButton(self):
     if self.ui.runRegistrationButton.text == 'Cancel':
