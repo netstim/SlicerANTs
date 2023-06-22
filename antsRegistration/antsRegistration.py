@@ -242,25 +242,25 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     # Make sure GUI changes do not call updateParameterNodeFromGUI (it could cause infinite loop)
     self._updatingGUIFromParameterNode = True
 
-    currentStage = int(self._parameterNode.GetParameter("CurrentStage"))
+    currentStage = int(self._parameterNode.GetParameter(self.logic.CURRENT_STAGE_PARAM))
     self.ui.stagesTableWidget.view.setCurrentIndex(self.ui.stagesTableWidget.model.index(currentStage, 0))
     self.ui.stagePropertiesCollapsibleButton.text = 'Stage ' + str(currentStage + 1) + ' Properties'
     self.updateStagesGUIFromParameter()
 
-    self.ui.outputTransformComboBox.setCurrentNode(self._parameterNode.GetNodeReference("OutputTransform"))
-    self.ui.outputVolumeComboBox.setCurrentNode(self._parameterNode.GetNodeReference("OutputVolume"))
-    self.ui.outputInterpolationComboBox.currentText = self._parameterNode.GetParameter("OutputInterpolation")
-    self.ui.outputDisplacementFieldCheckBox.checked = int(self._parameterNode.GetParameter("OutputDisplacementField"))
+    self.ui.outputTransformComboBox.setCurrentNode(self._parameterNode.GetNodeReference(self.logic.OUTPUT_TRANSFORM_REF))
+    self.ui.outputVolumeComboBox.setCurrentNode(self._parameterNode.GetNodeReference(self.logic.OUTPUT_VOLUME_REF))
+    self.ui.outputInterpolationComboBox.currentText = self._parameterNode.GetParameter(self.logic.OUTPUT_INTERPOLATION_PARAM)
+    self.ui.outputDisplacementFieldCheckBox.checked = int(self._parameterNode.GetParameter(self.logic.CREATE_DISPLACEMENT_FIELD_PARAM))
 
-    self.ui.initialTransformTypeComboBox.currentIndex = int(self._parameterNode.GetParameter("initializationFeature")) + 2
-    self.ui.initialTransformNodeComboBox.setCurrentNode(self._parameterNode.GetNodeReference("InitialTransform") if self.ui.initialTransformTypeComboBox.currentIndex == 1 else None)
+    self.ui.initialTransformTypeComboBox.currentIndex = int(self._parameterNode.GetParameter(self.logic.INITIALIZATION_FEATURE_PARAM)) + 2
+    self.ui.initialTransformNodeComboBox.setCurrentNode(self._parameterNode.GetNodeReference(self.logic.INITIAL_TRANSFORM_REF) if self.ui.initialTransformTypeComboBox.currentIndex == 1 else None)
     self.ui.initialTransformNodeComboBox.enabled = self.ui.initialTransformTypeComboBox.currentIndex == 1
 
-    self.ui.dimensionalitySpinBox.value = int(self._parameterNode.GetParameter("Dimensionality"))
-    self.ui.histogramMatchingCheckBox.checked = int(self._parameterNode.GetParameter("HistogramMatching"))
-    self.ui.winsorizeRangeWidget.setMinimumValue(float(self._parameterNode.GetParameter("WinsorizeImageIntensities").split(",")[0]))
-    self.ui.winsorizeRangeWidget.setMaximumValue(float(self._parameterNode.GetParameter("WinsorizeImageIntensities").split(",")[1]))
-    self.ui.computationPrecisionComboBox.currentText = self._parameterNode.GetParameter("ComputationPrecision")
+    self.ui.dimensionalitySpinBox.value = int(self._parameterNode.GetParameter(self.logic.DIMENSIONALITY_PARAM))
+    self.ui.histogramMatchingCheckBox.checked = int(self._parameterNode.GetParameter(self.logic.HISTOGRAM_MATCHING_PARAM))
+    self.ui.winsorizeRangeWidget.setMinimumValue(float(self._parameterNode.GetParameter(self.logic.WINSORIZE_IMAGE_INTENSITIES_PARAM).split(",")[0]))
+    self.ui.winsorizeRangeWidget.setMaximumValue(float(self._parameterNode.GetParameter(self.logic.WINSORIZE_IMAGE_INTENSITIES_PARAM).split(",")[1]))
+    self.ui.computationPrecisionComboBox.currentText = self._parameterNode.GetParameter(self.logic.COMPUTATION_PRECISION_PARAM)
 
     self.ui.runRegistrationButton.enabled = self.ui.fixedImageNodeComboBox.currentNodeID and self.ui.movingImageNodeComboBox.currentNodeID and\
                                             (self.ui.outputTransformComboBox.currentNodeID or self.ui.outputVolumeComboBox.currentNodeID)
@@ -269,7 +269,7 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self._updatingGUIFromParameterNode = False
 
   def updateStagesGUIFromParameter(self):
-    stagesList = json.loads(self._parameterNode.GetParameter("StagesJson"))
+    stagesList = json.loads(self._parameterNode.GetParameter(self.logic.STAGES_JSON_PARAM))
     self.ui.fixedImageNodeComboBox.setCurrentNodeID(stagesList[0]['metrics'][0]['fixed'])
     self.ui.movingImageNodeComboBox.setCurrentNodeID(stagesList[0]['metrics'][0]['moving'])
     self.setTransformsGUIFromList(stagesList)
@@ -280,7 +280,7 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.stagesTableWidget.setGUIFromParameters(transformsParameters)
 
   def setCurrentStagePropertiesGUIFromList(self, stagesList):
-    currentStage = int(self._parameterNode.GetParameter("CurrentStage"))
+    currentStage = int(self._parameterNode.GetParameter(self.logic.CURRENT_STAGE_PARAM))
     if {'metrics','levels','masks'} <= set(stagesList[currentStage].keys()):
       self.ui.metricsTableWidget.setGUIFromParameters(stagesList[currentStage]['metrics'])
       self.ui.levelsTableWidget.setGUIFromParameters(stagesList[currentStage]['levels'])
@@ -298,20 +298,21 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     wasModified = self._parameterNode.StartModify()  # Modify all properties in a single batch
 
-    self._parameterNode.SetParameter("CurrentStage", str(self.ui.stagesTableWidget.getSelectedRow()))
-    
-    self._parameterNode.SetNodeReferenceID("OutputTransform", self.ui.outputTransformComboBox.currentNodeID)
-    self._parameterNode.SetNodeReferenceID("OutputVolume", self.ui.outputVolumeComboBox.currentNodeID)
-    self._parameterNode.SetParameter("OutputInterpolation", self.ui.outputInterpolationComboBox.currentText)
-    self._parameterNode.SetParameter("OutputDisplacementField", str(int(self.ui.outputDisplacementFieldCheckBox.checked)))
+    self._parameterNode.SetParameter(self.logic.CURRENT_STAGE_PARAM, str(self.ui.stagesTableWidget.getSelectedRow()))
 
-    self._parameterNode.SetParameter("initializationFeature", str(self.ui.initialTransformTypeComboBox.currentIndex-2))
-    self._parameterNode.SetNodeReferenceID("InitialTransform", self.ui.initialTransformNodeComboBox.currentNodeID)
+    self._parameterNode.SetNodeReferenceID(self.logic.OUTPUT_TRANSFORM_REF, self.ui.outputTransformComboBox.currentNodeID)
+    self._parameterNode.SetNodeReferenceID(self.logic.OUTPUT_VOLUME_REF, self.ui.outputVolumeComboBox.currentNodeID)
+    self._parameterNode.SetParameter(self.logic.OUTPUT_INTERPOLATION_PARAM, self.ui.outputInterpolationComboBox.currentText)
+    self._parameterNode.SetParameter(self.logic.CREATE_DISPLACEMENT_FIELD_PARAM, str(int(self.ui.outputDisplacementFieldCheckBox.checked)))
 
-    self._parameterNode.SetParameter("Dimensionality", str(self.ui.dimensionalitySpinBox.value))
-    self._parameterNode.SetParameter("HistogramMatching", str(int(self.ui.histogramMatchingCheckBox.checked)))
-    self._parameterNode.SetParameter("WinsorizeImageIntensities", ",".join([str(self.ui.winsorizeRangeWidget.minimumValue),str(self.ui.winsorizeRangeWidget.maximumValue)]))
-    self._parameterNode.SetParameter("ComputationPrecision",  self.ui.computationPrecisionComboBox.currentText)
+    self._parameterNode.SetParameter(self.logic.INITIALIZATION_FEATURE_PARAM, str(self.ui.initialTransformTypeComboBox.currentIndex-2))
+    self._parameterNode.SetNodeReferenceID(self.logic.INITIAL_TRANSFORM_REF, self.ui.initialTransformNodeComboBox.currentNodeID)
+
+    self._parameterNode.SetParameter(self.logic.DIMENSIONALITY_PARAM, str(self.ui.dimensionalitySpinBox.value))
+    self._parameterNode.SetParameter(self.logic.HISTOGRAM_MATCHING_PARAM, str(int(self.ui.histogramMatchingCheckBox.checked)))
+    self._parameterNode.SetParameter(self.logic.WINSORIZE_IMAGE_INTENSITIES_PARAM,
+                                     ",".join([str(self.ui.winsorizeRangeWidget.minimumValue),str(self.ui.winsorizeRangeWidget.maximumValue)]))
+    self._parameterNode.SetParameter(self.logic.COMPUTATION_PRECISION_PARAM,  self.ui.computationPrecisionComboBox.currentText)
 
     self._parameterNode.EndModify(wasModified)
 
@@ -319,19 +320,19 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
   def updateStagesFromFixedMovingNodes(self):
     if self._parameterNode is None or self._updatingGUIFromParameterNode:
       return
-    stagesList = json.loads(self._parameterNode.GetParameter("StagesJson"))
+    stagesList = json.loads(self._parameterNode.GetParameter(self.logic.STAGES_JSON_PARAM))
     for stage in stagesList:
       stage['metrics'][0]['fixed'] = self.ui.fixedImageNodeComboBox.currentNodeID
       stage['metrics'][0]['moving'] = self.ui.movingImageNodeComboBox.currentNodeID
-    self._parameterNode.SetParameter("StagesJson", json.dumps(stagesList))
+    self._parameterNode.SetParameter(self.logic.STAGES_JSON_PARAM, json.dumps(stagesList))
 
   def updateStagesParameterFromGUI(self):
     if self._parameterNode is None or self._updatingGUIFromParameterNode:
       return
-    stagesList = json.loads(self._parameterNode.GetParameter("StagesJson"))
+    stagesList = json.loads(self._parameterNode.GetParameter(self.logic.STAGES_JSON_PARAM))
     self.setStagesTransformsToStagesList(stagesList)
     self.setCurrentStagePropertiesToStagesList(stagesList)
-    self._parameterNode.SetParameter("StagesJson", json.dumps(stagesList))
+    self._parameterNode.SetParameter(self.logic.STAGES_JSON_PARAM, json.dumps(stagesList))
 
   def setStagesTransformsToStagesList(self, stagesList):
     for stageNumber,transformParameters in enumerate(self.ui.stagesTableWidget.getParametersFromGUI()):
@@ -340,7 +341,7 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       stagesList[stageNumber]['transformParameters'] = transformParameters
 
   def setCurrentStagePropertiesToStagesList(self, stagesList):
-    currentStage = int(self._parameterNode.GetParameter("CurrentStage"))
+    currentStage = int(self._parameterNode.GetParameter(self.logic.CURRENT_STAGE_PARAM))
 
     stagesIterator = range(len(stagesList)) if self.ui.metricsTableWidget.linkStagesPushButton.checked else [currentStage]
     for stageNumber in stagesIterator:
@@ -355,14 +356,14 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       stagesList[stageNumber]['masks'] = {'fixed': self.ui.fixedMaskComboBox.currentNodeID, 'moving': self.ui.movingMaskComboBox.currentNodeID}
 
   def onRemoveStageButtonClicked(self):
-    stagesList = json.loads(self._parameterNode.GetParameter("StagesJson"))
+    stagesList = json.loads(self._parameterNode.GetParameter(self.logic.STAGES_JSON_PARAM))
     if len(stagesList) == 1:
       return
-    currentStage = int(self._parameterNode.GetParameter("CurrentStage"))
+    currentStage = int(self._parameterNode.GetParameter(self.logic.CURRENT_STAGE_PARAM))
     stagesList.pop(currentStage)
     wasModified = self._parameterNode.StartModify()  # Modify in a single batch
-    self._parameterNode.SetParameter("CurrentStage", str(max(currentStage-1,0)))
-    self._parameterNode.SetParameter("StagesJson", json.dumps(stagesList))
+    self._parameterNode.SetParameter(self.logic.CURRENT_STAGE_PARAM, str(max(currentStage-1,0)))
+    self._parameterNode.SetParameter(self.logic.STAGES_JSON_PARAM, json.dumps(stagesList))
     self._parameterNode.EndModify(wasModified)
 
   def onPresetSelected(self, presetName):
@@ -373,12 +374,12 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     for stage in presetParameters['stages']:
       stage['metrics'][0]['fixed'] = self.ui.fixedImageNodeComboBox.currentNodeID
       stage['metrics'][0]['moving'] = self.ui.movingImageNodeComboBox.currentNodeID
-    self._parameterNode.SetParameter("StagesJson", json.dumps(presetParameters['stages']))
-    self._parameterNode.SetParameter("CurrentStage", "0")
+    self._parameterNode.SetParameter(self.logic.STAGES_JSON_PARAM, json.dumps(presetParameters['stages']))
+    self._parameterNode.SetParameter(self.logic.CURRENT_STAGE_PARAM, "0")
     self._parameterNode.EndModify(wasModified)
 
   def onSavePresetPushButton(self):
-    stages = json.loads(self._parameterNode.GetParameter("StagesJson"))
+    stages = json.loads(self._parameterNode.GetParameter(self.logic.STAGES_JSON_PARAM))
     for stage in stages:
       for metric in stage['metrics']:
         metric['fixed'] = None
@@ -398,7 +399,7 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       return
 
     parameters = {}
-    parameters['stages'] = json.loads(self._parameterNode.GetParameter("StagesJson"))
+    parameters['stages'] = json.loads(self._parameterNode.GetParameter(self.logic.STAGES_JSON_PARAM))
     # ID to Node
     for stage in parameters['stages']:
       for metric in stage['metrics']:
@@ -414,13 +415,15 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     parameters['outputSettings']['useDisplacementField'] = int(self.ui.outputDisplacementFieldCheckBox.checked)
 
     parameters['initialTransformSettings'] = {}
-    parameters['initialTransformSettings']['initializationFeature'] = int(self._parameterNode.GetParameter("initializationFeature"))
+    parameters['initialTransformSettings']['initializationFeature'] = \
+      int(self._parameterNode.GetParameter(self.logic.INITIALIZATION_FEATURE_PARAM))
     parameters['initialTransformSettings']['initialTransformNode'] = self.ui.initialTransformNodeComboBox.currentNode()
 
     parameters['generalSettings'] = {}
     parameters['generalSettings']['dimensionality'] = self.ui.dimensionalitySpinBox.value
     parameters['generalSettings']['histogramMatching'] = int(self.ui.histogramMatchingCheckBox.checked)
-    parameters['generalSettings']['winsorizeImageIntensities'] = [self.ui.winsorizeRangeWidget.minimumValue, self.ui.winsorizeRangeWidget.maximumValue]
+    parameters['generalSettings']['winsorizeImageIntensities'] = \
+      [self.ui.winsorizeRangeWidget.minimumValue, self.ui.winsorizeRangeWidget.maximumValue]
     parameters['generalSettings']['computationPrecision'] = self.ui.computationPrecisionComboBox.currentText
 
     self.logic.process(**parameters)
@@ -466,6 +469,19 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
   https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
   """
 
+  OUTPUT_TRANSFORM_REF = "OutputTransform"
+  OUTPUT_VOLUME_REF = "OutputVolume"
+  INITIAL_TRANSFORM_REF = "InitialTransform"
+  OUTPUT_INTERPOLATION_PARAM = "OutputInterpolation"
+  STAGES_JSON_PARAM = "StagesJson"
+  CURRENT_STAGE_PARAM = "CurrentStage"
+  CREATE_DISPLACEMENT_FIELD_PARAM = "OutputDisplacementField"
+  INITIALIZATION_FEATURE_PARAM = "initializationFeature"
+  DIMENSIONALITY_PARAM = "Dimensionality"
+  HISTOGRAM_MATCHING_PARAM = "HistogramMatching"
+  WINSORIZE_IMAGE_INTENSITIES_PARAM = "WinsorizeImageIntensities"
+  COMPUTATION_PRECISION_PARAM = "ComputationPrecision"
+
   def __init__(self):
     """
     Called when the logic class is instantiated. Can be used for initializing member variables.
@@ -488,39 +504,39 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
 
     self._cliNode = None
     self._cliParams = {}
-    
+
   def setDefaultParameters(self, parameterNode):
     """
     Initialize parameter node with default settings.
     """
     presetParameters = PresetManager().getPresetParametersByName()
-    if not parameterNode.GetParameter("StagesJson"):
-      parameterNode.SetParameter("StagesJson",  json.dumps(presetParameters["stages"]))
-    if not parameterNode.GetParameter("CurrentStage"):
-      parameterNode.SetParameter("CurrentStage", "0")
+    if not parameterNode.GetParameter(self.STAGES_JSON_PARAM):
+      parameterNode.SetParameter(self.STAGES_JSON_PARAM,  json.dumps(presetParameters["stages"]))
+    if not parameterNode.GetParameter(self.CURRENT_STAGE_PARAM):
+      parameterNode.SetParameter(self.CURRENT_STAGE_PARAM, "0")
 
-    if not parameterNode.GetParameter("OutputTransform"):
-      parameterNode.SetParameter("OutputTransform", "")
-    if not parameterNode.GetParameter("OutputVolume"):
-      parameterNode.SetParameter("OutputVolume", "")
-    if not parameterNode.GetParameter("OutputInterpolation"):
-      parameterNode.SetParameter("OutputInterpolation", str(presetParameters["outputSettings"]["interpolation"]))
-    if not parameterNode.GetParameter("OutputDisplacementField"):
-      parameterNode.SetParameter("OutputDisplacementField", "0")
+    if not parameterNode.GetNodeReference(self.OUTPUT_TRANSFORM_REF):
+      parameterNode.SetNodeReferenceID(self.OUTPUT_TRANSFORM_REF, "")
+    if not parameterNode.GetNodeReference(self.OUTPUT_VOLUME_REF):
+      parameterNode.SetNodeReferenceID(self.OUTPUT_VOLUME_REF, "")
+    if not parameterNode.GetParameter(self.OUTPUT_INTERPOLATION_PARAM):
+      parameterNode.SetParameter(self.OUTPUT_INTERPOLATION_PARAM, str(presetParameters["outputSettings"]["interpolation"]))
+    if not parameterNode.GetParameter(self.CREATE_DISPLACEMENT_FIELD_PARAM):
+      parameterNode.SetParameter(self.CREATE_DISPLACEMENT_FIELD_PARAM, "0")
 
-    if not parameterNode.GetParameter("initializationFeature"):
-      parameterNode.SetParameter("initializationFeature", str(presetParameters["initialTransformSettings"]["initializationFeature"]))
-    if not parameterNode.GetParameter("InitialTransform"):
-      parameterNode.SetParameter("InitialTransform", "")
+    if not parameterNode.GetParameter(self.INITIALIZATION_FEATURE_PARAM):
+      parameterNode.SetParameter(self.INITIALIZATION_FEATURE_PARAM, str(presetParameters["initialTransformSettings"]["initializationFeature"]))
+    if not parameterNode.GetNodeReference(self.INITIAL_TRANSFORM_REF):
+      parameterNode.SetNodeReferenceID(self.INITIAL_TRANSFORM_REF, "")
 
-    if not parameterNode.GetParameter("Dimensionality"):
-      parameterNode.SetParameter("Dimensionality", str(presetParameters["generalSettings"]["dimensionality"]))
-    if not parameterNode.GetParameter("HistogramMatching"):
-      parameterNode.SetParameter("HistogramMatching", str(presetParameters["generalSettings"]["histogramMatching"]))
-    if not parameterNode.GetParameter("WinsorizeImageIntensities"):
-      parameterNode.SetParameter("WinsorizeImageIntensities", ",".join([str(x) for x in presetParameters["generalSettings"]["winsorizeImageIntensities"]]))
-    if not parameterNode.GetParameter("ComputationPrecision"):
-      parameterNode.SetParameter("ComputationPrecision", presetParameters["generalSettings"]["computationPrecision"])
+    if not parameterNode.GetParameter(self.DIMENSIONALITY_PARAM):
+      parameterNode.SetParameter(self.DIMENSIONALITY_PARAM, str(presetParameters["generalSettings"]["dimensionality"]))
+    if not parameterNode.GetParameter(self.HISTOGRAM_MATCHING_PARAM):
+      parameterNode.SetParameter(self.HISTOGRAM_MATCHING_PARAM, str(presetParameters["generalSettings"]["histogramMatching"]))
+    if not parameterNode.GetParameter(self.WINSORIZE_IMAGE_INTENSITIES_PARAM):
+      parameterNode.SetParameter(self.WINSORIZE_IMAGE_INTENSITIES_PARAM, ",".join([str(x) for x in presetParameters["generalSettings"]["winsorizeImageIntensities"]]))
+    if not parameterNode.GetParameter(self.COMPUTATION_PRECISION_PARAM):
+      parameterNode.SetParameter(self.COMPUTATION_PRECISION_PARAM, presetParameters["generalSettings"]["computationPrecision"])
 
   def cancelRegistration(self):
     if self._cliNode:
@@ -753,6 +769,3 @@ class antsRegistrationTest(ScriptedLoadableModuleTest):
   def onProcessingStatusUpdate(self, caller, event):
     if caller.GetStatus() & caller.Completed:
       self.delayDisplay('Test passed!')
-
-   
-
