@@ -523,8 +523,8 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     # ID to Node
     for stage in parameters['stages']:
       for metric in stage['metrics']:
-        metric['fixed'] = slicer.util.getNode(metric['fixed'])
-        metric['moving'] = slicer.util.getNode(metric['moving'])
+        metric['fixed'] = slicer.util.getNode(metric['fixed']) if metric['fixed'] else ''
+        metric['moving'] = slicer.util.getNode(metric['moving']) if metric['moving'] else ''
       stage['masks']['fixed'] = slicer.util.getNode(stage['masks']['fixed']) if stage['masks']['fixed'] else ''
       stage['masks']['moving'] = slicer.util.getNode(stage['masks']['moving']) if stage['masks']['moving'] else ''
 
@@ -632,9 +632,11 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     return " --metric %s[%s,%s,%s]" % (type, self.getOrSetCLIParam(fixed), self.getOrSetCLIParam(moving), settings)
 
   def getMasksCommand(self, fixed=None, moving=None):
-    fixedMask = self.getOrSetCLIParam(fixed) if fixed else 'NULL'
-    movingMask = self.getOrSetCLIParam(moving) if moving else 'NULL'
-    return " --masks [%s,%s]" % (fixedMask, movingMask)
+    fixedMask = self.getOrSetCLIParam(fixed) if fixed else ''
+    movingMask = self.getOrSetCLIParam(moving) if moving else ''
+    if fixedMask and movingMask:
+      return " --masks [%s,%s]" % (fixedMask, movingMask)
+    return ""
 
   def getLevelsCommand(self, steps, convergenceThreshold, convergenceWindowSize, smoothingSigmasUnit):
     convergence = self.joinStepsInfoForKey(steps, 'convergence')
