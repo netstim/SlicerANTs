@@ -547,12 +547,13 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
 
     return parameters
 
-  def process(self, stages, outputSettings, initialTransformSettings=None, generalSettings=None):
+  def process(self, stages, outputSettings, initialTransformSettings=None, generalSettings=None, wait_for_completion=False):
     """
     :param stages: list defining registration stages
     :param outputSettings: dictionary defining output settings
     :param initialTransformSettings: dictionary defining initial moving transform
     :param generalSettings: dictionary defining general registration settings
+    :param wait_for_completion: flag to enable waiting for completion
     See presets examples to see how these are specified
     """
 
@@ -575,7 +576,8 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     
     self._cliParams["useFloat"] = (generalSettings["computationPrecision"]  == "float")
 
-    self.cliNode = slicer.cli.run(slicer.modules.antsregistrationcli, None, self._cliParams, wait_for_completion=False, update_display=False)
+    self.cliNode = slicer.cli.run(slicer.modules.antsregistrationcli, None, self._cliParams,
+                                  wait_for_completion=wait_for_completion, update_display=False)
 
   def getAntsRegistrationCommand(self, stages, outputSettings, initialTransformSettings=None, generalSettings=None):
     if generalSettings is None:
