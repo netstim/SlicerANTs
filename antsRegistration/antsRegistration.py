@@ -428,19 +428,19 @@ class antsRegistrationWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     self.logic.process(**parameters)
 
-    self.ui.cliWidget.setCurrentCommandLineModuleNode(self.logic._cliNode)
-    self._cliObserver = self.logic._cliNode.AddObserver('ModifiedEvent', self.onProcessingStatusUpdate)
+    self.ui.cliWidget.setCurrentCommandLineModuleNode(self.logic.cliNode)
+    self._cliObserver = self.logic.cliNode.AddObserver('ModifiedEvent', self.onProcessingStatusUpdate)
     self.ui.runRegistrationButton.text = 'Cancel'
 
   def onProcessingStatusUpdate(self, caller, event):
     if caller.GetStatus() & caller.Cancelled:
       self.ui.runRegistrationButton.text = "Run Registration"
-      self.logic._cliNode.RemoveObserver(self._cliObserver)
+      self.logic.cliNode.RemoveObserver(self._cliObserver)
     elif caller.GetStatus() & caller.Completed:
       if caller.GetStatus() & caller.ErrorsMask:
         qt.QMessageBox().warning(qt.QWidget(),'Error', 'ANTs Failed. See CLI output.')
       self.ui.runRegistrationButton.text = "Run Registration"
-      self.logic._cliNode.RemoveObserver(self._cliObserver)
+      self.logic.cliNode.RemoveObserver(self._cliObserver)
     else:
       self.ui.runRegistrationButton.text = "Cancel"
 
@@ -502,7 +502,7 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
           module = getattr(module, modulePart)
         importlib.reload(module) # reload
 
-    self._cliNode = None
+    self.cliNode = None
     self._cliParams = {}
 
   def setDefaultParameters(self, parameterNode):
@@ -539,8 +539,8 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
       parameterNode.SetParameter(self.COMPUTATION_PRECISION_PARAM, presetParameters["generalSettings"]["computationPrecision"])
 
   def cancelRegistration(self):
-    if self._cliNode:
-      self._cliNode.Cancel()
+    if self.cliNode:
+      self.cliNode.Cancel()
 
   def process(self, stages, outputSettings, initialTransformSettings=None, generalSettings=None):
     """
@@ -570,7 +570,7 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     
     self._cliParams["useFloat"] = (generalSettings["computationPrecision"]  == "float")
 
-    self._cliNode = slicer.cli.run(slicer.modules.antsregistrationcli, None, self._cliParams, wait_for_completion=False, update_display=False)
+    self.cliNode = slicer.cli.run(slicer.modules.antsregistrationcli, None, self._cliParams, wait_for_completion=False, update_display=False)
 
   def getAntsRegistrationCommand(self, stages, outputSettings, initialTransformSettings=None, generalSettings=None):
     if generalSettings is None:
@@ -764,7 +764,7 @@ class antsRegistrationTest(ScriptedLoadableModuleTest):
 
     logic.process(**presetParameters)
 
-    logic._cliNode.AddObserver('ModifiedEvent', self.onProcessingStatusUpdate)
+    logic.cliNode.AddObserver('ModifiedEvent', self.onProcessingStatusUpdate)
 
   def onProcessingStatusUpdate(self, caller, event):
     if caller.GetStatus() & caller.Completed:
