@@ -41,7 +41,7 @@
          <stringlist notr="true"/>
         </property>
         <property name="baseName">
-         <string>ElastixParameters</string>
+         <string>ANTsRegistrationParameters</string>
         </property>
         <property name="renameEnabled">
          <bool>true</bool>
