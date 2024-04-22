@@ -7,9 +7,9 @@ project(SlicerANTs)
 set(EXTENSION_HOMEPAGE "https://github.com/netstim/SlicerANTs")
 set(EXTENSION_CATEGORY "Registration")
 set(EXTENSION_CONTRIBUTORS "Simon Oxenford (Netstim Berlin)")
-set(EXTENSION_DESCRIPTION "This extension implements ANTs Registration into Slicer")
+set(EXTENSION_DESCRIPTION "This extension implements antsRegistration in Slicer")
 set(EXTENSION_ICONURL "https://raw.githubusercontent.com/netstim/SlicerANTs/master/logo.png")
-set(EXTENSION_SCREENSHOTURLS "https://raw.githubusercontent.com/netstim/SlicerANTs/master/Documentation/ModuleUI.png")
+set(EXTENSION_SCREENSHOTURLS "https://raw.githubusercontent.com/netstim/SlicerANTs/master/Documentation/MR-CT_example.png")
 set(EXTENSION_DEPENDS "NA") # Specified as a list or "NA" if no dependencies
 set(EXTENSION_BUILD_SUBDIRECTORY inner-build)
 
