@@ -647,7 +647,6 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     command = " --convergence [%s,1e-%i,%i]" % (convergence, convergenceThreshold, convergenceWindowSize)
     command = command + " --smoothing-sigmas %s%s" % (smoothingSigmas, smoothingSigmasUnit)
     command = command + " --shrink-factors %s" % shrinkFactors
-    command = command + " --use-estimate-learning-rate-once"
     return command
 
   def joinStepsInfoForKey(self, steps, key):
