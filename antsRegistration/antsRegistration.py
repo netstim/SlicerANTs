@@ -634,11 +634,11 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     return " --metric %s[%s,%s,%s]" % (type, self.getOrSetCLIParam(fixed), self.getOrSetCLIParam(moving), settings)
 
   def getMasksCommand(self, fixed=None, moving=None):
-    fixedMask = self.getOrSetCLIParam(fixed) if fixed else ''
-    movingMask = self.getOrSetCLIParam(moving) if moving else ''
-    if fixedMask and movingMask:
-      return " --masks [%s,%s]" % (fixedMask, movingMask)
-    return ""
+    if not fixed and not moving:
+      return ""
+    fixedMask = self.getOrSetCLIParam(fixed) if fixed else 'NULL'
+    movingMask = self.getOrSetCLIParam(moving) if moving else 'NULL'
+    return " --masks [%s,%s]" % (fixedMask, movingMask)
 
   def getLevelsCommand(self, steps, convergenceThreshold, convergenceWindowSize, smoothingSigmasUnit):
     convergence = self.joinStepsInfoForKey(steps, 'convergence')
