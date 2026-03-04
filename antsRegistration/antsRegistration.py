@@ -587,6 +587,9 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     antsCommand = self.getGeneralSettingsCommand(**generalSettings)
     antsCommand = antsCommand + self.getOutputCommand(interpolation=outputSettings['interpolation'], volume=outputSettings['volume'])
     antsCommand = antsCommand + self.getInitialMovingTransformCommand(**initialTransformSettings)
+    # CHANGED: If any stage has a real mask, emit per-stage --masks for every stage (NULL placeholders)
+    # CHANGED: so ANTs interprets masks as stage-specific instead of applying a single --masks to all stages.
+    self._emitNullMasks = any((s.get('masks', {}).get('fixed') or s.get('masks', {}).get('moving')) for s in stages)
     for stage in stages:
       antsCommand = antsCommand + self.getStageCommand(**stage)
     return antsCommand
@@ -634,8 +637,10 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     return " --metric %s[%s,%s,%s]" % (type, self.getOrSetCLIParam(fixed), self.getOrSetCLIParam(moving), settings)
 
   def getMasksCommand(self, fixed=None, moving=None):
+    # CHANGED: If masking is enabled in any stage, always emit --masks per stage.
+    # CHANGED: Using NULL for stages without a mask forces antsRegistration's stage-specific mask mode.
     if not fixed and not moving:
-      return ""
+      return " --masks [NULL,NULL]" if getattr(self, "_emitNullMasks", False) else ""
     fixedMask = self.getOrSetCLIParam(fixed) if fixed else 'NULL'
     movingMask = self.getOrSetCLIParam(moving) if moving else 'NULL'
     return " --masks [%s,%s]" % (fixedMask, movingMask)
