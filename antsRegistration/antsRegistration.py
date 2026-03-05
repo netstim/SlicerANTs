@@ -587,11 +587,9 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     antsCommand = self.getGeneralSettingsCommand(**generalSettings)
     antsCommand = antsCommand + self.getOutputCommand(interpolation=outputSettings['interpolation'], volume=outputSettings['volume'])
     antsCommand = antsCommand + self.getInitialMovingTransformCommand(**initialTransformSettings)
-    # CHANGED: If any stage has a real mask, emit per-stage --masks for every stage (NULL placeholders)
-    # CHANGED: so ANTs interprets masks as stage-specific instead of applying a single --masks to all stages.
-    self._emitNullMasks = any((s.get('masks', {}).get('fixed') or s.get('masks', {}).get('moving')) for s in stages)
+    emitNullMasks = any((s.get('masks', {}).get('fixed') or s.get('masks', {}).get('moving')) for s in stages)
     for stage in stages:
-      antsCommand = antsCommand + self.getStageCommand(**stage)
+      antsCommand = antsCommand + self.getStageCommand(emitNullMasks=emitNullMasks, **stage)
     return antsCommand
 
   def getGeneralSettingsCommand(self, dimensionality=3, histogramMatching=False, winsorizeImageIntensities=None, computationPrecision="float"):
@@ -622,12 +620,12 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     else:
       return ""
 
-  def getStageCommand(self, transformParameters, metrics, levels, masks):
+  def getStageCommand(self, transformParameters, metrics, levels, masks, emitNullMasks=False):
     command = self.getTransformCommand(**transformParameters)
     for metric in metrics:
       command = command + self.getMetricCommand(**metric)
     command = command + self.getLevelsCommand(**levels)
-    command = command + self.getMasksCommand(**masks)
+    command = command + self.getMasksCommand(emitNullMasks=emitNullMasks, **masks)
     return command
 
   def getTransformCommand(self, transform, settings):
@@ -636,11 +634,9 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
   def getMetricCommand(self, type, fixed, moving, settings):
     return " --metric %s[%s,%s,%s]" % (type, self.getOrSetCLIParam(fixed), self.getOrSetCLIParam(moving), settings)
 
-  def getMasksCommand(self, fixed=None, moving=None):
-    # CHANGED: If masking is enabled in any stage, always emit --masks per stage.
-    # CHANGED: Using NULL for stages without a mask forces antsRegistration's stage-specific mask mode.
+  def getMasksCommand(self, fixed=None, moving=None, emitNullMasks=False):
     if not fixed and not moving:
-      return " --masks [NULL,NULL]" if getattr(self, "_emitNullMasks", False) else ""
+      return " --masks [NULL,NULL]" if emitNullMasks else ""
     fixedMask = self.getOrSetCLIParam(fixed) if fixed else 'NULL'
     movingMask = self.getOrSetCLIParam(moving) if moving else 'NULL'
     return " --masks [%s,%s]" % (fixedMask, movingMask)
