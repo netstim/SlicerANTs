@@ -587,8 +587,9 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     antsCommand = self.getGeneralSettingsCommand(**generalSettings)
     antsCommand = antsCommand + self.getOutputCommand(interpolation=outputSettings['interpolation'], volume=outputSettings['volume'])
     antsCommand = antsCommand + self.getInitialMovingTransformCommand(**initialTransformSettings)
+    emitNullMasks = any((s.get('masks', {}).get('fixed') or s.get('masks', {}).get('moving')) for s in stages)
     for stage in stages:
-      antsCommand = antsCommand + self.getStageCommand(**stage)
+      antsCommand = antsCommand + self.getStageCommand(emitNullMasks=emitNullMasks, **stage)
     return antsCommand
 
   def getGeneralSettingsCommand(self, dimensionality=3, histogramMatching=False, winsorizeImageIntensities=None, computationPrecision="float"):
@@ -619,12 +620,12 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
     else:
       return ""
 
-  def getStageCommand(self, transformParameters, metrics, levels, masks):
+  def getStageCommand(self, transformParameters, metrics, levels, masks, emitNullMasks=False):
     command = self.getTransformCommand(**transformParameters)
     for metric in metrics:
       command = command + self.getMetricCommand(**metric)
     command = command + self.getLevelsCommand(**levels)
-    command = command + self.getMasksCommand(**masks)
+    command = command + self.getMasksCommand(emitNullMasks=emitNullMasks, **masks)
     return command
 
   def getTransformCommand(self, transform, settings):
@@ -633,9 +634,9 @@ class antsRegistrationLogic(ScriptedLoadableModuleLogic):
   def getMetricCommand(self, type, fixed, moving, settings):
     return " --metric %s[%s,%s,%s]" % (type, self.getOrSetCLIParam(fixed), self.getOrSetCLIParam(moving), settings)
 
-  def getMasksCommand(self, fixed=None, moving=None):
+  def getMasksCommand(self, fixed=None, moving=None, emitNullMasks=False):
     if not fixed and not moving:
-      return ""
+      return " --masks [NULL,NULL]" if emitNullMasks else ""
     fixedMask = self.getOrSetCLIParam(fixed) if fixed else 'NULL'
     movingMask = self.getOrSetCLIParam(moving) if moving else 'NULL'
     return " --masks [%s,%s]" % (fixedMask, movingMask)
