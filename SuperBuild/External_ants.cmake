@@ -33,7 +33,7 @@ if(NOT DEFINED ${proj}_DIR AND NOT ${SUPERBUILD_TOPLEVEL_PROJECT}_USE_SYSTEM_${p
 
   ExternalProject_SetIfNotDefined(
    ${SUPERBUILD_TOPLEVEL_PROJECT}_${proj}_GIT_TAG
-   "8c4e2077f43e92f2134fa578ee62ccd8f51162ef" # 2024.09.10
+   "ad0e6a1d90cba335ffd13ffdb56da479ed1e17a2" # 2026-05-10 (ANTsX/ANTs master, includes ITK6 itkSurfaceImageCurvature fix)
    QUIET
    )
 
@@ -75,6 +75,7 @@ if(NOT DEFINED ${proj}_DIR AND NOT ${SUPERBUILD_TOPLEVEL_PROJECT}_USE_SYSTEM_${p
       # Options
       -DBUILD_ALL_ANTS_APPS:BOOL=OFF
       -DBUILD_TESTING:BOOL=OFF
+      -DUSE_TractographyTRX:BOOL=OFF
       -DBUILD_SHARED_LIBS:BOOL=ON
       -DANTS_INSTALL_LIBS_ONLY:BOOL=OFF
       # Dependencies
